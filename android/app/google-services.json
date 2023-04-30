@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "536153952717",
+    "project_id": "wya-app-d1efb",
+    "storage_bucket": "wya-app-d1efb.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:536153952717:android:370367c711ff62cc19f484",
+        "android_client_info": {
+          "package_name": "com.example.wya_final"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "536153952717-t4tldle5ml6g8j7tpsec9c8dptsj52vn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBD8kBq4n9S_G0OE_GPJuKa46YFhLomhTA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "536153952717-t4tldle5ml6g8j7tpsec9c8dptsj52vn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
