@@ -3,7 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';               // new
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';                 // new
+import 'package:wya_final/profile_page.dart';
+import 'package:wya_final/search_page.dart';
+import 'package:wya_final/src/friends_page.dart';
+import 'package:wya_final/src/utils/events_page.dart';
 
+import 'account_page.dart';
 import 'app_state.dart';                                 // new
 import 'home_page.dart';
 
@@ -73,7 +78,7 @@ final _router = GoRouter(
           ],
         ),
         GoRoute(
-          path: 'profile',
+          path: 'profile-screen',
           builder: (context, state) {
             return ProfileScreen(
               providers: const [],
@@ -82,6 +87,38 @@ final _router = GoRouter(
                   context.pushReplacement('/');
                 }),
               ],
+            );
+          },
+        ),
+        GoRoute(
+          path: 'search',
+          builder: (context, state) {
+            return const SearchPage();
+          },
+        ),
+        GoRoute(
+          path: 'account',
+          builder: (context, state) {
+            return const AccountPage();
+          },
+        ),
+        GoRoute(
+          path: 'friends',
+          builder: (context, state) {
+            return const FriendsPage();
+          },
+        ),
+        GoRoute(
+          path: 'events',
+          builder: (context, state) {
+            return const EventsPage();
+          },
+        ),
+        GoRoute(
+          path: 'profile:userId',
+          builder: (context, state) {
+            return ProfilePage(
+              uid: state.pathParameters['userId']
             );
           },
         ),
