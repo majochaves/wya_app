@@ -33,25 +33,60 @@ const kTitleTextStyle = TextStyle(
   fontSize: 40.0,
 );
 
-const kH1TextStyle = TextStyle(
+const kH1RobotoTextStyle = TextStyle(
   color: kAlmostBlack,
   fontFamily: 'Roboto Slab',
   fontSize: 40.0,
   fontWeight: FontWeight.w900,
 );
 
-const kH2TextStyle = TextStyle(
+const kH2RobotoTextStyle = TextStyle(
   color: kAlmostBlack,
   fontFamily: 'Roboto Slab',
   fontSize: 30.0,
   fontWeight: FontWeight.w700,
 );
 
-const kH3TextStyle = TextStyle(
+const kH3RobotoTextStyle = TextStyle(
   color: kAlmostBlack,
   fontFamily: 'Roboto Slab',
   fontSize: 20.0,
+  fontWeight: FontWeight.w500,
+);
+
+const kH4RobotoTextStyle = TextStyle(
+  color: kAlmostBlack,
+  fontFamily: 'Roboto Slab',
+  fontSize: 15.0,
+  fontWeight: FontWeight.w300,
+);
+
+const kH1SourceSansTextStyle = TextStyle(
+  color: kAlmostBlack,
+  fontFamily: 'Source Sans Pro',
+  fontSize: 40.0,
+  fontWeight: FontWeight.w900,
+);
+
+const kH2SourceSansTextStyle = TextStyle(
+  color: kAlmostBlack,
+  fontFamily: 'Source Sans Pro',
+  fontSize: 30.0,
   fontWeight: FontWeight.w700,
+);
+
+const kH3SourceSansTextStyle = TextStyle(
+  color: kAlmostBlack,
+  fontFamily: 'Source Sans Pro',
+  fontSize: 20.0,
+  fontWeight: FontWeight.w500,
+);
+
+const kH4SourceSansTextStyle = TextStyle(
+  color: kAlmostBlack,
+  fontFamily: 'Source Sans Pro',
+  fontSize: 15.0,
+  fontWeight: FontWeight.w500,
 );
 
 const kSubtitleTextStyle = TextStyle(

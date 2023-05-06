@@ -48,6 +48,11 @@ dependencies:
   flutter_cupertino_date_picker_fork: ^1.0.7
   username_gen: ^1.0.4
   uuid: ^3.0.7
+  geolocator: ^9.0.2
+  google_maps_flutter: ^2.2.6
+  google_maps_webservice: ^0.0.19
+  tuple: ^2.0.1
+  google_maps_place_picker_mb: ^3.0.1
 
 dev_dependencies:
   flutter_test:

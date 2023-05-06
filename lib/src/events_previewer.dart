@@ -20,6 +20,7 @@ class EventsPreviewer extends StatelessWidget {
         index = 0;
       }
       EventCard eventCard = EventCard(
+        eventId: event.eventId,
         startTime: event.startsAt,
         endTime: event.endsAt,
         cardColor: colorCombos[index][0],

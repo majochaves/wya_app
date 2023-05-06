@@ -10,14 +10,14 @@ import '../user_data.dart';
 
 class AllFriendsViewer extends StatelessWidget {
   final List<UserData> friends;
-  final FutureOr<void> Function(String groupId) deleteFriend;
+  final FutureOr<void> Function(String friendId) deleteFriend;
   final String uid;
 
   const AllFriendsViewer(
       {Key? key,
-        required this.uid,
-        required this.friends,
-        required this.deleteFriend})
+      required this.uid,
+      required this.friends,
+      required this.deleteFriend})
       : super(key: key);
 
   @override
@@ -25,26 +25,44 @@ class AllFriendsViewer extends StatelessWidget {
     return RoundedContainer(
         padding: 10,
         backgroundColor: kPastelBlue,
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('All friends (${friends.length})', textAlign: TextAlign.start, style: kH3TextStyle,),
+        child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(
+            'All friends (${friends.length})',
+            textAlign: TextAlign.start,
+            style: kH3RobotoTextStyle,
+          ),
           friends.isNotEmpty
-              ? ListView.builder(
-              scrollDirection: Axis.vertical,
-              shrinkWrap: true,
-              itemCount: friends.length,
-              itemBuilder: (context, index) {
-                InkWell(child:
-                  ListTile(
-                    leading: CircleAvi(
-                      imageSrc: NetworkImage(friends[index].photoUrl,),
-                      size: 40,
-                    ),
-                    title: Text(friends[index].username),
-                    trailing: IconButton(icon: Icon(Icons.close), onPressed: () {deleteFriend(friends[index].uid);},),
-                  ),
-                  onTap: () {context.push('profile:${friends[index].uid}');},);
-              })
-              : Expanded(child: const Center(child: Text('You have no friends yet. '))),
+              ? Expanded(
+                child: ListView.builder(
+                    scrollDirection: Axis.vertical,
+                    itemCount: friends.length,
+                    itemBuilder: (context, index) {
+                      return InkWell(
+                        child: ListTile(
+                          leading: CircleAvi(
+                            imageSrc: NetworkImage(
+                              friends[index].photoUrl,
+                            ),
+                            size: 40,
+                          ),
+                          title: Text(friends[index].username),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () {
+                              deleteFriend(friends[index].uid);
+                            },
+                          ),
+                        ),
+                        onTap: () {
+                          context.push('profile:${friends[index].uid}');
+                        },
+                      );
+                    }),
+              )
+              : const Expanded(
+                  child:
+                      Center(child: Text('You have no friends yet. '))),
         ]));
   }
 }

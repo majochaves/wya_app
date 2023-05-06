@@ -39,7 +39,7 @@ class _ProfilePageState extends State<ProfilePage> {
     });
     try {
       var userSnap = await FirebaseFirestore.instance
-          .collection('users')
+          .collection('userData')
           .doc(widget.uid)
           .get();
 
@@ -85,9 +85,9 @@ class _ProfilePageState extends State<ProfilePage> {
             children: [
               Expanded(flex: 1, child: Column(children: <Widget>[
                 CircleAvi(
-                  imageSrc: NetworkImage(
+                  imageSrc: Image.network(
                     userData['photoUrl'],
-                  ),
+                  ).image,
                   size: 100,
                 ),
                 const SizedBox(height: 5,),
@@ -101,21 +101,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   style: kNameStyle,
                 ),
                 const SizedBox(height: 5,),
-                Container(
-                  width: 100,
-                  height: 40,
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      color: kPastelOrangeYellow
-                  ),
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.only(
-                    top: 1,
-                  ),
-                  child: Text(
-                    userData['bio'],
-                  ),
-                ),
                 Row(
                   children: [
                     Expanded(
@@ -132,7 +117,8 @@ class _ProfilePageState extends State<ProfilePage> {
                             ],
                           ),
                           Consumer<ApplicationState>(
-                            builder: (context, appState, _) => Row( children: [isFriend
+                            builder: (context, appState, _) =>
+                                Row( mainAxisAlignment: MainAxisAlignment.center, children: [isFriend
                                     ? FollowButton(
                                   text: 'Remove friend',
                                   backgroundColor: Colors.white,
@@ -159,7 +145,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   textColor: Colors.white,
                                   borderColor: Colors.blue,
                                   function: () {
-                                    appState.requestFriend(userData['uid']);
+                                    appState.requestFriend(userData['uid'] as String);
                                     setState(() {
                                       isRequested = true;
                                     });

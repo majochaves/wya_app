@@ -7,8 +7,12 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_cupertino_date_picker_fork/flutter_cupertino_date_picker_fork.dart';
 import 'package:go_router/go_router.dart';
+import 'package:table_calendar/table_calendar.dart';
 import 'package:wya_final/src/utils/constants.dart';
 import 'package:wya_final/src/utils/string_formatter.dart';
+
+import '../group.dart';
+import '../user_data.dart';
 
 class Header extends StatelessWidget {
   const Header(this.heading, {super.key});
@@ -341,45 +345,178 @@ class SharedEventCard extends StatelessWidget {
 class EventCard extends StatelessWidget {
   final DateTime startTime;
   final DateTime endTime;
+  final String eventId;
   final String eventTitle;
   final String eventDescription;
   final Color cardColor;
   final Color iconColor;
 
-  const EventCard({Key? key, required this.cardColor, required this.iconColor, required this.eventTitle, required this.eventDescription, required this.startTime, required this.endTime}) : super(key: key);
+  const EventCard({Key? key, required this.cardColor, required this.iconColor, required this.eventTitle, required this.eventDescription, required this.startTime, required this.endTime, required this.eventId}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: cardColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(40), // if you need this
-        side: BorderSide(
-          color: iconColor,
-          width: 1,
+    return InkWell(
+      onTap: (){context.go('/viewEvent:${eventId}');},
+      child: Card(
+        color: cardColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20), // if you need this
+          side: BorderSide(
+            color: iconColor,
+            width: 1,
+          ),
         ),
-      ),
-      child: SizedBox(
-        width: 150,
-        height: 100,
-        child: Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                SizedBox(height: 100, width: 5, child: Container(color: iconColor),),
-                Expanded(child: Center(child: Text('${StringFormatter.getTimeString(startTime)}-${StringFormatter.getTimeString(endTime)}', style: kSubtitleTextStyle,),)),
-                Expanded(
-                  flex: 3,
-                  child: ListTile(
-                    title: Text(eventTitle, style: kMatchCardTextStyle,),
-                    subtitle: Text(eventDescription, style: kMatchCardTextStyle,),
+        child: SizedBox(
+          width: 150,
+          height: 100,
+          child: Center(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  SizedBox(height: 70, width: 5, child: Container(color: iconColor),),
+                  Expanded(child: Center(child: Text('${StringFormatter.getTimeString(startTime)}-\n${StringFormatter.getTimeString(endTime)}', style: kSubtitleTextStyle,),)),
+                  Expanded(
+                    flex: 2,
+                    child: ListTile(
+                      title: Text(eventTitle, style: kMatchCardTextStyle,),
+                      subtitle: Text(eventDescription, style: kMatchCardTextStyle,),
+                    ),
                   ),
-                ),
-              ],
-            )
+                ],
+              )
+          ),
         ),
       ),
+    );
+  }
+}
+
+///Chips
+class EventCategoryChip extends StatelessWidget {
+  final String categoryName;
+  final int index;
+  final bool isSelected;
+  final Function selectEventCategoryCallback;
+  final Image? icon;
+
+  const EventCategoryChip(
+      {Key? key,
+        required this.isSelected,
+        required this.selectEventCategoryCallback,
+        required this.categoryName,
+        required this.index,
+        required this.icon,})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return (index == 0 || index == 1) ? InputChip(
+      backgroundColor: kPastelBlue,
+      selectedColor: kPastelPink,
+      disabledColor: kPastelBlue,
+      label: Container(
+        //color: backgroundColor,
+        child: Text(
+          categoryName,
+          textAlign: TextAlign.center,
+        ),
+      ),
+      selected: isSelected,
+      onSelected: (bool selected) {
+        selectEventCategoryCallback(index, selected);
+      },
+    ) : InputChip(
+      avatar: CircleAvatar(
+          backgroundColor: isSelected ? kPastelPink : kPastelBlue,
+          child: icon
+      ),
+      backgroundColor: kPastelBlue,
+      selectedColor: kPastelPink,
+      disabledColor: kPastelBlue,
+      label: Container(
+        //color: backgroundColor,
+        child: Text(
+          categoryName,
+          textAlign: TextAlign.center,
+        ),
+      ),
+      selected: isSelected,
+      onSelected: (bool selected) {
+        selectEventCategoryCallback(index, selected);
+      },
+    );
+  }
+}
+
+class GroupChip extends StatelessWidget {
+  final String groupName;
+  final int groupIndex;
+  final bool isSelected;
+  final Function selectGroupCallback;
+
+  const GroupChip(
+      {Key? key, required this.groupName, required this.groupIndex, required this.isSelected, required this.selectGroupCallback})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return InputChip(
+      label: Text(groupName),
+      selected: isSelected,
+      onSelected: (bool selected) {
+        selectGroupCallback(groupIndex, selected);
+      },
+    );
+  }
+}
+
+class MemberOrGroupChip extends StatelessWidget {
+  final String name;
+
+  const MemberOrGroupChip(
+      {Key? key, required this.name})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return InputChip(
+      label: Text(name),
+    );
+  }
+}
+
+class YesNoChip extends StatelessWidget {
+  final String label;
+  final int index;
+  final bool isSelected;
+  final Function selectEventTypeCallback;
+
+  const YesNoChip(
+      {Key? key,
+        required this.isSelected,
+        required this.selectEventTypeCallback,
+        required this.label,
+        required this.index,})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return InputChip(
+      backgroundColor: kPastelBlue,
+      selectedColor: kPastelPink,
+      disabledColor: kPastelBlue,
+      label: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+        ),
+      ),
+      selected: isSelected,
+      onSelected: (bool selected) {
+        selectEventTypeCallback(index, selected);
+      },
     );
   }
 }
@@ -505,6 +642,59 @@ class StatColumn extends StatelessWidget {
   }
 }
 
+class OptionSwitch extends StatelessWidget {
+  final bool boolValue;
+  final Function onChanged;
+  OptionSwitch({Key? key, required this.boolValue, required this.onChanged}) : super(key: key);
+
+  final MaterialStateProperty<Color?> trackColor =
+  MaterialStateProperty.resolveWith<Color?>(
+        (Set<MaterialState> states) {
+      // Track color when the switch is selected.
+      if (states.contains(MaterialState.selected)) {
+        return kDeepBlue;
+      }
+      // Otherwise return null to set default track color
+      // for remaining states such as when the switch is
+      // hovered, focused, or disabled.
+      return null;
+    },
+  );
+  final MaterialStateProperty<Color?> overlayColor =
+  MaterialStateProperty.resolveWith<Color?>(
+        (Set<MaterialState> states) {
+      // Material color when switch is selected.
+      if (states.contains(MaterialState.selected)) {
+        return kDeepBlue.withOpacity(0.54);
+      }
+      // Material color when switch is disabled.
+      if (states.contains(MaterialState.disabled)) {
+        return Colors.grey.shade400;
+      }
+      // Otherwise return null to set default material color
+      // for remaining states such as when the switch is
+      // hovered, or focused.
+      return null;
+    },
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return Switch(
+      // This bool value toggles the switch.
+      value: boolValue,
+      overlayColor: overlayColor,
+      trackColor: trackColor,
+      thumbColor: const MaterialStatePropertyAll<Color>(Colors.black),
+      onChanged: (bool value) {
+        // This is called when the user toggles the switch.
+        onChanged(value);
+      },
+    );
+  }
+}
+
+
 class TitleDescriptionColumn extends StatelessWidget {
   final String title;
   final String description;
@@ -533,19 +723,31 @@ class TitleDescriptionColumn extends StatelessWidget {
   }
 }
 
-class DatetimePicker extends StatelessWidget {
+class DatetimePicker extends StatefulWidget {
   final DateTime minDate;
   final DateTime maxDate;
   final DateTime initDate;
   final Function toggleChangeDatetime;
   final bool time;
 
-  const DatetimePicker({super.key, required this.minDate, required this.maxDate, required this.initDate, required this.time, required this.toggleChangeDatetime,});
+  DatetimePicker({super.key, required this.initDate, required this.time, required this.toggleChangeDatetime, required this.minDate, required this.maxDate,});
 
+  @override
+  State<DatetimePicker> createState() => _DatetimePickerState();
+}
+
+class _DatetimePickerState extends State<DatetimePicker> {
   final DateTimePickerLocale _locale = DateTimePickerLocale.en_us;
+
   final String _dateFormat = 'dd/MM/yyyy';
+
   final String _timeFormat = 'HH:mm';
 
+
+  @override
+  void initState() {
+    super.initState();
+  }
   String _toDoubleDigits(int number){
     if(number > 9){
       return number.toString();
@@ -562,18 +764,18 @@ class DatetimePicker extends StatelessWidget {
         showTitle: true,
         confirm: Text('Done', style: TextStyle(color: Colors.blue)),
       ),
-      minDateTime: minDate,
-      maxDateTime: maxDate,
-      initialDateTime: initDate,
+      minDateTime: widget.minDate,
+      maxDateTime: widget.maxDate,
+      initialDateTime: widget.initDate,
       dateFormat: _dateFormat,
       locale: _locale,
       onClose: () {},
       onCancel: () {},
       onChange: (dt, List<int> index) {
-        toggleChangeDatetime(dt);
+        widget.toggleChangeDatetime(dt);
       },
       onConfirm: (dt, List<int> index) {
-        toggleChangeDatetime(dt);
+        widget.toggleChangeDatetime(dt);
       },
     );
   }
@@ -583,9 +785,9 @@ class DatetimePicker extends StatelessWidget {
   void _showTimePicker(BuildContext context) {
     DatePicker.showDatePicker(
       context,
-      minDateTime: minDate,
-      maxDateTime: maxDate,
-      initialDateTime: initDate,
+      minDateTime: widget.minDate,
+      maxDateTime: widget.maxDate,
+      initialDateTime: widget.initDate,
       dateFormat: _timeFormat,
       pickerMode: DateTimePickerMode.time, // show TimePicker
       pickerTheme: DateTimePickerTheme(
@@ -605,10 +807,10 @@ class DatetimePicker extends StatelessWidget {
         debugPrint('onCancel');
       },
       onChange: (dt, List<int> index) {
-        toggleChangeDatetime(dt);
+        widget.toggleChangeDatetime(dt);
       },
       onConfirm: (dt, List<int> index) {
-        toggleChangeDatetime(dt);
+        widget.toggleChangeDatetime(dt);
       },
     );
   }
@@ -616,10 +818,10 @@ class DatetimePicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () {time ? _showTimePicker(context) : _showDatePicker(context);},
-      child: time
-          ? Text('${_toDoubleDigits(initDate.hour)}:${_toDoubleDigits(initDate.minute)}')
-          : Text('${_toDoubleDigits(initDate.day)}/${_toDoubleDigits(initDate.month)}/${_toDoubleDigits(initDate.year)}'),
+      onTap: () {widget.time ? _showTimePicker(context) : _showDatePicker(context);},
+      child: widget.time
+          ? Text('${_toDoubleDigits(widget.initDate.hour)}:${_toDoubleDigits(widget.initDate.minute)}')
+          : Text('${_toDoubleDigits(widget.initDate.day)}/${_toDoubleDigits(widget.initDate.month)}/${_toDoubleDigits(widget.initDate.year)}'),
       //trailing: widget.time ? const Icon(Icons.access_time, size: 0,) : const Icon(Icons.calendar_month)
     );
   }
@@ -808,6 +1010,63 @@ class _TextFieldInputWithIconState extends State<TextFieldInputWithIcon> {
     );
   }
 }
+
+class UserListTiles extends StatelessWidget {
+  final List<UserData> users;
+  final IconData icon;
+  final Function onPressed;
+  const UserListTiles({Key? key, required this.users, required this.icon, required this.onPressed}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+        scrollDirection: Axis.vertical,
+        itemCount: users.length,
+        itemBuilder: (context, index) {
+          return ListTile(
+            leading: CircleAvi(
+              imageSrc: NetworkImage(
+                users[index].photoUrl,
+              ),
+              size: 40,
+            ),
+            title: Text(users[index].username),
+            trailing: IconButton(
+              icon: Icon(icon),
+              onPressed: () {
+                onPressed(users[index]);
+              },
+            ),
+          );
+        });
+  }
+}
+
+class GroupListTiles extends StatelessWidget {
+  final Map<Group, List<UserData>> groups;
+  final IconData icon;
+  final Function onPressed;
+  const GroupListTiles({Key? key, required this.groups, required this.icon, required this.onPressed}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+        scrollDirection: Axis.vertical,
+        itemCount: groups.length,
+        itemBuilder: (context, index) {
+          return ListTile(
+            title: Text(groups.keys.elementAt(index).name),
+            trailing: IconButton(
+              icon: Icon(icon),
+              onPressed: () {
+                onPressed(groups.entries.elementAt(index));
+              },
+            ),
+          );
+        });
+  }
+}
+
 
 /// List tiles
 class OptionTile extends StatelessWidget {

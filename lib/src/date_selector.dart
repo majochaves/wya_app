@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'utils/string_formatter.dart';
 import 'utils/constants.dart';
 
@@ -15,7 +16,7 @@ class DateSelector extends StatelessWidget {
           flex: 5,
           child: Text(
             StringFormatter.getDayTitle(selectedDay),
-            style: kH2TextStyle,
+            style: kH2RobotoTextStyle,
           ),
         ),
         IconButton(
@@ -24,6 +25,7 @@ class DateSelector extends StatelessWidget {
             color: kHotPink,
           ),
           onPressed: () {
+            context.go('/newEvent');
             //Navigator.of(context)
             //.pushReplacement(MaterialPageRoute(
             //builder: (context) => LocationLoadingScreen(

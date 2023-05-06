@@ -36,7 +36,7 @@ class _RequestsViewerState extends State<RequestsViewer> {
       child: Column(
         children: [
           Row(children: [
-            Text('Requests (${widget.requests.length})', style: kH3TextStyle,),
+            Text('Requests (${widget.requests.length})', style: kH3RobotoTextStyle,),
             Visibility(
                 visible: widget.requests.isNotEmpty,
                 child: IconButton(
@@ -49,7 +49,7 @@ class _RequestsViewerState extends State<RequestsViewer> {
           Visibility(
             visible: viewRequests,
             child: SizedBox(
-              height: 200,
+              height: 160,
               child: Column(
                 children: [
                   ListView.builder(

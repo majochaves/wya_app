@@ -1,12 +1,15 @@
 import 'package:firebase_ui_auth/firebase_ui_auth.dart'; // new
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';               // new
 import 'package:google_fonts/google_fonts.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';                 // new
 import 'package:wya_final/profile_page.dart';
 import 'package:wya_final/search_page.dart';
+import 'package:wya_final/src/event_creator.dart';
 import 'package:wya_final/src/friends_page.dart';
-import 'package:wya_final/src/utils/events_page.dart';
+import 'package:wya_final/src/events_page.dart';
 
 import 'account_page.dart';
 import 'app_state.dart';                                 // new
@@ -14,7 +17,9 @@ import 'home_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-
+  if (defaultTargetPlatform == TargetPlatform.android) {
+    AndroidGoogleMapsFlutter.useAndroidViewSurface = true;
+  }
   runApp(ChangeNotifierProvider(
     create: (context) => ApplicationState(),
     builder: ((context, child) => const App()),
@@ -112,6 +117,12 @@ final _router = GoRouter(
           path: 'events',
           builder: (context, state) {
             return const EventsPage();
+          },
+        ),
+        GoRoute(
+          path: 'newEvent',
+          builder: (context, state) {
+            return const EventCreator();
           },
         ),
         GoRoute(

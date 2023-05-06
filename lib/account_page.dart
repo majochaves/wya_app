@@ -1,4 +1,5 @@
 //Core
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -146,6 +147,11 @@ class _AccountPageState extends State<AccountPage> {
       builder: (context, appState, _) => appState.loggedIn ? Scaffold(
         appBar: AppBar(
           title: const Text('WYA'),
+          actions: [
+            IconButton(onPressed: (){
+              FirebaseAuth.instance.signOut();
+      }, icon: const Icon(Icons.logout)),
+          ],
         ),
         body: SafeArea(
           child: Padding(
@@ -157,9 +163,9 @@ class _AccountPageState extends State<AccountPage> {
                     Expanded(
                       flex: 4,
                       child: CircleAvi(
-                        imageSrc: appState.userData.photoUrl.isNotEmpty ? NetworkImage(
+                        imageSrc: appState.userData.photoUrl.isNotEmpty ? Image.network(
                           appState.userData.photoUrl,
-                        ) : Image.asset('assets/images/noProfilePic.png').image,
+                        ).image : Image.asset('assets/images/noProfilePic.png').image,
                         size: 120,
                       ),
                     ),

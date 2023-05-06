@@ -37,7 +37,7 @@ class _SearchPageState extends State<SearchPage> {
       body: isShowUsers
           ? FutureBuilder(
         future: FirebaseFirestore.instance
-            .collection('users')
+            .collection('userData')
             .where(
           'username',
           isGreaterThanOrEqualTo: searchController.text,

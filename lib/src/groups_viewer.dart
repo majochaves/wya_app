@@ -12,6 +12,7 @@ class GroupsViewer extends StatefulWidget {
   final List<UserData> friends;
   final FutureOr<void> Function(String groupId) deleteGroup;
   final FutureOr<void> Function(Group group) addGroup;
+  final FutureOr<void> Function(Group group) updateGroup;
   final String uid;
 
   const GroupsViewer(
@@ -20,7 +21,8 @@ class GroupsViewer extends StatefulWidget {
       required this.deleteGroup,
       required this.addGroup,
       required this.uid,
-      required this.friends})
+      required this.friends,
+      required this.updateGroup})
       : super(key: key);
 
   @override
@@ -30,16 +32,18 @@ class GroupsViewer extends StatefulWidget {
 class _GroupsViewerState extends State<GroupsViewer> {
   final _groupNameFormKey =
       GlobalKey<FormState>(debugLabel: '_GroupPageStateNameForm');
-  late TextEditingController _groupNameController = TextEditingController();
+  final TextEditingController _groupNameController = TextEditingController();
+  final TextEditingController _errorController = TextEditingController();
   List<UserData> selectedFriends = [];
 
   Future<void> viewGroupWidget(
       Group group, List<UserData> members, bool isNewGroup) async {
     bool isChangeGroup = isNewGroup;
     _groupNameController.text = group.name;
-    String error = '';
-    List<UserData> friendsNotInGroup = widget.friends;
+    _errorController.text = '';
+    List<UserData> friendsNotInGroup = List<UserData>.from(widget.friends);
     friendsNotInGroup.removeWhere((element) => members.contains(element));
+
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
@@ -65,150 +69,172 @@ class _GroupsViewerState extends State<GroupsViewer> {
                 ],
               )
             : AlertDialog(
-                content: SizedBox(
-                  height: 350,
-                  width: 300,
-                  child: Column(
-                    children: [
-                      Visibility(
-                        visible: isChangeGroup,
-                        child: Row(
-                          children: [
-                            Form(
+                content: StatefulBuilder(
+                    builder: (BuildContext context, StateSetter setState) {
+                  return SizedBox(
+                    height: 450,
+                    width: 300,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.max,
+                      children: [
+                        Visibility(
+                          visible: isChangeGroup,
+                          child: Expanded(
+                            child: Form(
                               key: _groupNameFormKey,
-                              child: TextFormField(
-                                controller: _groupNameController,
-                                decoration: const InputDecoration(
-                                  hintText: 'Group name',
-                                ),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Group name must not be empty';
-                                  }
-                                  return null;
-                                },
+                              child: Row(
+                                mainAxisSize: MainAxisSize.max,
+                                children: [
+                                  Expanded(
+                                      child: TextFormField(
+                                    controller: _groupNameController,
+                                    decoration: const InputDecoration(
+                                      hintText: 'Group name',
+                                    ),
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Group name must not be empty';
+                                      }
+                                      return null;
+                                    },
+                                  )),
+                                  IconButton(
+                                    icon: const Icon(Icons.check),
+                                    onPressed: () {
+                                      if (_groupNameFormKey.currentState!
+                                          .validate()) {
+                                        setState(() {
+                                          group = Group(
+                                            groupId: group.groupId,
+                                            name: _groupNameController.text,
+                                            uid: group.uid,
+                                            members: group.members,
+                                          );
+                                          _errorController.text = '';
+                                          isChangeGroup = false;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                  IconButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          _errorController.text = '';
+                                          isChangeGroup = false;
+                                        });
+                                      },
+                                      icon: const Icon(Icons.close)),
+                                ],
                               ),
                             ),
-                            IconButton(
-                              icon: Icon(Icons.check),
-                              onPressed: () {
-                                if (_groupNameFormKey.currentState!
-                                    .validate()) {
-                                  group = Group(
-                                    groupId: group.groupId,
-                                    name: _groupNameController.text,
-                                    uid: group.uid,
-                                    members: group.members,
-                                  );
-                                  error = '';
-                                  isChangeGroup = false;
-                                }
-                              },
-                            ),
-                            IconButton(
-                                onPressed: () {
-                                  error = '';
-                                  isChangeGroup = false;
-                                },
-                                icon: Icon(Icons.close))
-                          ],
+                          ),
                         ),
-                      ),
-                      Visibility(
-                        visible: !isChangeGroup,
-                        child: Row(children: [
-                          Text(group.name),
-                          IconButton(
-                              onPressed: () {
-                                isChangeGroup = true;
-                              },
-                              icon: const Icon(Icons.edit)),
-                          TextButton(
-                            onPressed: () {
-                              widget.deleteGroup(group.groupId);
-                            },
-                            child: const Text('Delete group'),
-                          )
-                        ]),
-                      ),
-                      const Text('Members: '),
-                      SizedBox(
-                        height: 100,
-                        child: members.isEmpty
-                            ? const Center(
-                                child: Text(
-                                    'Your group has no members yet. Add a friend.'),
-                              )
-                            : ListView.builder(
-                                scrollDirection: Axis.vertical,
-                                shrinkWrap: true,
-                                itemCount: members.length,
-                                itemBuilder: (context, index) {
-                                  ListTile(
-                                    leading: CircleAvi(
-                                      imageSrc: NetworkImage(
-                                        members[index].photoUrl,
-                                      ),
-                                      size: 40,
-                                    ),
-                                    title: Text(members[index].username),
-                                    trailing: IconButton(
-                                      icon: Icon(Icons.close),
-                                      onPressed: () {
-                                        group.members
-                                            .remove(members[index].uid);
-                                        members.remove(members[index]);
-                                      },
-                                    ),
-                                  );
-                                },
-                              ),
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      const Text('Add Friends:'),
-                      SizedBox(
-                        height: 100,
-                        child: friendsNotInGroup.isEmpty
-                            ? const Center(
-                                child: Text(
-                                    "You've added all your friends to this grouo."),
-                              )
-                            : ListView.builder(
-                                scrollDirection: Axis.vertical,
-                                shrinkWrap: true,
-                                itemCount: friendsNotInGroup.length,
-                                itemBuilder: (context, index) {
-                                  ListTile(
-                                    leading: CircleAvi(
-                                      imageSrc: NetworkImage(
-                                        friendsNotInGroup[index].photoUrl,
-                                      ),
-                                      size: 40,
-                                    ),
-                                    title:
-                                        Text(friendsNotInGroup[index].username),
-                                    trailing: IconButton(
-                                      icon: Icon(Icons.add),
-                                      onPressed: () {
-                                        group.members
-                                            .add(friendsNotInGroup[index].uid);
-                                        members.add(friendsNotInGroup[index]);
-                                        friendsNotInGroup.removeAt(index);
-                                      },
-                                    ),
-                                  );
-                                },
-                              ),
-                      ),
-                      SizedBox(
-                        height: 30,
-                        child: Text(error),
-                      ),
-                    ],
-                  ),
-                ),
+                        Visibility(
+                          visible: !isChangeGroup,
+                          child: Expanded(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.max,
+                              children: [
+                                Expanded(child: Text(group.name)),
+                                IconButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        isChangeGroup = true;
+                                      });
+                                    },
+                                    icon: const Icon(Icons.edit)),
+                                Visibility(
+                                  visible: !isNewGroup,
+                                  child: TextButton(
+                                    onPressed: () {
+                                      widget.deleteGroup(group.groupId);
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('Delete group'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 20,
+                          width: 300,
+                        ),
+                        const Text(
+                          'Members: ',
+                          style: kH3SourceSansTextStyle,
+                        ),
+                        const SizedBox(
+                          height: 10,
+                          width: 300,
+                        ),
+                        Expanded(
+                          flex: 4,
+                          child: members.isEmpty
+                              ? const Center(
+                                  child: Text(
+                                      'Your group has no members yet. Add a friend.'),
+                                )
+                              : UserListTiles(
+                                  users: members,
+                                  icon: Icons.close,
+                                  onPressed: (user) {
+                                    setState(() {
+                                      group.members.remove(user.uid);
+                                      members.remove(user);
+                                      friendsNotInGroup.add(user);
+                                      print(
+                                          'Members length: ${members.length}');
+                                    });
+                                  }),
+                        ),
+                        const SizedBox(
+                          height: 10,
+                          width: 300,
+                        ),
+                        const Text('Add Friends:',
+                            style: kH3SourceSansTextStyle),
+                        const SizedBox(
+                          height: 10,
+                          width: 300,
+                        ),
+                        Expanded(
+                          flex: 4,
+                          child: friendsNotInGroup.isEmpty
+                              ? const Center(
+                                  child: Text(
+                                      "You've added all your friends to this group."),
+                                )
+                              : UserListTiles(
+                                  users: friendsNotInGroup,
+                                  icon: Icons.add,
+                                  onPressed: (user) {
+                                    setState(() {
+                                      group.members.add(user.uid);
+                                      members.add(user);
+                                      friendsNotInGroup.remove(user);
+                                      print(
+                                          'Members length: ${members.length}');
+                                    });
+                                  }),
+                        ),
+                        SizedBox(
+                          height: 20,
+                          width: 300,
+                          child: TextField(
+                            style: TextStyle(color: Colors.red.shade700),
+                            controller: _errorController,
+                            readOnly: true,
+                            enabled: false,
+                            decoration: const InputDecoration(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
                 actions: <Widget>[
                   TextButton(
                     child: const Text('Cancel'),
@@ -221,11 +247,22 @@ class _GroupsViewerState extends State<GroupsViewer> {
                     child: const Text('Done'),
                     onPressed: () {
                       if (group.members.isEmpty) {
-                        error = 'Group must have at least one member.';
+                        setState(() {
+                          _errorController.text =
+                              'Group must have at least one member.';
+                        });
                       } else if (group.name.isEmpty) {
-                        error = 'Group name must not be empty';
+                        setState(() {
+                          _errorController.text =
+                              'Group name must not be empty';
+                        });
                       } else {
-                        widget.addGroup(group);
+                        if (isNewGroup) {
+                          widget.addGroup(group);
+                        } else {
+                          widget.updateGroup(group);
+                        }
+
                         _groupNameController.clear();
                         Navigator.of(context).pop();
                       }
@@ -244,7 +281,10 @@ class _GroupsViewerState extends State<GroupsViewer> {
         backgroundColor: kPastelBlue,
         child: Column(children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Text('Groups (${widget.groups.length})', style: kH3TextStyle,),
+            Text(
+              'Groups (${widget.groups.length})',
+              style: kH3RobotoTextStyle,
+            ),
             IconButton(
               icon: const Icon(Icons.add),
               onPressed: () {
@@ -258,10 +298,19 @@ class _GroupsViewerState extends State<GroupsViewer> {
                   shrinkWrap: true,
                   itemCount: widget.groups.length,
                   itemBuilder: (context, index) {
-                    InkWell(child: ListTile(title: Text(widget.groups.keys.elementAt(index).name),),
-                    onTap: () {viewGroupWidget(widget.groups.keys.elementAt(index), widget.groups[index]!, false);},);
+                    return InkWell(
+                      child: ListTile(
+                        title: Text(widget.groups.keys.elementAt(index).name),
+                      ),
+                      onTap: () {
+                        viewGroupWidget(widget.groups.keys.elementAt(index),
+                            widget.groups.values.elementAt(index), false);
+                      },
+                    );
                   })
-              : const Expanded(child: Center(child: Text('You have no groups yet. Add one. '))),
+              : const Expanded(
+                  child:
+                      Center(child: Text('You have no groups yet. Add one. '))),
         ]));
   }
 }

@@ -6,8 +6,8 @@ import 'package:wya_final/app_state.dart';
 import 'package:wya_final/src/events_previewer.dart';
 import 'package:wya_final/src/widgets.dart';
 
-import '../calendar.dart';
-import '../date_selector.dart';
+import 'calendar.dart';
+import 'date_selector.dart';
 
 class EventsPage extends StatefulWidget {
   const EventsPage({
@@ -31,7 +31,7 @@ class _EventsPageState extends State<EventsPage> {
             builder: (context, appState, _)
             => SizedBox(height:350, width: 300,
                 child: Calendar(
-                    events: appState.sharedEvents.map((e) => e.event).toList(),
+                    events: appState.selectedEvents,
                     selectedDay: appState.selectedDay,
                     onSelectDay: (selectedDay) => appState.selectedDay = selectedDay,
                     monthView: true)),),
