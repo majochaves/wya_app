@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:wya_final/src/utils/constants.dart';
 import '../event.dart';
 import 'widgets.dart';
 
 
 class EventsPreviewer extends StatelessWidget {
+  final Function setSelectedEvent;
   final List<Event> events;
 
-  EventsPreviewer({Key? key, required this.events}) : super(key: key);
+  EventsPreviewer({Key? key, required this.events, required this.setSelectedEvent}) : super(key: key);
 
   final List<List<Color>> colorCombos = [[kPastelBlue, kDeepBlue], [kPastelOrangeYellow, kOrange], [kPastelGreen, kGreen],
     [kPastelPink, kHotPink], [kPastelPurple, kPurple]];
@@ -20,13 +22,10 @@ class EventsPreviewer extends StatelessWidget {
         index = 0;
       }
       EventCard eventCard = EventCard(
-        eventId: event.eventId,
-        startTime: event.startsAt,
-        endTime: event.endsAt,
+        setSelectedEvent: setSelectedEvent,
+        event: event,
         cardColor: colorCombos[index][0],
         iconColor: colorCombos[index][1],
-        eventTitle: 'Hang out',
-        eventDescription: event.description,
       );
       eventCards.add(eventCard);
       index++;
@@ -60,7 +59,7 @@ class EventsPreviewer extends StatelessWidget {
                 children: <Widget> [
                   const Text("You have no events on this day. ",
                     textAlign: TextAlign.center, style: kBodyTextStyle,),
-                  TextButton(onPressed: (){}, child: const Text(
+                  TextButton(onPressed: (){context.go('/newEvent');}, child: const Text(
                       'Add one', style: kBodyTextStyle
                   ))
                 ],

@@ -8,11 +8,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_cupertino_date_picker_fork/flutter_cupertino_date_picker_fork.dart';
 import 'package:go_router/go_router.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:wya_final/event_category.dart';
 import 'package:wya_final/src/utils/constants.dart';
 import 'package:wya_final/src/utils/string_formatter.dart';
 
+import 'package:wya_final/event.dart';
 import '../group.dart';
+import '../shared_event.dart';
 import '../user_data.dart';
+import 'package:wya_final/match.dart' as model;
 
 class Header extends StatelessWidget {
   const Header(this.heading, {super.key});
@@ -258,13 +262,11 @@ class CircleAvi extends StatelessWidget {
 
 class MatchCard extends StatelessWidget {
 
-  final ImageProvider userPicture;
-  final DateTime time;
-  final String userName;
+  final model.Match match;
   final Color cardColor;
   final Color iconColor;
 
-  const MatchCard({Key? key, required this.userPicture, required this.time, required this.userName, required this.cardColor, required this.iconColor}) : super(key: key);
+  const MatchCard({Key? key, required this.cardColor, required this.iconColor, required this.match}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -276,13 +278,12 @@ class MatchCard extends StatelessWidget {
         child: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
+
               children: [
-                ListTile(
-                  leading: CircleAvi(imageSrc: userPicture, size: 40),
-                  title: Text(StringFormatter.getTimeString(time), style: kMatchCardTextStyle,),
-                  subtitle: Text(userName, style: kMatchCardTextStyle,),
-                ),
-                Icon(Icons.send, color: iconColor,)
+                Expanded(child: CircleAvi(imageSrc: NetworkImage(match.friendEvent.user.photoUrl), size: 40),),
+                Expanded(child: Text(match.friendEvent.user.name)),
+                Expanded(child: Text('${StringFormatter.getTimeString(match.friendEvent.event.startsAt)}-'
+                    '${StringFormatter.getTimeString(match.friendEvent.event.endsAt)}')),
               ],
             )
         ),
@@ -293,49 +294,53 @@ class MatchCard extends StatelessWidget {
 
 class SharedEventCard extends StatelessWidget {
 
-  final ImageProvider userPicture;
-  final DateTime time;
-  final String eventTitle;
-  final String eventDescription;
-  final String userName;
+  final SharedEvent sharedEvent;
   final Color cardColor;
   final Color iconColor;
+  final Function setSelectedSharedEvent;
 
-  const SharedEventCard({Key? key, required this.userPicture, required this.time, required this.userName, required this.cardColor, required this.iconColor, required this.eventTitle, required this.eventDescription}) : super(key: key);
+  SharedEventCard({Key? key, required this.cardColor, required this.iconColor, required this.sharedEvent, required this.setSelectedSharedEvent, }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: cardColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(40), // if you need this
-        side: BorderSide(
-          color: iconColor,
-          width: 1,
+    return InkWell(
+      onTap: (){
+        setSelectedSharedEvent(sharedEvent);
+        context.go('/viewSharedEvent');
+      },
+      child: Card(
+        color: cardColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(40), // if you need this
+          side: BorderSide(
+            color: iconColor,
+            width: 1,
+          ),
         ),
-      ),
-      child: SizedBox(
-        width: 150,
-        height: 100,
-        child: Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(child: Center(child: Text(StringFormatter.getTimeString(time), style: kSubtitleTextStyle,),)),
-                Expanded(
-                  flex: 3,
-                  child: ListTile(
-                    title: Text(eventTitle, style: kMatchCardTextStyle,),
-                    subtitle: Text(eventDescription, style: kMatchCardTextStyle,),
+        child: SizedBox(
+          width: 150,
+          height: 100,
+          child: Center(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+
+                  Expanded(child: Center(child: Text(StringFormatter.getTimeString(sharedEvent.event.startsAt), style: kSubtitleTextStyle,),)),
+                  Expanded(
+                    flex: 2,
+                    child: ListTile(
+                      title: Text(EventCategory.getCategoryById(sharedEvent.event.category).name, style: kMatchCardTextStyle,),
+                      subtitle: Text(sharedEvent.event.description, style: kMatchCardTextStyle,),
+                    ),
                   ),
-                ),
-                Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  CircleAvi(imageSrc: userPicture, size: 40),
-                  Text(userName),
-                ],))
-              ],
-            )
+                  Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    CircleAvi(imageSrc: NetworkImage(sharedEvent.user.photoUrl), size: 40),
+                    Text(sharedEvent.user.name),
+                  ],))
+                ],
+              )
+          ),
         ),
       ),
     );
@@ -343,20 +348,20 @@ class SharedEventCard extends StatelessWidget {
 }
 
 class EventCard extends StatelessWidget {
-  final DateTime startTime;
-  final DateTime endTime;
-  final String eventId;
-  final String eventTitle;
-  final String eventDescription;
+  final Event event;
+  final Function setSelectedEvent;
   final Color cardColor;
   final Color iconColor;
 
-  const EventCard({Key? key, required this.cardColor, required this.iconColor, required this.eventTitle, required this.eventDescription, required this.startTime, required this.endTime, required this.eventId}) : super(key: key);
+  const EventCard({Key? key, required this.cardColor, required this.iconColor, required this.event, required this.setSelectedEvent, }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: (){context.go('/viewEvent:${eventId}');},
+      onTap: (){
+        setSelectedEvent(event);
+        context.go('/viewEvent');
+        },
       child: Card(
         color: cardColor,
         shape: RoundedRectangleBorder(
@@ -375,12 +380,12 @@ class EventCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   SizedBox(height: 70, width: 5, child: Container(color: iconColor),),
-                  Expanded(child: Center(child: Text('${StringFormatter.getTimeString(startTime)}-\n${StringFormatter.getTimeString(endTime)}', style: kSubtitleTextStyle,),)),
+                  Expanded(child: Center(child: Text('${StringFormatter.getTimeString(event.startsAt)}-\n${StringFormatter.getTimeString(event.endsAt)}', style: kSubtitleTextStyle,),)),
                   Expanded(
                     flex: 2,
                     child: ListTile(
-                      title: Text(eventTitle, style: kMatchCardTextStyle,),
-                      subtitle: Text(eventDescription, style: kMatchCardTextStyle,),
+                      title: Text(EventCategory.getCategoryById(event.category).name, style: kMatchCardTextStyle,),
+                      subtitle: Text(event.description, style: kMatchCardTextStyle,),
                     ),
                   ),
                 ],
@@ -723,31 +728,19 @@ class TitleDescriptionColumn extends StatelessWidget {
   }
 }
 
-class DatetimePicker extends StatefulWidget {
+class DateChooser extends StatelessWidget {
   final DateTime minDate;
   final DateTime maxDate;
   final DateTime initDate;
-  final Function toggleChangeDatetime;
-  final bool time;
+  final Function toggleChangeDate;
 
-  DatetimePicker({super.key, required this.initDate, required this.time, required this.toggleChangeDatetime, required this.minDate, required this.maxDate,});
+  DateChooser({super.key, required this.initDate, required this.toggleChangeDate, required this.minDate, required this.maxDate,});
 
-  @override
-  State<DatetimePicker> createState() => _DatetimePickerState();
-}
 
-class _DatetimePickerState extends State<DatetimePicker> {
   final DateTimePickerLocale _locale = DateTimePickerLocale.en_us;
 
   final String _dateFormat = 'dd/MM/yyyy';
 
-  final String _timeFormat = 'HH:mm';
-
-
-  @override
-  void initState() {
-    super.initState();
-  }
   String _toDoubleDigits(int number){
     if(number > 9){
       return number.toString();
@@ -764,30 +757,60 @@ class _DatetimePickerState extends State<DatetimePicker> {
         showTitle: true,
         confirm: Text('Done', style: TextStyle(color: Colors.blue)),
       ),
-      minDateTime: widget.minDate,
-      maxDateTime: widget.maxDate,
-      initialDateTime: widget.initDate,
+      minDateTime: minDate,
+      maxDateTime: maxDate,
+      initialDateTime: initDate,
       dateFormat: _dateFormat,
       locale: _locale,
       onClose: () {},
       onCancel: () {},
       onChange: (dt, List<int> index) {
-        widget.toggleChangeDatetime(dt);
+        toggleChangeDate(dt);
       },
       onConfirm: (dt, List<int> index) {
-        widget.toggleChangeDatetime(dt);
+        toggleChangeDate(dt);
       },
     );
   }
 
   ///Datetime
 
+
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {_showDatePicker(context);},
+      child: Text('${_toDoubleDigits(initDate.day)}/${_toDoubleDigits(initDate.month)}/${_toDoubleDigits(initDate.year)}'),
+      //trailing: widget.time ? const Icon(Icons.access_time, size: 0,) : const Icon(Icons.calendar_month)
+    );
+  }
+}
+
+class TimeChooser extends StatelessWidget {
+  final DateTime minDate;
+  final DateTime maxDate;
+  final DateTime initDate;
+  final Function toggleChangeTime;
+  const TimeChooser({Key? key, required this.initDate, required this.toggleChangeTime, required this.minDate, required this.maxDate}) : super(key: key);
+
+  final String _timeFormat = 'HH:mm';
+
+
+  String _toDoubleDigits(int number){
+    if(number > 9){
+      return number.toString();
+    }else{
+      return '0$number';
+    }
+  }
+
   void _showTimePicker(BuildContext context) {
     DatePicker.showDatePicker(
       context,
-      minDateTime: widget.minDate,
-      maxDateTime: widget.maxDate,
-      initialDateTime: widget.initDate,
+      minDateTime: minDate,
+      maxDateTime: maxDate,
+      initialDateTime: initDate,
       dateFormat: _timeFormat,
       pickerMode: DateTimePickerMode.time, // show TimePicker
       pickerTheme: DateTimePickerTheme(
@@ -807,10 +830,10 @@ class _DatetimePickerState extends State<DatetimePicker> {
         debugPrint('onCancel');
       },
       onChange: (dt, List<int> index) {
-        widget.toggleChangeDatetime(dt);
+        toggleChangeTime(dt);
       },
       onConfirm: (dt, List<int> index) {
-        widget.toggleChangeDatetime(dt);
+        toggleChangeTime(dt);
       },
     );
   }
@@ -818,14 +841,12 @@ class _DatetimePickerState extends State<DatetimePicker> {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () {widget.time ? _showTimePicker(context) : _showDatePicker(context);},
-      child: widget.time
-          ? Text('${_toDoubleDigits(widget.initDate.hour)}:${_toDoubleDigits(widget.initDate.minute)}')
-          : Text('${_toDoubleDigits(widget.initDate.day)}/${_toDoubleDigits(widget.initDate.month)}/${_toDoubleDigits(widget.initDate.year)}'),
-      //trailing: widget.time ? const Icon(Icons.access_time, size: 0,) : const Icon(Icons.calendar_month)
+      onTap: () {_showTimePicker(context);},
+      child: Text('${_toDoubleDigits(initDate.hour)}:${_toDoubleDigits(initDate.minute)}')
     );
   }
 }
+
 
 /// Icons
 class CircleIcon extends StatelessWidget {

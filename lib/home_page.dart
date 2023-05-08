@@ -2,8 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:firebase_auth/firebase_auth.dart'
-    hide EmailAuthProvider, PhoneAuthProvider;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:wya_final/src/calendar.dart';
@@ -12,7 +10,6 @@ import 'package:wya_final/src/shared_event_previewer.dart';
 import 'package:wya_final/welcome_page.dart';
 
 import 'app_state.dart';
-import 'src/authentication.dart';
 import 'src/widgets.dart';
 import 'src/date_selector.dart';
 
@@ -45,7 +42,7 @@ class _HomePageState extends State<HomePage> {
               builder: (context, appState, _)
                 => SizedBox(height:350, width: 300,
                     child: Calendar(
-                      events: appState.sharedEvents.map((e) => e.event).toList(),
+                      events: appState.selectedSharedEvents.map((e) => e.event).toList(),
                       selectedDay: appState.selectedDay,
                       onSelectDay: (selectedDay) => appState.selectedDay = selectedDay,
                       monthView: true)),),
@@ -68,6 +65,10 @@ class _HomePageState extends State<HomePage> {
         builder: (context, appState, _) => appState.loggedIn ? Scaffold(
         appBar: AppBar(
           title: const Text('WYA'),
+          actions: [
+            IconButton(icon: const Icon(Icons.notification_important_outlined), onPressed: (){},),
+            IconButton(icon: const Icon(Icons.send), onPressed: (){},)
+          ],
         ),
         body: SafeArea(
           child: Padding(
@@ -77,9 +78,9 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(height: 8),
                 Expanded(child: DateSelector(selectedDay: appState.selectedDay, toggleCalendar: toggleCalendar)),
                 const SizedBox(height: 10),
-                Expanded(flex: 3, child: MatchPreviewer(matches: appState.matches)),
+                Expanded(flex: 3, child: MatchPreviewer(matches: appState.selectedMatches)),
                 const SizedBox(height: 10),
-                Expanded(flex: 5, child: SharedEventPreviewer(sharedEvents: appState.sharedEvents)),
+                Expanded(flex: 5, child: SharedEventPreviewer(sharedEvents: appState.selectedSharedEvents, setSelectedSharedEvent: (sharedEvent) => appState.selectedSharedEvent = sharedEvent,)),
               ],
             ),
           ),

@@ -1,30 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_maps_place_picker_mb/google_maps_place_picker.dart';
+import 'package:google_maps_webservice/directions.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:google_maps_place_picker_mb/google_maps_place_picker.dart';
-
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:wya_final/src/utils/constants.dart';
 import 'package:wya_final/src/widgets.dart';
-
 import '../app_state.dart';
 import '../event_category.dart';
 import '../group.dart';
 import '../user_data.dart';
+import 'package:wya_final/location.dart' as model;
 import 'location_provider.dart';
 import 'package:wya_final/event.dart';
 
-class EventCreator extends StatefulWidget {
-  const EventCreator({
-    Key? key,
-  }) : super(key: key);
+class EventEditor extends StatefulWidget {
+  const EventEditor({Key? key}) : super(key: key);
 
   @override
-  State<EventCreator> createState() => _EventCreatorState();
+  State<EventEditor> createState() => _EventEditorState();
 }
 
-class _EventCreatorState extends State<EventCreator> {
+class _EventEditorState extends State<EventEditor> {
   final _eventFormKey = GlobalKey<FormState>(debugLabel: '_NewEventStateForm');
 
   final TextEditingController _locationController = TextEditingController();
@@ -34,7 +32,22 @@ class _EventCreatorState extends State<EventCreator> {
   late LocationProvider locationProvider;
   PickResult? locationResult;
 
-  Event event = Event.emptyEvent('', DateTime.now(), DateTime.now());
+  bool isLoading = true;
+
+  Event? event;
+  int category = 0;
+  DateTime startsAt = DateTime.now();
+  DateTime endsAt = DateTime.now();
+  bool isOpen = false;
+  bool isPublic = true;
+  bool addMembers = false;
+  model.Location? location;
+
+  DateTime eventDate = DateTime.now();
+
+  DateTime startTime = DateTime.now();
+
+  DateTime endTime = DateTime.now();
 
   List<UserData> friends = [];
   Map<Group, List<UserData>> groups = {};
@@ -44,30 +57,56 @@ class _EventCreatorState extends State<EventCreator> {
   List<UserData> sharedWith = [];
   Map<Group, List<UserData>> eventGroups = {};
 
-  bool addMembers = false;
-
-  DateTime eventDate = DateTime.now();
-
-  DateTime startTime = DateTime.now();
-
-  DateTime endTime = DateTime.now();
-
   @override
   void initState() {
     super.initState();
+    getData();
+  }
 
+  void getData() async{
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final appState = Provider.of<ApplicationState>(context, listen: false);
-      friends = appState.friends;
-      groups = appState.groups;
-
-      eventParticipants = List.from(appState.friends);
-      eventParticipants
-          .removeWhere((element) => !event.participants.contains(element.uid));
-
-      event = Event.emptyEvent(
-          appState.userData.uid, appState.selectedDay, appState.endDay);
+      event = appState.selectedEvent;
+      location = await appState.getLocationById(event!.locationId);
       locationProvider = await appState.location;
+      setState(() {
+        event = appState.selectedEvent;
+
+        friends = appState.friends;
+        groups = appState.groups;
+
+        category = event!.category;
+        startsAt = event!.startsAt;
+        eventDate = event!.startsAt;
+        startTime = event!.startsAt;
+        endTime = event!.endsAt;
+        endsAt = event!.endsAt;
+        isOpen = event!.isOpen;
+        event!.sharedWithAll;
+        addMembers = event!.participants != 0;
+
+        _descriptionController.text = event!.description;
+        _locationController.text = location!.formattedAddress!;
+
+        sharedWith = List.from(appState.friends);
+        sharedWith.removeWhere((element) => !event!.sharedWith.contains(element.uid));
+
+        eventParticipants = List.from(appState.friends);
+        eventParticipants
+            .removeWhere((element) => !event!.participants.contains(element.uid));
+
+        eventGroups = Map.from(groups);
+        for(MapEntry group in eventGroups.entries){
+          if(event!.groups.contains(group.key.groupId)){
+            eventGroups.remove(group.key);
+          }
+        }
+
+        locationResult = PickResult(formattedAddress: location!.formattedAddress, geometry: Geometry(
+          location: Location(lat: location!.latitude, lng: location!.longitude),
+        ));
+        isLoading = false;
+      });
     });
   }
 
@@ -80,7 +119,7 @@ class _EventCreatorState extends State<EventCreator> {
         if (typeIndex == 0) {
           selectedCategory = 0;
         } else if (typeIndex == 1) {
-          if (event.category == 0) {
+          if (event!.category == 0) {
             selectedCategory = 1;
           }
         } else {
@@ -88,20 +127,20 @@ class _EventCreatorState extends State<EventCreator> {
         }
 
         event = Event(
-            description: event.description,
-            uid: event.uid,
-            eventId: event.eventId,
-            datePublished: event.datePublished,
-            startsAt: event.startsAt,
-            endsAt: event.endsAt,
-            participants: event.participants,
-            locationId: event.locationId,
-            sharedWithAll: event.sharedWithAll,
-            isOpen: event.isOpen,
-            groups: event.groups,
+            description: event!.description,
+            uid: event!.uid,
+            eventId: event!.eventId,
+            datePublished: event!.datePublished,
+            startsAt: event!.startsAt,
+            endsAt: event!.endsAt,
+            participants: event!.participants,
+            locationId: event!.locationId,
+            sharedWithAll: event!.sharedWithAll,
+            isOpen: event!.isOpen,
+            groups: event!.groups,
             category: selectedCategory,
-            sharedWith: event.sharedWith,
-            requests: event.requests
+            sharedWith: event!.sharedWith,
+            requests: event!.requests
         );
       }
     });
@@ -110,20 +149,20 @@ class _EventCreatorState extends State<EventCreator> {
   selectIsOpen(bool isOpen) {
     setState(() {
       event = Event(
-          description: event.description,
-          uid: event.uid,
-          eventId: event.eventId,
-          datePublished: event.datePublished,
-          startsAt: event.startsAt,
-          endsAt: event.endsAt,
-          participants: event.participants,
-          locationId: event.locationId,
-          sharedWithAll: event.sharedWithAll,
-          isOpen: isOpen,
-          groups: event.groups,
-          category: event.category,
-          sharedWith: event.sharedWith,
-          requests: event.requests,
+        description: event!.description,
+        uid: event!.uid,
+        eventId: event!.eventId,
+        datePublished: event!.datePublished,
+        startsAt: event!.startsAt,
+        endsAt: event!.endsAt,
+        participants: event!.participants,
+        locationId: event!.locationId,
+        sharedWithAll: event!.sharedWithAll,
+        isOpen: isOpen,
+        groups: event!.groups,
+        category: event!.category,
+        sharedWith: event!.sharedWith,
+        requests: event!.requests,
       );
     });
   }
@@ -137,20 +176,20 @@ class _EventCreatorState extends State<EventCreator> {
   selectIsSharedWithAll(bool isSharedWithAll) {
     setState(() {
       event = Event(
-          description: event.description,
-          uid: event.uid,
-          eventId: event.eventId,
-          datePublished: event.datePublished,
-          startsAt: event.startsAt,
-          endsAt: event.endsAt,
-          participants: event.participants,
-          locationId: event.locationId,
-          sharedWithAll: isSharedWithAll,
-          isOpen: event.isOpen,
-          groups: event.groups,
-          category: event.category,
-          sharedWith: event.sharedWith,
-          requests: event.requests,
+        description: event!.description,
+        uid: event!.uid,
+        eventId: event!.eventId,
+        datePublished: event!.datePublished,
+        startsAt: event!.startsAt,
+        endsAt: event!.endsAt,
+        participants: event!.participants,
+        locationId: event!.locationId,
+        sharedWithAll: isSharedWithAll,
+        isOpen: event!.isOpen,
+        groups: event!.groups,
+        category: event!.category,
+        sharedWith: event!.sharedWith,
+        requests: event!.requests,
       );
     });
   }
@@ -192,7 +231,7 @@ class _EventCreatorState extends State<EventCreator> {
   Future<void> _showAddMembersWindow() async {
     List<UserData> friendsNotAdded = List.from(friends);
     friendsNotAdded
-        .removeWhere((element) => event.participants.contains(element.uid));
+        .removeWhere((element) => event!.participants.contains(element.uid));
 
     return showDialog<void>(
       context: context,
@@ -200,98 +239,98 @@ class _EventCreatorState extends State<EventCreator> {
       builder: (BuildContext context) {
         return friends.isEmpty
             ? AlertDialog(
-                content: const SizedBox(
-                  height: 100,
-                  width: 300,
-                  child: Center(
-                    child: Text(
-                        'You have no friends. Add friends first to add members to your event.'),
-                  ),
-                ),
-                actions: <Widget>[
-                  TextButton(
-                    child: const Text('Done'),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ],
-              )
+          content: const SizedBox(
+            height: 100,
+            width: 300,
+            child: Center(
+              child: Text(
+                  'You have no friends. Add friends first to add members to your event.'),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Done'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        )
             : AlertDialog(
-                title: const Text('Group members: '),
-                content: StatefulBuilder(
-                    builder: (BuildContext context, StateSetter setState) {
-                  return SizedBox(
-                    height: 350,
-                    width: 300,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.max,
-                      children: [
-                        const Text(
-                          'Members: ',
-                          style: kH4SourceSansTextStyle,
-                        ),
-                        Expanded(
-                          flex: 4,
-                          child: eventParticipants.isEmpty
-                              ? const Center(
-                                  child: Text(
-                                      'Your event has no members yet. Add a friend.'),
-                                )
-                              : UserListTiles(
-                                  users: eventParticipants,
-                                  icon: Icons.close,
-                                  onPressed: (user) {
-                                    setState(() {
-                                      event.participants.remove(user.uid);
-                                      eventParticipants.remove(user);
-                                      friendsNotAdded.add(user);
-                                    });
-                                  }),
-                        ),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        const Text('Add Friends:',
-                            style: kH4SourceSansTextStyle),
-                        Expanded(
-                          flex: 4,
-                          child: friendsNotAdded.isEmpty
-                              ? const Center(
-                                  child: Text(
-                                      "You've added all your friends to this event."),
-                                )
-                              : UserListTiles(
-                                  users: friendsNotAdded,
-                                  icon: Icons.add,
-                                  onPressed: (user) {
-                                    setState(() {
-                                      event.participants.add(user.uid);
-                                      eventParticipants.add(user);
-                                      friendsNotAdded.remove(user);
-                                    });
-                                  }),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-                actions: <Widget>[
-                  TextButton(
-                    child: const Text('Cancel'),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
+          title: const Text('Group members: '),
+          content: StatefulBuilder(
+              builder: (BuildContext context, StateSetter setState) {
+                return SizedBox(
+                  height: 350,
+                  width: 300,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      const Text(
+                        'Members: ',
+                        style: kH4SourceSansTextStyle,
+                      ),
+                      Expanded(
+                        flex: 4,
+                        child: eventParticipants.isEmpty
+                            ? const Center(
+                          child: Text(
+                              'Your event has no members yet. Add a friend.'),
+                        )
+                            : UserListTiles(
+                            users: eventParticipants,
+                            icon: Icons.close,
+                            onPressed: (user) {
+                              setState(() {
+                                event!.participants.remove(user.uid);
+                                eventParticipants.remove(user);
+                                friendsNotAdded.add(user);
+                              });
+                            }),
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      const Text('Add Friends:',
+                          style: kH4SourceSansTextStyle),
+                      Expanded(
+                        flex: 4,
+                        child: friendsNotAdded.isEmpty
+                            ? const Center(
+                          child: Text(
+                              "You've added all your friends to this event."),
+                        )
+                            : UserListTiles(
+                            users: friendsNotAdded,
+                            icon: Icons.add,
+                            onPressed: (user) {
+                              setState(() {
+                                event!.participants.add(user.uid);
+                                eventParticipants.add(user);
+                                friendsNotAdded.remove(user);
+                              });
+                            }),
+                      ),
+                    ],
                   ),
-                  TextButton(
-                    child: const Text('Done'),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ],
-              );
+                );
+              }),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Done'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
       },
     );
   }
@@ -299,10 +338,10 @@ class _EventCreatorState extends State<EventCreator> {
   Future<void> _showShareWithWindow() async {
     Map<Group, List<UserData>> groupsNotAdded = Map.from(groups);
     groupsNotAdded
-        .removeWhere((key, value) => event.groups.contains(key.groupId));
+        .removeWhere((key, value) => event!.groups.contains(key.groupId));
     List<UserData> friendsNotAdded = List.from(friends);
     friendsNotAdded
-        .removeWhere((element) => event.sharedWith.contains(element.uid));
+        .removeWhere((element) => event!.sharedWith.contains(element.uid));
 
     return showDialog<void>(
       context: context,
@@ -310,212 +349,212 @@ class _EventCreatorState extends State<EventCreator> {
       builder: (BuildContext context) {
         return friends.isEmpty
             ? AlertDialog(
-                content: const SizedBox(
-                  height: 100,
-                  width: 300,
-                  child: Center(
-                    child: Text(
-                        'You have no friends. Add friends first to share your event.'),
-                  ),
-                ),
-                actions: <Widget>[
-                  TextButton(
-                    child: const Text('Done'),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ],
-              )
+          content: const SizedBox(
+            height: 100,
+            width: 300,
+            child: Center(
+              child: Text(
+                  'You have no friends. Add friends first to share your event.'),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Done'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        )
             : AlertDialog(
-                title: const Text('Share with: '),
-                content: StatefulBuilder(
-                    builder: (BuildContext context, StateSetter setState) {
-                  return SizedBox(
-                    height: 450,
-                    width: 300,
-                    child: Column(
-                      children: [
-                        Expanded(
-                            flex: 4,
-                            child:
-                                Row(mainAxisSize: MainAxisSize.max, children: [
-                              Visibility(
-                                visible: groups.isNotEmpty,
-                                child: Expanded(
-                                  child: Column(
-                                    children: [
-                                      const Expanded(
-                                          child: Text(
-                                        'Groups shared with: ',
-                                        style: kH4SourceSansTextStyle,
-                                        textAlign: TextAlign.center,
-                                      )),
-                                      Expanded(
-                                        flex: 5,
-                                        child: eventGroups.isEmpty
-                                            ? const Center(
-                                                child: Text(
-                                                    "You haven't added any groups"))
-                                            : GroupListTiles(
-                                                groups: eventGroups,
-                                                icon: Icons.close,
-                                                onPressed: (MapEntry group) {
-                                                  setState(() {
-                                                    eventGroups.removeWhere(
-                                                        (key, value) =>
-                                                            key == group.key);
-                                                    event.groups.remove(
-                                                        group.key.groupId);
-                                                    groupsNotAdded.putIfAbsent(
-                                                        group.key,
-                                                        () => group.value);
-                                                  });
-                                                }),
-                                      )
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              Expanded(
+          title: const Text('Share with: '),
+          content: StatefulBuilder(
+              builder: (BuildContext context, StateSetter setState) {
+                return SizedBox(
+                  height: 450,
+                  width: 300,
+                  child: Column(
+                    children: [
+                      Expanded(
+                          flex: 4,
+                          child:
+                          Row(mainAxisSize: MainAxisSize.max, children: [
+                            Visibility(
+                              visible: groups.isNotEmpty,
+                              child: Expanded(
                                 child: Column(
                                   children: [
                                     const Expanded(
                                         child: Text(
-                                      'Friends shared with: ',
-                                      style: kH4SourceSansTextStyle,
-                                      textAlign: TextAlign.center,
-                                    )),
+                                          'Groups shared with: ',
+                                          style: kH4SourceSansTextStyle,
+                                          textAlign: TextAlign.center,
+                                        )),
                                     Expanded(
                                       flex: 5,
-                                      child: sharedWith.isEmpty
+                                      child: eventGroups.isEmpty
                                           ? const Center(
-                                              child: Text(
-                                                  "You haven't added any friends"))
-                                          : UserListTiles(
-                                              users: sharedWith,
-                                              icon: Icons.close,
-                                              onPressed: (UserData user) {
-                                                setState(() {
-                                                  sharedWith.remove(user);
-                                                  event.sharedWith
-                                                      .remove(user.uid);
-                                                  friendsNotAdded.add(user);
-                                                });
-                                              }),
+                                          child: Text(
+                                              "You haven't added any groups"))
+                                          : GroupListTiles(
+                                          groups: eventGroups,
+                                          icon: Icons.close,
+                                          onPressed: (MapEntry group) {
+                                            setState(() {
+                                              eventGroups.removeWhere(
+                                                      (key, value) =>
+                                                  key == group.key);
+                                              event!.groups.remove(
+                                                  group.key.groupId);
+                                              groupsNotAdded.putIfAbsent(
+                                                  group.key,
+                                                      () => group.value);
+                                            });
+                                          }),
                                     )
                                   ],
                                 ),
                               ),
-                            ])),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        Visibility(
-                            visible: groups.isNotEmpty,
-                            child: const Text('Your groups:',
-                                style: kH4SourceSansTextStyle)),
-                        Visibility(
-                          visible: groups.isNotEmpty,
-                          child: const SizedBox(
-                            height: 10,
-                          ),
-                        ),
-                        Visibility(
-                          visible: groups.isNotEmpty,
-                          child: Expanded(
-                              flex: 2,
-                              child: groupsNotAdded.isEmpty
-                                  ? const Center(
+                            ),
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  const Expanded(
                                       child: Text(
-                                          "You've added all your groups to this event."),
-                                    )
-                                  : GroupListTiles(
-                                      groups: groupsNotAdded,
-                                      icon: Icons.add,
-                                      onPressed: (MapEntry group) {
-                                        setState(() {
-                                          eventGroups.putIfAbsent(
-                                              group.key, () => group.value);
-                                          for (UserData groupMember
-                                              in group.value) {
-                                            if (!sharedWith
-                                                .contains(groupMember)) {
-                                              sharedWith.add(groupMember);
-                                              event.sharedWith
-                                                  .add(groupMember.uid);
-                                            }
-                                          }
-                                          groupsNotAdded.remove(group);
-                                          friendsNotAdded.removeWhere(
-                                              (element) => group.value
-                                                  .contains(element));
-                                        });
-                                      })),
-                        ),
-                        const SizedBox(
-                          height: 20,
-                        ),
-                        const Text('Your friends:',
-                            style: kH4SourceSansTextStyle),
-                        const SizedBox(
+                                        'Friends shared with: ',
+                                        style: kH4SourceSansTextStyle,
+                                        textAlign: TextAlign.center,
+                                      )),
+                                  Expanded(
+                                    flex: 5,
+                                    child: sharedWith.isEmpty
+                                        ? const Center(
+                                        child: Text(
+                                            "You haven't added any friends"))
+                                        : UserListTiles(
+                                        users: sharedWith,
+                                        icon: Icons.close,
+                                        onPressed: (UserData user) {
+                                          setState(() {
+                                            sharedWith.remove(user);
+                                            event!.sharedWith
+                                                .remove(user.uid);
+                                            friendsNotAdded.add(user);
+                                          });
+                                        }),
+                                  )
+                                ],
+                              ),
+                            ),
+                          ])),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      Visibility(
+                          visible: groups.isNotEmpty,
+                          child: const Text('Your groups:',
+                              style: kH4SourceSansTextStyle)),
+                      Visibility(
+                        visible: groups.isNotEmpty,
+                        child: const SizedBox(
                           height: 10,
                         ),
-                        Expanded(
+                      ),
+                      Visibility(
+                        visible: groups.isNotEmpty,
+                        child: Expanded(
                             flex: 2,
-                            child: friendsNotAdded.isEmpty
+                            child: groupsNotAdded.isEmpty
                                 ? const Center(
-                                    child: Text(
-                                        "You've added all your friends to this event."),
-                                  )
-                                : UserListTiles(
-                                    users: friendsNotAdded,
-                                    icon: Icons.add,
-                                    onPressed: (user) {
-                                      setState(() {
-                                        sharedWith.add(user);
-                                        event.sharedWith.add(user.uid);
-                                        friendsNotAdded.remove(user);
-                                      });
-                                    })),
-                        SizedBox(
-                          height: 20,
-                          width: 300,
-                          child: TextField(
-                            style: TextStyle(color: Colors.red.shade700),
-                            controller: _errorController,
-                            readOnly: true,
-                            enabled: false,
-                            decoration: const InputDecoration(),
-                          ),
+                              child: Text(
+                                  "You've added all your groups to this event."),
+                            )
+                                : GroupListTiles(
+                                groups: groupsNotAdded,
+                                icon: Icons.add,
+                                onPressed: (MapEntry group) {
+                                  setState(() {
+                                    eventGroups.putIfAbsent(
+                                        group.key, () => group.value);
+                                    for (UserData groupMember
+                                    in group.value) {
+                                      if (!sharedWith
+                                          .contains(groupMember)) {
+                                        sharedWith.add(groupMember);
+                                        event!.sharedWith
+                                            .add(groupMember.uid);
+                                      }
+                                    }
+                                    groupsNotAdded.remove(group);
+                                    friendsNotAdded.removeWhere(
+                                            (element) => group.value
+                                            .contains(element));
+                                  });
+                                })),
+                      ),
+                      const SizedBox(
+                        height: 20,
+                      ),
+                      const Text('Your friends:',
+                          style: kH4SourceSansTextStyle),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      Expanded(
+                          flex: 2,
+                          child: friendsNotAdded.isEmpty
+                              ? const Center(
+                            child: Text(
+                                "You've added all your friends to this event."),
+                          )
+                              : UserListTiles(
+                              users: friendsNotAdded,
+                              icon: Icons.add,
+                              onPressed: (user) {
+                                setState(() {
+                                  sharedWith.add(user);
+                                  event!.sharedWith.add(user.uid);
+                                  friendsNotAdded.remove(user);
+                                });
+                              })),
+                      SizedBox(
+                        height: 20,
+                        width: 300,
+                        child: TextField(
+                          style: TextStyle(color: Colors.red.shade700),
+                          controller: _errorController,
+                          readOnly: true,
+                          enabled: false,
+                          decoration: const InputDecoration(),
                         ),
-                      ],
-                    ),
-                  );
-                }),
-                actions: <Widget>[
-                  TextButton(
-                    child: const Text('Cancel'),
-                    onPressed: () {
-                      _errorController.clear();
-                      Navigator.of(context).pop();
-                    },
+                      ),
+                    ],
                   ),
-                  TextButton(
-                    child: const Text('Done'),
-                    onPressed: () {
-                      if (event.sharedWith.isEmpty) {
-                        setState(() {
-                          _errorController.text =
-                              'Group must be shared with at least one friend.';
-                        });
-                      }
-                      _errorController.clear();
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ],
-              );
+                );
+              }),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                _errorController.clear();
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Done'),
+              onPressed: () {
+                if (event!.sharedWith.isEmpty) {
+                  setState(() {
+                    _errorController.text =
+                    'Group must be shared with at least one friend.';
+                  });
+                }
+                _errorController.clear();
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
       },
     );
   }
@@ -544,9 +583,9 @@ class _EventCreatorState extends State<EventCreator> {
                         },
                         initialPosition: locationResult == null
                             ? LatLng(locationProvider.latitude,
-                                locationProvider.longitude)
+                            locationProvider.longitude)
                             : LatLng(locationResult!.geometry!.location.lat,
-                                locationResult!.geometry!.location.lng),
+                            locationResult!.geometry!.location.lng),
                         useCurrentLocation: true,
                         resizeToAvoidBottomInset: false,
                       ),
@@ -582,13 +621,13 @@ class _EventCreatorState extends State<EventCreator> {
           icon: null,
           categoryName: 'Hang Out',
           index: 0,
-          isSelected: event.category == 0,
+          isSelected: event == null ? category == 0 : event!.category == 0,
           selectEventCategoryCallback: selectEventCategory),
       EventCategoryChip(
           icon: null,
           categoryName: 'Other',
           index: 1,
-          isSelected: event.category != 0,
+          isSelected: event == null ? category != 0 :event!.category != 0,
           selectEventCategoryCallback: selectEventCategory),
     ];
     return eventChips;
@@ -602,7 +641,7 @@ class _EventCreatorState extends State<EventCreator> {
           icon: eventCategories[i].icon,
           categoryName: eventCategories[i].name,
           index: i + 1,
-          isSelected: event.category == i,
+          isSelected: event == null ? category == i : event!.category == i,
           selectEventCategoryCallback: selectEventCategory);
       eventChips.add(chip);
     }
@@ -639,7 +678,7 @@ class _EventCreatorState extends State<EventCreator> {
           title: const Text('WYA'),
         ),
         body: SafeArea(
-          child: Padding(
+          child: isLoading ? const Center(child: CircularProgressIndicator(color: kDeepBlue,),) : Padding(
               padding: const EdgeInsets.all(16),
               child: RoundedContainer(
                 backgroundColor: Colors.white,
@@ -663,10 +702,10 @@ class _EventCreatorState extends State<EventCreator> {
                                 flex2: 5,
                                 chips: getEventCategoryChips()),
                             SizedBox(
-                              height: event.category != 0 ? 20 : 0,
+                              height: event == null ? category != 0 ? 20 : 0 : event!.category != 0 ? 20 : 0,
                             ),
                             Visibility(
-                              visible: event.category != 0,
+                              visible: event == null ? category != 0 : event!.category != 0,
                               child: SizedBox(
                                 width: double.infinity,
                                 height: 150,
@@ -761,15 +800,15 @@ class _EventCreatorState extends State<EventCreator> {
                                 children: <Widget>[
                                   const Expanded(
                                       child: Text(
-                                    'Start: ',
-                                    style: kEventFieldTitleTextStyle,
-                                  )),
+                                        'Start: ',
+                                        style: kEventFieldTitleTextStyle,
+                                      )),
                                   Expanded(child: startTimePicker),
                                   const Expanded(
                                       child: Text(
-                                    'End: ',
-                                    style: kEventFieldTitleTextStyle,
-                                  )),
+                                        'End: ',
+                                        style: kEventFieldTitleTextStyle,
+                                      )),
                                   Expanded(child: endTimePicker),
                                 ],
                               ),
@@ -785,11 +824,11 @@ class _EventCreatorState extends State<EventCreator> {
                                     child: TitleDescriptionColumn(
                                         title: 'Open event: ',
                                         description:
-                                            'Your friends can join automatically'),
+                                        'Your friends can join automatically'),
                                   ),
                                   Expanded(
                                       child: OptionSwitch(
-                                          boolValue: event.isOpen,
+                                          boolValue: event == null ? isOpen : event!.isOpen,
                                           onChanged: selectIsOpen)),
                                 ],
                               ),
@@ -803,7 +842,7 @@ class _EventCreatorState extends State<EventCreator> {
                                     child: TitleDescriptionColumn(
                                         title: 'Add members: ',
                                         description:
-                                            'Add friends who you know are coming \nto your event.'),
+                                        'Add friends who you know are coming \nto your event.'),
                                   ),
                                   Expanded(
                                       child: OptionSwitch(
@@ -821,9 +860,9 @@ class _EventCreatorState extends State<EventCreator> {
                                   padding: 10,
                                   child: Center(
                                       child: Text(
-                                    'Select members',
-                                    style: kH3SourceSansTextStyle,
-                                  )),
+                                        'Select members',
+                                        style: kH3SourceSansTextStyle,
+                                      )),
                                 ),
                               ),
                             ),
@@ -836,17 +875,17 @@ class _EventCreatorState extends State<EventCreator> {
                                     child: TitleDescriptionColumn(
                                         title: 'Public event: ',
                                         description:
-                                            'Share with all your friends'),
+                                        'Share with all your friends'),
                                   ),
                                   Expanded(
                                       child: OptionSwitch(
-                                          boolValue: event.sharedWithAll,
+                                          boolValue: event == null ? isPublic : event!.sharedWithAll,
                                           onChanged: selectIsSharedWithAll)),
                                 ],
                               ),
                             ),
                             Visibility(
-                              visible: !event.sharedWithAll,
+                              visible: event == null ? !isPublic :  !event!.sharedWithAll,
                               child: InkWell(
                                 onTap: _showShareWithWindow,
                                 child: const RoundedContainer(
@@ -854,9 +893,9 @@ class _EventCreatorState extends State<EventCreator> {
                                   padding: 10,
                                   child: Center(
                                       child: Text(
-                                    'Share with: ',
-                                    style: kH3SourceSansTextStyle,
-                                  )),
+                                        'Share with: ',
+                                        style: kH3SourceSansTextStyle,
+                                      )),
                                 ),
                               ),
                             ),
@@ -883,8 +922,8 @@ class _EventCreatorState extends State<EventCreator> {
                             TextButton(
                               style: ButtonStyle(
                                 backgroundColor:
-                                    MaterialStateProperty.all<Color>(
-                                        kDeepBlue),
+                                MaterialStateProperty.all<Color>(
+                                    kDeepBlue),
                                 padding: MaterialStateProperty.all<EdgeInsets>(
                                     const EdgeInsets.all(10)),
                               ),
@@ -892,27 +931,27 @@ class _EventCreatorState extends State<EventCreator> {
                               onPressed: () async {
                                 if(locationResult == null){
                                   _errorController.text = 'Please select a location for your event';
-                                }else if(event.sharedWithAll == false && sharedWith.isEmpty){
+                                }else if(event!.sharedWithAll == false && sharedWith.isEmpty){
                                   _errorController.text = 'Event must be shared with at least one friend';
                                 }else{
                                   event = Event(
                                       description: _descriptionController.text,
-                                      uid: event.uid,
-                                      eventId: event.eventId,
-                                      datePublished: event.datePublished,
+                                      uid: event!.uid,
+                                      eventId: event!.eventId,
+                                      datePublished: event!.datePublished,
                                       startsAt: startTime,
                                       endsAt: endTime,
-                                      participants: event.participants,
-                                      locationId: event.locationId,
-                                      sharedWithAll: event.sharedWithAll,
-                                      isOpen: event.isOpen,
-                                      groups: event.groups,
-                                      category: event.category,
-                                      sharedWith: event.sharedWith,
-                                      requests: event.requests
+                                      participants: event!.participants,
+                                      locationId: event!.locationId,
+                                      sharedWithAll: event!.sharedWithAll,
+                                      isOpen: event!.isOpen,
+                                      groups: event!.groups,
+                                      category: event!.category,
+                                      sharedWith: event!.sharedWith,
+                                      requests: event!.requests
                                   );
                                   if(_eventFormKey.currentState!.validate()){
-                                    await appState.addEvent(event, locationResult!);
+                                    await appState.updateEvent(event!, locationResult!);
                                     context.go('/events');
                                   }
                                 }

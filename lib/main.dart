@@ -8,8 +8,12 @@ import 'package:provider/provider.dart';                 // new
 import 'package:wya_final/profile_page.dart';
 import 'package:wya_final/search_page.dart';
 import 'package:wya_final/src/event_creator.dart';
+import 'package:wya_final/src/event_editor.dart';
 import 'package:wya_final/src/friends_page.dart';
 import 'package:wya_final/src/events_page.dart';
+import 'package:wya_final/src/event_viewer.dart';
+import 'package:wya_final/src/settings_page.dart';
+import 'package:wya_final/src/shared_event_viewer.dart';
 
 import 'account_page.dart';
 import 'app_state.dart';                                 // new
@@ -114,6 +118,12 @@ final _router = GoRouter(
           },
         ),
         GoRoute(
+          path: 'settings',
+          builder: (context, state) {
+            return const SettingsPage();
+          },
+        ),
+        GoRoute(
           path: 'events',
           builder: (context, state) {
             return const EventsPage();
@@ -123,6 +133,24 @@ final _router = GoRouter(
           path: 'newEvent',
           builder: (context, state) {
             return const EventCreator();
+          },
+        ),
+        GoRoute(
+          path: 'viewEvent',
+          builder: (context, state) {
+            return const EventViewer();
+          },
+        ),
+        GoRoute(
+          path: 'editEvent',
+          builder: (context, state) {
+            return const EventEditor();
+          },
+        ),
+        GoRoute(
+          path: 'viewSharedEvent',
+          builder: (context, state) {
+            return const SharedEventViewer();
           },
         ),
         GoRoute(

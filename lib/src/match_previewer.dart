@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:wya_final/src/utils/constants.dart';
 import 'widgets.dart';
 import 'package:wya_final/match.dart' as model;
@@ -21,9 +22,7 @@ class MatchPreviewer extends StatelessWidget {
         index = 0;
       }
       MatchCard matchCard = MatchCard(
-        userName: match.friend.name,
-        userPicture: NetworkImage(match.friend.photoUrl),
-        time: match.friendEvent.startsAt,
+        match: match,
         cardColor: colorCombos[index][0],
         iconColor: colorCombos[index][1],
       );
@@ -47,7 +46,7 @@ class MatchPreviewer extends StatelessWidget {
         Expanded(
           flex: 6,
           child: RoundedContainer(
-              backgroundColor: kPastelBlue,
+              backgroundColor: Colors.white,
               padding: 20,
               child: SizedBox(
                 width: double.infinity,
@@ -61,6 +60,7 @@ class MatchPreviewer extends StatelessWidget {
                     const Text('You have no matches for this day. Add an event: ',
                         style: kBodyTextStyle),
                     TextButton(onPressed: (){
+                      context.go('/newEvent');
                     }, child: const Text(
                         'Add event', style: kBodyTextStyle
                     ))

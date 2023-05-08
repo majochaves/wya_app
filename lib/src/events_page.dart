@@ -53,6 +53,7 @@ class _EventsPageState extends State<EventsPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_){
       final appState = Provider.of<ApplicationState>(context, listen: false);
+      appState.selectedEvent = null;
       appState.selectedDay = DateTime.now();
     });
   }
@@ -70,7 +71,7 @@ class _EventsPageState extends State<EventsPage> {
                 child: Column(
                   children: [
                     Expanded(child: DateSelector(selectedDay: appState.selectedDay, toggleCalendar: toggleCalendar)),
-                    Expanded(flex: 12, child: EventsPreviewer(events: appState.selectedEvents)),
+                    Expanded(flex: 12, child: EventsPreviewer(events: appState.selectedEvents, setSelectedEvent: (event) => appState.selectedEvent = event,)),
                   ],
                 )),
           ),

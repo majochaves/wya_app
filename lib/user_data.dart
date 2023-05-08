@@ -10,6 +10,9 @@ class UserData {
   final List requests;
   final List events;
   final List groups;
+  final bool allowAdd;
+  final int maxMatchDistance;
+  final List notifications;
 
   const UserData({
     required this.name,
@@ -21,6 +24,9 @@ class UserData {
     required this.username,
     required this.events,
     required this.groups,
+    required this.allowAdd,
+    required this.maxMatchDistance,
+    required this.notifications,
   });
 
   Map<String, dynamic> toJson() => {
@@ -33,6 +39,9 @@ class UserData {
     "requests": requests,
     "events": events,
     "groups": groups,
+    "allowAdd" : allowAdd,
+    "maxMatchDistance" : maxMatchDistance,
+    "notifications" : notifications,
   };
 
   static UserData fromSnap(DocumentSnapshot snap) {
@@ -48,6 +57,9 @@ class UserData {
       requests: snapshot['requests'],
       events: snapshot['events'],
       groups: snapshot['groups'],
+      allowAdd: snapshot['allowAdd'],
+      maxMatchDistance: snapshot['maxMatchDistance'],
+      notifications: snapshot['notifications'],
     );
   }
 
@@ -61,7 +73,10 @@ class UserData {
         uid: '',
         username: '',
         events: [],
-        groups: []
+        groups: [],
+        notifications: [],
+        allowAdd: true,
+        maxMatchDistance: 200,
     );
   }
 }

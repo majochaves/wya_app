@@ -7,8 +7,9 @@ import 'widgets.dart';
 
 class SharedEventPreviewer extends StatelessWidget {
   final List<SharedEvent> sharedEvents;
+  final Function setSelectedSharedEvent;
 
-  SharedEventPreviewer({Key? key, required this.sharedEvents}) : super(key: key);
+  SharedEventPreviewer({Key? key, required this.sharedEvents, required this.setSelectedSharedEvent}) : super(key: key);
 
   final List<List<Color>> colorCombos = [[kPastelBlue, kDeepBlue], [kPastelOrangeYellow, kOrange], [kPastelGreen, kGreen],
     [kPastelPink, kHotPink], [kPastelPurple, kPurple]];
@@ -21,13 +22,10 @@ class SharedEventPreviewer extends StatelessWidget {
         index = 0;
       }
       SharedEventCard eventCard = SharedEventCard(
-        userName: sharedEvent.user.name,
-        userPicture: NetworkImage(sharedEvent.user.photoUrl,),
-        time: sharedEvent.event.startsAt,
+        setSelectedSharedEvent: setSelectedSharedEvent,
+        sharedEvent: sharedEvent,
         cardColor: colorCombos[index][0],
         iconColor: colorCombos[index][1],
-        eventTitle: 'Hang out',
-        eventDescription: sharedEvent.event.description,
       );
       eventCards.add(eventCard);
       index++;
@@ -50,7 +48,7 @@ class SharedEventPreviewer extends StatelessWidget {
         Expanded(
           flex: 10,
           child: RoundedContainer(
-            backgroundColor: kPastelGreen,
+            backgroundColor: Colors.white,
             padding: 20,
             child: SizedBox(
               width: double.infinity,
