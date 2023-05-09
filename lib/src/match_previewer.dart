@@ -46,7 +46,7 @@ class MatchPreviewer extends StatelessWidget {
         Expanded(
           flex: 6,
           child: RoundedContainer(
-              backgroundColor: Colors.white,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               padding: 20,
               child: SizedBox(
                 width: double.infinity,

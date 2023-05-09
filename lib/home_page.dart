@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:wya_final/src/calendar.dart';
 import 'package:wya_final/src/match_previewer.dart';
@@ -66,8 +67,74 @@ class _HomePageState extends State<HomePage> {
         appBar: AppBar(
           title: const Text('WYA'),
           actions: [
-            IconButton(icon: const Icon(Icons.notification_important_outlined), onPressed: (){},),
-            IconButton(icon: const Icon(Icons.send), onPressed: (){},)
+              Row(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  InkWell(
+                    onTap: () {context.go('/notifications');},
+                    child: Stack(
+                    children: <Widget>[
+                    const Icon(Icons.notifications),
+                      Positioned(
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(1),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).primaryColor,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 12,
+                            minHeight: 12,
+                          ),
+                          child: Text(
+                            '${appState.unreadNotifications}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      )
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10,),
+                  InkWell(
+                    onTap: () {context.go('/chats');},
+                    child: Stack(
+                      children: <Widget>[
+                        const Icon(Icons.send),
+                        Positioned(
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(1),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).primaryColor,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 12,
+                              minHeight: 12,
+                            ),
+                            child: Text(
+                              '${appState.unreadMessages}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 8,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10,),
+                ],
+              ),
           ],
         ),
         body: SafeArea(

@@ -7,16 +7,21 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_cupertino_date_picker_fork/flutter_cupertino_date_picker_fork.dart';
 import 'package:go_router/go_router.dart';
-import 'package:table_calendar/table_calendar.dart';
+import 'package:provider/provider.dart';
 import 'package:wya_final/event_category.dart';
 import 'package:wya_final/src/utils/constants.dart';
 import 'package:wya_final/src/utils/string_formatter.dart';
 
 import 'package:wya_final/event.dart';
+import '../app_state.dart';
+import '../chat_info.dart';
 import '../group.dart';
 import '../shared_event.dart';
 import '../user_data.dart';
 import 'package:wya_final/match.dart' as model;
+import 'package:wya_final/notification.dart' as model;
+
+import 'notification_user_event.dart';
 
 class Header extends StatelessWidget {
   const Header(this.heading, {super.key});
@@ -24,12 +29,12 @@ class Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(8.0),
-    child: Text(
-      heading,
-      style: const TextStyle(fontSize: 24),
-    ),
-  );
+        padding: const EdgeInsets.all(8.0),
+        child: Text(
+          heading,
+          style: const TextStyle(fontSize: 24),
+        ),
+      );
 }
 
 class Paragraph extends StatelessWidget {
@@ -37,12 +42,12 @@ class Paragraph extends StatelessWidget {
   final String content;
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-    child: Text(
-      content,
-      style: const TextStyle(fontSize: 18),
-    ),
-  );
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Text(
+          content,
+          style: const TextStyle(fontSize: 18),
+        ),
+      );
 }
 
 class IconAndDetail extends StatelessWidget {
@@ -52,18 +57,18 @@ class IconAndDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(8.0),
-    child: Row(
-      children: [
-        Icon(icon),
-        const SizedBox(width: 8),
-        Text(
-          detail,
-          style: const TextStyle(fontSize: 18),
-        )
-      ],
-    ),
-  );
+        padding: const EdgeInsets.all(8.0),
+        child: Row(
+          children: [
+            Icon(icon),
+            const SizedBox(width: 8),
+            Text(
+              detail,
+              style: const TextStyle(fontSize: 18),
+            )
+          ],
+        ),
+      );
 }
 
 ///Buttons
@@ -75,11 +80,11 @@ class StyledButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => OutlinedButton(
-    style: OutlinedButton.styleFrom(
-        side: const BorderSide(color: Colors.deepPurple)),
-    onPressed: onPressed,
-    child: child,
-  );
+        style: OutlinedButton.styleFrom(
+            side: const BorderSide(color: Colors.deepPurple)),
+        onPressed: onPressed,
+        child: child,
+      );
 }
 
 class CustomPaddingButton extends StatelessWidget {
@@ -89,7 +94,13 @@ class CustomPaddingButton extends StatelessWidget {
   final double width;
   final VoidCallback onPress;
 
-  const CustomPaddingButton({super.key, required this.text, required this.color, required this.onPress, required this.height, required this.width});
+  const CustomPaddingButton(
+      {super.key,
+      required this.text,
+      required this.color,
+      required this.onPress,
+      required this.height,
+      required this.width});
 
   @override
   Widget build(BuildContext context) {
@@ -114,7 +125,14 @@ class SquareButton extends StatelessWidget {
   final String text;
   final VoidCallback onTap;
   final bool isLoading;
-  const SquareButton({Key? key, required this.color, required this.textColor, required this.text, required this.onTap, required this.isLoading}) : super(key: key);
+  const SquareButton(
+      {Key? key,
+      required this.color,
+      required this.textColor,
+      required this.text,
+      required this.onTap,
+      required this.isLoading})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -130,15 +148,17 @@ class SquareButton extends StatelessWidget {
           ),
           color: color,
         ),
-        child:
-        ! isLoading ?
-        Text(
-          text,
-          style: TextStyle(fontWeight: FontWeight.bold, color: textColor, fontSize: 14),
-        ) :
-        CircularProgressIndicator(
-          color: color,
-        ),
+        child: !isLoading
+            ? Text(
+                text,
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                    fontSize: 14),
+              )
+            : CircularProgressIndicator(
+                color: color,
+              ),
       ),
     );
   }
@@ -149,12 +169,18 @@ class SquareIconButton extends StatelessWidget {
   final IconData icon;
   final String pushTo;
 
-  const SquareIconButton({Key? key, required this.color, required this.icon, required this.pushTo}) : super(key: key);
+  const SquareIconButton(
+      {Key? key, required this.color, required this.icon, required this.pushTo})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      child: RoundedIcon(icon: Icons.add, iconColor: Colors.black, backgroundColor: color,),
+      child: RoundedIcon(
+        icon: Icons.add,
+        iconColor: Colors.black,
+        backgroundColor: color,
+      ),
       onTap: () {
         context.push(pushTo);
       },
@@ -170,11 +196,11 @@ class FollowButton extends StatelessWidget {
   final Color textColor;
   const FollowButton(
       {Key? key,
-        required this.backgroundColor,
-        required this.borderColor,
-        required this.text,
-        required this.textColor,
-        this.function})
+      required this.backgroundColor,
+      required this.borderColor,
+      required this.text,
+      required this.textColor,
+      this.function})
       : super(key: key);
 
   @override
@@ -212,7 +238,11 @@ class PaddingButton extends StatelessWidget {
   final String text;
   final VoidCallback onPress;
 
-  const PaddingButton({super.key, required this.text, required this.color, required this.onPress});
+  const PaddingButton(
+      {super.key,
+      required this.text,
+      required this.color,
+      required this.onPress});
 
   @override
   Widget build(BuildContext context) {
@@ -249,8 +279,7 @@ class CircleAvi extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        image: DecorationImage(
-            fit: BoxFit.cover, image: imageSrc),
+        image: DecorationImage(fit: BoxFit.cover, image: imageSrc),
         borderRadius: const BorderRadius.all(Radius.circular(100.0)),
         color: Colors.redAccent,
       ),
@@ -261,12 +290,16 @@ class CircleAvi extends StatelessWidget {
 ///Cards
 
 class MatchCard extends StatelessWidget {
-
   final model.Match match;
   final Color cardColor;
   final Color iconColor;
 
-  const MatchCard({Key? key, required this.cardColor, required this.iconColor, required this.match}) : super(key: key);
+  const MatchCard(
+      {Key? key,
+      required this.cardColor,
+      required this.iconColor,
+      required this.match})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -277,34 +310,43 @@ class MatchCard extends StatelessWidget {
         height: 100,
         child: Center(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-
-              children: [
-                Expanded(child: CircleAvi(imageSrc: NetworkImage(match.friendEvent.user.photoUrl), size: 40),),
-                Expanded(child: Text(match.friendEvent.user.name)),
-                Expanded(child: Text('${StringFormatter.getTimeString(match.friendEvent.event.startsAt)}-'
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Expanded(
+              child: CircleAvi(
+                  imageSrc: NetworkImage(match.friendEvent.user.photoUrl),
+                  size: 40),
+            ),
+            Expanded(child: Text(match.friendEvent.user.name)),
+            Expanded(
+                child: Text(
+                    '${StringFormatter.getTimeString(match.friendEvent.event.startsAt)}-'
                     '${StringFormatter.getTimeString(match.friendEvent.event.endsAt)}')),
-              ],
-            )
-        ),
+          ],
+        )),
       ),
     );
   }
 }
 
 class SharedEventCard extends StatelessWidget {
-
   final SharedEvent sharedEvent;
   final Color cardColor;
   final Color iconColor;
   final Function setSelectedSharedEvent;
 
-  SharedEventCard({Key? key, required this.cardColor, required this.iconColor, required this.sharedEvent, required this.setSelectedSharedEvent, }) : super(key: key);
+  SharedEventCard({
+    Key? key,
+    required this.cardColor,
+    required this.iconColor,
+    required this.sharedEvent,
+    required this.setSelectedSharedEvent,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: (){
+      onTap: () {
         setSelectedSharedEvent(sharedEvent);
         context.go('/viewSharedEvent');
       },
@@ -322,25 +364,42 @@ class SharedEventCard extends StatelessWidget {
           height: 100,
           child: Center(
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-
-                  Expanded(child: Center(child: Text(StringFormatter.getTimeString(sharedEvent.event.startsAt), style: kSubtitleTextStyle,),)),
-                  Expanded(
-                    flex: 2,
-                    child: ListTile(
-                      title: Text(EventCategory.getCategoryById(sharedEvent.event.category).name, style: kMatchCardTextStyle,),
-                      subtitle: Text(sharedEvent.event.description, style: kMatchCardTextStyle,),
-                    ),
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                  child: Center(
+                child: Text(
+                  StringFormatter.getTimeString(sharedEvent.event.startsAt),
+                  style: kSubtitleTextStyle,
+                ),
+              )),
+              Expanded(
+                flex: 2,
+                child: ListTile(
+                  title: Text(
+                    EventCategory.getCategoryById(sharedEvent.event.category)
+                        .name,
+                    style: kMatchCardTextStyle,
                   ),
-                  Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    CircleAvi(imageSrc: NetworkImage(sharedEvent.user.photoUrl), size: 40),
-                    Text(sharedEvent.user.name),
-                  ],))
+                  subtitle: Text(
+                    sharedEvent.event.description,
+                    style: kMatchCardTextStyle,
+                  ),
+                ),
+              ),
+              Expanded(
+                  child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircleAvi(
+                      imageSrc: NetworkImage(sharedEvent.user.photoUrl),
+                      size: 40),
+                  Text(sharedEvent.user.name),
                 ],
-              )
-          ),
+              ))
+            ],
+          )),
         ),
       ),
     );
@@ -353,15 +412,21 @@ class EventCard extends StatelessWidget {
   final Color cardColor;
   final Color iconColor;
 
-  const EventCard({Key? key, required this.cardColor, required this.iconColor, required this.event, required this.setSelectedEvent, }) : super(key: key);
+  const EventCard({
+    Key? key,
+    required this.cardColor,
+    required this.iconColor,
+    required this.event,
+    required this.setSelectedEvent,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: (){
+      onTap: () {
         setSelectedEvent(event);
         context.go('/viewEvent');
-        },
+      },
       child: Card(
         color: cardColor,
         shape: RoundedRectangleBorder(
@@ -376,21 +441,36 @@ class EventCard extends StatelessWidget {
           height: 100,
           child: Center(
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  SizedBox(height: 70, width: 5, child: Container(color: iconColor),),
-                  Expanded(child: Center(child: Text('${StringFormatter.getTimeString(event.startsAt)}-\n${StringFormatter.getTimeString(event.endsAt)}', style: kSubtitleTextStyle,),)),
-                  Expanded(
-                    flex: 2,
-                    child: ListTile(
-                      title: Text(EventCategory.getCategoryById(event.category).name, style: kMatchCardTextStyle,),
-                      subtitle: Text(event.description, style: kMatchCardTextStyle,),
-                    ),
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                height: 70,
+                width: 5,
+                child: Container(color: iconColor),
+              ),
+              Expanded(
+                  child: Center(
+                child: Text(
+                  '${StringFormatter.getTimeString(event.startsAt)}-\n${StringFormatter.getTimeString(event.endsAt)}',
+                  style: kSubtitleTextStyle,
+                ),
+              )),
+              Expanded(
+                flex: 2,
+                child: ListTile(
+                  title: Text(
+                    EventCategory.getCategoryById(event.category).name,
+                    style: kMatchCardTextStyle,
                   ),
-                ],
-              )
-          ),
+                  subtitle: Text(
+                    event.description,
+                    style: kMatchCardTextStyle,
+                  ),
+                ),
+              ),
+            ],
+          )),
         ),
       ),
     );
@@ -405,52 +485,53 @@ class EventCategoryChip extends StatelessWidget {
   final Function selectEventCategoryCallback;
   final Image? icon;
 
-  const EventCategoryChip(
-      {Key? key,
-        required this.isSelected,
-        required this.selectEventCategoryCallback,
-        required this.categoryName,
-        required this.index,
-        required this.icon,})
-      : super(key: key);
+  const EventCategoryChip({
+    Key? key,
+    required this.isSelected,
+    required this.selectEventCategoryCallback,
+    required this.categoryName,
+    required this.index,
+    required this.icon,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return (index == 0 || index == 1) ? InputChip(
-      backgroundColor: kPastelBlue,
-      selectedColor: kPastelPink,
-      disabledColor: kPastelBlue,
-      label: Container(
-        //color: backgroundColor,
-        child: Text(
-          categoryName,
-          textAlign: TextAlign.center,
-        ),
-      ),
-      selected: isSelected,
-      onSelected: (bool selected) {
-        selectEventCategoryCallback(index, selected);
-      },
-    ) : InputChip(
-      avatar: CircleAvatar(
-          backgroundColor: isSelected ? kPastelPink : kPastelBlue,
-          child: icon
-      ),
-      backgroundColor: kPastelBlue,
-      selectedColor: kPastelPink,
-      disabledColor: kPastelBlue,
-      label: Container(
-        //color: backgroundColor,
-        child: Text(
-          categoryName,
-          textAlign: TextAlign.center,
-        ),
-      ),
-      selected: isSelected,
-      onSelected: (bool selected) {
-        selectEventCategoryCallback(index, selected);
-      },
-    );
+    return (index == 0 || index == 1)
+        ? InputChip(
+            backgroundColor: kPastelBlue,
+            selectedColor: kPastelPink,
+            disabledColor: kPastelBlue,
+            label: Container(
+              //color: backgroundColor,
+              child: Text(
+                categoryName,
+                textAlign: TextAlign.center,
+              ),
+            ),
+            selected: isSelected,
+            onSelected: (bool selected) {
+              selectEventCategoryCallback(index, selected);
+            },
+          )
+        : InputChip(
+            avatar: CircleAvatar(
+                backgroundColor: isSelected ? kPastelPink : kPastelBlue,
+                child: icon),
+            backgroundColor: kPastelBlue,
+            selectedColor: kPastelPink,
+            disabledColor: kPastelBlue,
+            label: Container(
+              //color: backgroundColor,
+              child: Text(
+                categoryName,
+                textAlign: TextAlign.center,
+              ),
+            ),
+            selected: isSelected,
+            onSelected: (bool selected) {
+              selectEventCategoryCallback(index, selected);
+            },
+          );
   }
 }
 
@@ -461,7 +542,11 @@ class GroupChip extends StatelessWidget {
   final Function selectGroupCallback;
 
   const GroupChip(
-      {Key? key, required this.groupName, required this.groupIndex, required this.isSelected, required this.selectGroupCallback})
+      {Key? key,
+      required this.groupName,
+      required this.groupIndex,
+      required this.isSelected,
+      required this.selectGroupCallback})
       : super(key: key);
 
   @override
@@ -479,9 +564,7 @@ class GroupChip extends StatelessWidget {
 class MemberOrGroupChip extends StatelessWidget {
   final String name;
 
-  const MemberOrGroupChip(
-      {Key? key, required this.name})
-      : super(key: key);
+  const MemberOrGroupChip({Key? key, required this.name}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -497,13 +580,13 @@ class YesNoChip extends StatelessWidget {
   final bool isSelected;
   final Function selectEventTypeCallback;
 
-  const YesNoChip(
-      {Key? key,
-        required this.isSelected,
-        required this.selectEventTypeCallback,
-        required this.label,
-        required this.index,})
-      : super(key: key);
+  const YesNoChip({
+    Key? key,
+    required this.isSelected,
+    required this.selectEventTypeCallback,
+    required this.label,
+    required this.index,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -526,13 +609,49 @@ class YesNoChip extends StatelessWidget {
   }
 }
 
+class ChatPreviewer extends StatelessWidget {
+  final ChatInfo chat;
+  const ChatPreviewer({Key? key, required this.chat}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<ApplicationState>(
+        builder: (context, appState, _) => InkWell(
+              onTap: () {
+                appState.selectedChat = chat;
+                context.go('/viewChat');
+              },
+              child: ListTile(
+                leading: CircleAvi(
+                  imageSrc: NetworkImage(chat.user.photoUrl),
+                  size: 30,
+                ),
+                title: Text(chat.user.name, style:
+                (chat.messages.last.senderId != appState.userData.uid &&
+                    chat.messages.last.isRead == false) ?
+                    const TextStyle(fontWeight: FontWeight.bold) : null,),
+                subtitle: Text(chat.messages.last.text, style:
+                (chat.messages.last.senderId != appState.userData.uid &&
+                    chat.messages.last.isRead == false) ?
+                const TextStyle(fontWeight: FontWeight.bold) : null,),
+                trailing: Text(StringFormatter.getTimeString(
+                    chat.chat.lastMessageSentAt!)),),
+            ));
+  }
+}
+
 /// Containers
 
 class RoundedContainer extends StatelessWidget {
   final Widget child;
   final Color backgroundColor;
   final double padding;
-  const RoundedContainer({Key? key, required this.child, required this.backgroundColor, required this.padding}) : super(key: key);
+  const RoundedContainer(
+      {Key? key,
+      required this.child,
+      required this.backgroundColor,
+      required this.padding})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -559,9 +678,7 @@ class BioBox extends StatelessWidget {
       width: 100,
       height: 40,
       decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          color: kPastelOrangeYellow
-      ),
+          borderRadius: BorderRadius.circular(10), color: kPastelOrangeYellow),
       alignment: Alignment.center,
       padding: const EdgeInsets.only(
         top: 1,
@@ -579,7 +696,14 @@ class ChipsField extends StatelessWidget {
   final int flex1;
   final int flex2;
   final List<Widget> chips;
-  const ChipsField({Key? key, required this.title, required this.height, required this.flex1, required this.flex2, required this.chips}) : super(key: key);
+  const ChipsField(
+      {Key? key,
+      required this.title,
+      required this.height,
+      required this.flex1,
+      required this.flex2,
+      required this.chips})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -588,10 +712,7 @@ class ChipsField extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
-          Expanded(
-              flex: flex1,
-              child: title
-          ),
+          Expanded(flex: flex1, child: title),
           const SizedBox(
             width: 10,
           ),
@@ -611,7 +732,9 @@ class StatColumn extends StatelessWidget {
   final int num;
   final String label;
   final Function pushTo;
-  const StatColumn({Key? key, required this.num, required this.label, required this.pushTo}) : super(key: key);
+  const StatColumn(
+      {Key? key, required this.num, required this.label, required this.pushTo})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -647,14 +770,204 @@ class StatColumn extends StatelessWidget {
   }
 }
 
+class NotificationsBuilder extends StatefulWidget {
+  final List<model.Notification> notifications;
+  const NotificationsBuilder({Key? key, required this.notifications})
+      : super(key: key);
+
+  @override
+  State<NotificationsBuilder> createState() => _NotificationsBuilderState();
+}
+
+class _NotificationsBuilderState extends State<NotificationsBuilder> {
+  List<NotificationUserEvent> notificationInfo = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    getData();
+  }
+
+  void getData() async {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final appState = Provider.of<ApplicationState>(context, listen: false);
+      notificationInfo =
+          await appState.getNotificationInfo(widget.notifications);
+      isLoading = false;
+    });
+  }
+
+  List<Widget> getNotificationTiles() {
+    List<Widget> notificationTiles = [];
+    for (NotificationUserEvent n in notificationInfo) {
+      if (n.notification.type == 0) {
+        notificationTiles.add(NotificationType0(
+          notification: n,
+        ));
+      } else if (n.notification.type == 1) {
+        notificationTiles.add(NotificationType1(
+          notification: n,
+        ));
+      } else if (n.notification.type == 2) {
+        notificationTiles.add(NotificationType2(
+          notification: n,
+        ));
+      } else if (n.notification.type == 3) {
+        notificationTiles.add(NotificationType3(
+          notification: n,
+        ));
+      } else {
+        notificationTiles.add(NotificationType4(
+          notification: n,
+        ));
+      }
+    }
+    return notificationTiles;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : notificationInfo.isEmpty
+            ? const Center(child: Text('You have no notifications'))
+            : ListView(
+                children: getNotificationTiles(),
+              );
+  }
+}
+
+class NotificationType0 extends StatelessWidget {
+  final NotificationUserEvent notification;
+  const NotificationType0({Key? key, required this.notification})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        context.go('/friends');
+      },
+      child: ListTile(
+        leading: CircleAvi(
+          imageSrc: NetworkImage(notification.user.photoUrl),
+          size: 30,
+        ),
+        title: Text('${notification.user.username} sent you a follow request'),
+      ),
+    );
+  }
+}
+
+class NotificationType1 extends StatelessWidget {
+  final NotificationUserEvent notification;
+  const NotificationType1({Key? key, required this.notification})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        context.go('/friends');
+      },
+      child: ListTile(
+        leading: CircleAvi(
+          imageSrc: NetworkImage(notification.user.photoUrl),
+          size: 30,
+        ),
+        title:
+            Text('${notification.user.username} accepted your follow request'),
+      ),
+    );
+  }
+}
+
+class NotificationType2 extends StatelessWidget {
+  final NotificationUserEvent notification;
+  const NotificationType2({Key? key, required this.notification})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<ApplicationState>(
+        builder: (context, appState, _) => InkWell(
+              onTap: () {
+                appState.selectedEvent = notification.event;
+                context.go('/viewEvent');
+              },
+              child: ListTile(
+                leading: CircleAvi(
+                  imageSrc: NetworkImage(notification.user.photoUrl),
+                  size: 30,
+                ),
+                title: Text(
+                    '${notification.user.username} has requested to join your event'),
+              ),
+            ));
+  }
+}
+
+class NotificationType3 extends StatelessWidget {
+  final NotificationUserEvent notification;
+  const NotificationType3({Key? key, required this.notification})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<ApplicationState>(
+        builder: (context, appState, _) => InkWell(
+              onTap: () {
+                appState.selectedSharedEvent =
+                    SharedEvent(notification.event!, notification.user);
+                context.go('/viewSharedEvent');
+              },
+              child: ListTile(
+                leading: CircleAvi(
+                  imageSrc: NetworkImage(notification.user.photoUrl),
+                  size: 30,
+                ),
+                title: Text(
+                    '${notification.user.username} accepted your request to join their event'),
+              ),
+            ));
+  }
+}
+
+class NotificationType4 extends StatelessWidget {
+  final NotificationUserEvent notification;
+  const NotificationType4({Key? key, required this.notification})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<ApplicationState>(
+        builder: (context, appState, _) => InkWell(
+              onTap: () {
+                appState.selectedEvent = notification.event;
+                context.go('/viewEvent');
+              },
+              child: ListTile(
+                leading: CircleAvi(
+                  imageSrc: NetworkImage(notification.user.photoUrl),
+                  size: 30,
+                ),
+                title:
+                    Text('${notification.user.username} has joined your event'),
+              ),
+            ));
+  }
+}
+
 class OptionSwitch extends StatelessWidget {
   final bool boolValue;
   final Function onChanged;
-  OptionSwitch({Key? key, required this.boolValue, required this.onChanged}) : super(key: key);
+  OptionSwitch({Key? key, required this.boolValue, required this.onChanged})
+      : super(key: key);
 
   final MaterialStateProperty<Color?> trackColor =
-  MaterialStateProperty.resolveWith<Color?>(
-        (Set<MaterialState> states) {
+      MaterialStateProperty.resolveWith<Color?>(
+    (Set<MaterialState> states) {
       // Track color when the switch is selected.
       if (states.contains(MaterialState.selected)) {
         return kDeepBlue;
@@ -666,8 +979,8 @@ class OptionSwitch extends StatelessWidget {
     },
   );
   final MaterialStateProperty<Color?> overlayColor =
-  MaterialStateProperty.resolveWith<Color?>(
-        (Set<MaterialState> states) {
+      MaterialStateProperty.resolveWith<Color?>(
+    (Set<MaterialState> states) {
       // Material color when switch is selected.
       if (states.contains(MaterialState.selected)) {
         return kDeepBlue.withOpacity(0.54);
@@ -699,11 +1012,12 @@ class OptionSwitch extends StatelessWidget {
   }
 }
 
-
 class TitleDescriptionColumn extends StatelessWidget {
   final String title;
   final String description;
-  const TitleDescriptionColumn({Key? key, required this.title, required this.description}) : super(key: key);
+  const TitleDescriptionColumn(
+      {Key? key, required this.title, required this.description})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -734,17 +1048,22 @@ class DateChooser extends StatelessWidget {
   final DateTime initDate;
   final Function toggleChangeDate;
 
-  DateChooser({super.key, required this.initDate, required this.toggleChangeDate, required this.minDate, required this.maxDate,});
-
+  DateChooser({
+    super.key,
+    required this.initDate,
+    required this.toggleChangeDate,
+    required this.minDate,
+    required this.maxDate,
+  });
 
   final DateTimePickerLocale _locale = DateTimePickerLocale.en_us;
 
   final String _dateFormat = 'dd/MM/yyyy';
 
-  String _toDoubleDigits(int number){
-    if(number > 9){
+  String _toDoubleDigits(int number) {
+    if (number > 9) {
       return number.toString();
-    }else{
+    } else {
       return '0$number';
     }
   }
@@ -775,13 +1094,14 @@ class DateChooser extends StatelessWidget {
 
   ///Datetime
 
-
-
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () {_showDatePicker(context);},
-      child: Text('${_toDoubleDigits(initDate.day)}/${_toDoubleDigits(initDate.month)}/${_toDoubleDigits(initDate.year)}'),
+      onTap: () {
+        _showDatePicker(context);
+      },
+      child: Text(
+          '${_toDoubleDigits(initDate.day)}/${_toDoubleDigits(initDate.month)}/${_toDoubleDigits(initDate.year)}'),
       //trailing: widget.time ? const Icon(Icons.access_time, size: 0,) : const Icon(Icons.calendar_month)
     );
   }
@@ -792,15 +1112,20 @@ class TimeChooser extends StatelessWidget {
   final DateTime maxDate;
   final DateTime initDate;
   final Function toggleChangeTime;
-  const TimeChooser({Key? key, required this.initDate, required this.toggleChangeTime, required this.minDate, required this.maxDate}) : super(key: key);
+  const TimeChooser(
+      {Key? key,
+      required this.initDate,
+      required this.toggleChangeTime,
+      required this.minDate,
+      required this.maxDate})
+      : super(key: key);
 
   final String _timeFormat = 'HH:mm';
 
-
-  String _toDoubleDigits(int number){
-    if(number > 9){
+  String _toDoubleDigits(int number) {
+    if (number > 9) {
       return number.toString();
-    }else{
+    } else {
       return '0$number';
     }
   }
@@ -841,12 +1166,13 @@ class TimeChooser extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () {_showTimePicker(context);},
-      child: Text('${_toDoubleDigits(initDate.hour)}:${_toDoubleDigits(initDate.minute)}')
-    );
+        onTap: () {
+          _showTimePicker(context);
+        },
+        child: Text(
+            '${_toDoubleDigits(initDate.hour)}:${_toDoubleDigits(initDate.minute)}'));
   }
 }
-
 
 /// Icons
 class CircleIcon extends StatelessWidget {
@@ -854,7 +1180,12 @@ class CircleIcon extends StatelessWidget {
   final Color iconColor;
   final Color backgroundColor;
 
-  const CircleIcon({Key? key, required this.icon, required this.backgroundColor, required this.iconColor}) : super(key: key);
+  const CircleIcon(
+      {Key? key,
+      required this.icon,
+      required this.backgroundColor,
+      required this.iconColor})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -864,9 +1195,12 @@ class CircleIcon extends StatelessWidget {
         //border: Border.all(color: Colors.grey, width: 0.5),
         borderRadius: BorderRadius.circular(100),
       ),
-      child:Padding(
+      child: Padding(
         padding: EdgeInsets.all(10),
-        child: Icon(icon, color: iconColor,),
+        child: Icon(
+          icon,
+          color: iconColor,
+        ),
       ),
     );
   }
@@ -877,7 +1211,12 @@ class RoundedIcon extends StatelessWidget {
   final Color iconColor;
   final Color backgroundColor;
 
-  const RoundedIcon({Key? key, required this.icon, required this.backgroundColor, required this.iconColor}) : super(key: key);
+  const RoundedIcon(
+      {Key? key,
+      required this.icon,
+      required this.backgroundColor,
+      required this.iconColor})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -887,9 +1226,12 @@ class RoundedIcon extends StatelessWidget {
         //border: Border.all(color: Colors.grey, width: 0.5),
         borderRadius: BorderRadius.circular(10),
       ),
-      child:Padding(
+      child: Padding(
         padding: EdgeInsets.all(7),
-        child: Icon(icon, color: iconColor,),
+        child: Icon(
+          icon,
+          color: iconColor,
+        ),
       ),
     );
   }
@@ -902,24 +1244,30 @@ class SearchInput extends StatelessWidget {
   final Color iconColor;
   final String hintText;
   final Function onSearch;
-  const SearchInput({
-    Key? key,
-    required this.hintText,
-    required this.textEditingController,
-    required this.iconColor, required this.onSearch
-  }) : super(key: key);
+  const SearchInput(
+      {Key? key,
+      required this.hintText,
+      required this.textEditingController,
+      required this.iconColor,
+      required this.onSearch})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: Icon(Icons.search, color: iconColor,)),
+        Expanded(
+            child: Icon(
+          Icons.search,
+          color: iconColor,
+        )),
         Expanded(
           flex: 6,
           child: Form(
             child: TextFormField(
               controller: textEditingController,
-              decoration: InputDecoration(hintText: hintText, contentPadding: const EdgeInsets.all(8)),
+              decoration: InputDecoration(
+                  hintText: hintText, contentPadding: const EdgeInsets.all(8)),
               onFieldSubmitted: (String _) {
                 onSearch();
               },
@@ -936,19 +1284,18 @@ class TextFieldInput extends StatelessWidget {
   final bool isPass;
   final String hintText;
   final TextInputType textInputType;
-  const TextFieldInput({
-    Key? key,
-    required this.hintText,
-    this.isPass = false,
-    required this.textEditingController,
-    required this.textInputType
-  }) : super(key: key);
+  const TextFieldInput(
+      {Key? key,
+      required this.hintText,
+      this.isPass = false,
+      required this.textEditingController,
+      required this.textInputType})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final inputBorder = OutlineInputBorder(
-        borderSide: Divider.createBorderSide(context)
-    );
+    final inputBorder =
+        OutlineInputBorder(borderSide: Divider.createBorderSide(context));
     return TextField(
       controller: textEditingController,
       decoration: InputDecoration(
@@ -972,21 +1319,21 @@ class TextFieldInputWithIcon extends StatefulWidget {
   final bool isPass;
   final String hintText;
   final TextInputType textInputType;
-  const TextFieldInputWithIcon({
-    Key? key,
-    required this.hintText,
-    this.isPass = false,
-    required this.textEditingController,
-    required this.textInputType,
-    required this.icon, required this.iconColor
-  }) : super(key: key);
+  const TextFieldInputWithIcon(
+      {Key? key,
+      required this.hintText,
+      this.isPass = false,
+      required this.textEditingController,
+      required this.textInputType,
+      required this.icon,
+      required this.iconColor})
+      : super(key: key);
 
   @override
   State<TextFieldInputWithIcon> createState() => _TextFieldInputWithIconState();
 }
 
 class _TextFieldInputWithIconState extends State<TextFieldInputWithIcon> {
-
   late bool _passwordVisible;
 
   @override
@@ -999,7 +1346,9 @@ class _TextFieldInputWithIconState extends State<TextFieldInputWithIcon> {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Expanded(child: SizedBox(),),
+        const Expanded(
+          child: SizedBox(),
+        ),
         Expanded(
           flex: 15,
           child: TextField(
@@ -1007,26 +1356,33 @@ class _TextFieldInputWithIconState extends State<TextFieldInputWithIcon> {
             decoration: InputDecoration(
               hintText: widget.hintText,
               contentPadding: const EdgeInsets.all(8),
-              prefixIcon: Icon(widget.icon, color: kOrange,),
-              suffixIcon: widget.isPass ? IconButton(
-                icon: Icon(
-                  _passwordVisible
-                      ? Icons.visibility
-                      : Icons.visibility_off,
-                  color: widget.iconColor,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _passwordVisible = !_passwordVisible;
-                  });
-                },
-              ): null,
+              prefixIcon: Icon(
+                widget.icon,
+                color: kOrange,
+              ),
+              suffixIcon: widget.isPass
+                  ? IconButton(
+                      icon: Icon(
+                        _passwordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                        color: widget.iconColor,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _passwordVisible = !_passwordVisible;
+                        });
+                      },
+                    )
+                  : null,
             ),
             keyboardType: widget.textInputType,
             obscureText: !_passwordVisible,
           ),
         ),
-        const Expanded(child: SizedBox(),),
+        const Expanded(
+          child: SizedBox(),
+        ),
       ],
     );
   }
@@ -1036,7 +1392,12 @@ class UserListTiles extends StatelessWidget {
   final List<UserData> users;
   final IconData icon;
   final Function onPressed;
-  const UserListTiles({Key? key, required this.users, required this.icon, required this.onPressed}) : super(key: key);
+  const UserListTiles(
+      {Key? key,
+      required this.users,
+      required this.icon,
+      required this.onPressed})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -1067,7 +1428,12 @@ class GroupListTiles extends StatelessWidget {
   final Map<Group, List<UserData>> groups;
   final IconData icon;
   final Function onPressed;
-  const GroupListTiles({Key? key, required this.groups, required this.icon, required this.onPressed}) : super(key: key);
+  const GroupListTiles(
+      {Key? key,
+      required this.groups,
+      required this.icon,
+      required this.onPressed})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -1088,23 +1454,36 @@ class GroupListTiles extends StatelessWidget {
   }
 }
 
-
 /// List tiles
 class OptionTile extends StatelessWidget {
-
   final IconData iconData;
   final String title;
   final String pushTo;
 
-  const OptionTile({Key? key, required this.iconData, required this.title, required this.pushTo}) : super(key: key);
+  const OptionTile(
+      {Key? key,
+      required this.iconData,
+      required this.title,
+      required this.pushTo})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       child: ListTile(
-        leading: RoundedIcon(backgroundColor: Colors.white, icon: iconData, iconColor: Colors.black,),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold),),
-        trailing: const Icon(Icons.navigate_next, color: Colors.black,),
+        leading: RoundedIcon(
+          backgroundColor: Colors.white,
+          icon: iconData,
+          iconColor: Colors.black,
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        trailing: const Icon(
+          Icons.navigate_next,
+          color: Colors.black,
+        ),
       ),
       onTap: () {
         context.push(pushTo);
@@ -1118,9 +1497,9 @@ class MyCustomScrollBehavior extends MaterialScrollBehavior {
   // Override behavior methods and getters like dragDevices
   @override
   Set<PointerDeviceKind> get dragDevices => {
-    PointerDeviceKind.touch,
-    PointerDeviceKind.mouse,
-  };
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+      };
 }
 
 ///App bars
@@ -1142,11 +1521,15 @@ class BottomAppBarCustom extends StatelessWidget {
           children: <Widget>[
             Expanded(
               child: InkWell(
-                onTap: () {context.push('/');},
+                onTap: () {
+                  context.push('/');
+                },
                 child: IconButton(
                   iconSize: 30,
                   tooltip: 'Home',
-                  icon: current == 'home' ? const Icon(Icons.home) : const Icon(Icons.home_outlined),
+                  icon: current == 'home'
+                      ? const Icon(Icons.home)
+                      : const Icon(Icons.home_outlined),
                   onPressed: () {
                     context.push('/');
                   },
@@ -1155,11 +1538,15 @@ class BottomAppBarCustom extends StatelessWidget {
             ),
             Expanded(
               child: InkWell(
-                onTap: () {context.push('/search');},
+                onTap: () {
+                  context.push('/search');
+                },
                 child: IconButton(
                   iconSize: 30,
                   tooltip: 'Search',
-                  icon: current == 'search' ? const Icon(Icons.search) : const Icon(Icons.search_outlined),
+                  icon: current == 'search'
+                      ? const Icon(Icons.search)
+                      : const Icon(Icons.search_outlined),
                   onPressed: () {
                     context.push('/search');
                   },
@@ -1168,11 +1555,15 @@ class BottomAppBarCustom extends StatelessWidget {
             ),
             Expanded(
               child: InkWell(
-                onTap: () {context.push('/account');},
+                onTap: () {
+                  context.push('/account');
+                },
                 child: IconButton(
                   iconSize: 30,
                   tooltip: 'Profile',
-                  icon: current == 'account' ? const Icon(Icons.person): const Icon(Icons.person_outlined),
+                  icon: current == 'account'
+                      ? const Icon(Icons.person)
+                      : const Icon(Icons.person_outlined),
                   onPressed: () {
                     context.push('/account');
                   },

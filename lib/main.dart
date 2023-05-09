@@ -17,7 +17,10 @@ import 'package:wya_final/src/shared_event_viewer.dart';
 
 import 'account_page.dart';
 import 'app_state.dart';                                 // new
+import 'chat_viewer.dart';
+import 'chats_page.dart';
 import 'home_page.dart';
+import 'notifications_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -103,6 +106,24 @@ final _router = GoRouter(
           path: 'search',
           builder: (context, state) {
             return const SearchPage();
+          },
+        ),
+        GoRoute(
+          path: 'notifications',
+          builder: (context, state) {
+            return const NotificationsPage();
+          },
+        ),
+        GoRoute(
+          path: 'chats',
+          builder: (context, state) {
+            return const ChatsPage();
+          },
+        ),
+        GoRoute(
+          path: 'viewChat',
+          builder: (context, state) {
+            return const ChatViewer();
           },
         ),
         GoRoute(

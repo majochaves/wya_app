@@ -13,6 +13,7 @@ class UserData {
   final bool allowAdd;
   final int maxMatchDistance;
   final List notifications;
+  final List chats;
 
   const UserData({
     required this.name,
@@ -27,6 +28,7 @@ class UserData {
     required this.allowAdd,
     required this.maxMatchDistance,
     required this.notifications,
+    required this.chats,
   });
 
   Map<String, dynamic> toJson() => {
@@ -42,6 +44,7 @@ class UserData {
     "allowAdd" : allowAdd,
     "maxMatchDistance" : maxMatchDistance,
     "notifications" : notifications,
+    "chats" : chats,
   };
 
   static UserData fromSnap(DocumentSnapshot snap) {
@@ -60,6 +63,7 @@ class UserData {
       allowAdd: snapshot['allowAdd'],
       maxMatchDistance: snapshot['maxMatchDistance'],
       notifications: snapshot['notifications'],
+      chats: snapshot['chats']
     );
   }
 
@@ -77,6 +81,7 @@ class UserData {
         notifications: [],
         allowAdd: true,
         maxMatchDistance: 200,
+        chats: []
     );
   }
 }

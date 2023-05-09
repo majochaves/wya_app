@@ -48,7 +48,7 @@ class SharedEventPreviewer extends StatelessWidget {
         Expanded(
           flex: 10,
           child: RoundedContainer(
-            backgroundColor: Colors.white,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             padding: 20,
             child: SizedBox(
               width: double.infinity,

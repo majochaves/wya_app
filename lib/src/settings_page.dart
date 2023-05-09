@@ -29,6 +29,15 @@ class _SettingsPageState extends State<SettingsPage> {
   Uint8List? _image;
   bool isLoading = true;
 
+  void changeProfilePic() async{
+    WidgetsBinding.instance.addPostFrameCallback((_){
+      final appState = Provider.of<ApplicationState>(context, listen: false);
+      if(_image != null){
+        appState.changeProfilePicture(_image!);
+      }
+    });
+  }
+
   Future pickImage() async {
     try {
       final XFile? image = await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -37,7 +46,6 @@ class _SettingsPageState extends State<SettingsPage> {
       setState(() {
         _image = imageTemp.readAsBytesSync();
       }
-
       );
     } on PlatformException catch(e) {
       print('Failed to pick image: $e');

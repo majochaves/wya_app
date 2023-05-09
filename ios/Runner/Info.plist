@@ -4,6 +4,12 @@
 <dict>
     <key>io.flutter.embedded_views_preview</key>
     <string>YES</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>This app requires access to the photo library.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>This app requires access to the camera.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>This app does not require access to the microphone.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>This app needs access to location when open.</string>
     <key>NSLocationAlwaysUsageDescription</key>
