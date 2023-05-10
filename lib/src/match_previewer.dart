@@ -35,43 +35,52 @@ class MatchPreviewer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Expanded(
+        Expanded(
           flex: 1,
           child: Text(
-            'Your matches:',
-            style: kSubtitleTextStyle,
+            'Synced Lynks:',
+            style: kH3SpaceMonoTextStyle,
+            textAlign: TextAlign.start,
           ),
         ),
+        SizedBox(height: 10,),
         Expanded(
-          flex: 6,
-          child: RoundedContainer(
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              padding: 20,
-              child: SizedBox(
+          flex: 4,
+          child: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/megaorangegradient.png').image,
+                fit: BoxFit.cover),
+              borderRadius: const BorderRadius.all(Radius.circular(40))),
+            child: Padding(
+            padding: EdgeInsets.all(16),
+            child: SizedBox(
                 width: double.infinity,
                 child: matches.isEmpty ? Column(
                   mainAxisSize: MainAxisSize.max,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget> [
-                    Image.asset('assets/images/monkey.png', height: 60,),
-                    const SizedBox(height: 10,),
-                    const Text('You have no matches for this day. Add an event: ',
-                        style: kBodyTextStyle),
+                    //Image.asset('assets/images/monkey.png', height: 60,),
+                    //const SizedBox(height: 10,),
+                    //const Text('You have no matches for this day. Add an event: ',
+                        //style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                    Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/notFoundSymbol.png', width: 30,),
                     TextButton(onPressed: (){
                       context.go('/newEvent');
                     }, child: const Text(
-                        'Add event', style: kBodyTextStyle
-                    ))
+                        'Add event', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),),
                   ],
                 ) : ListView(
                   scrollDirection: Axis.horizontal,
                   children: getMatchCards(),
                 ),
               ),
-
-          ),
+          ),),
         ),
       ],
     );

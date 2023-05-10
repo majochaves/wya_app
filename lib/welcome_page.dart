@@ -19,33 +19,31 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kMainBGColor,
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            SvgPicture.asset('assets/images/wya_logo.svg', height: 150, width: 150,),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: const <Widget>[
-                Text(
-                  'wya',
-                  style: TextStyle(
-                    fontFamily: 'Roboto Slab',
-                    fontSize: 70.0,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(
-              height: 48.0,
-            ),
-            SquareButton(textColor: Colors.white, color: kDeepBlue, isLoading: false, text: 'Log In', onTap: (){
-              context.push('/sign-in');
-            }),
-          ],
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/linkwaveWAVEYbg.png').image,
+            fit: BoxFit.cover
+          )
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              const SizedBox(
+                height: 550.0,
+              ),
+              Image(image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/lynkwave_text.png').image),
+              const SizedBox(
+                height: 20.0,
+              ),
+              SquareButton(textColor: Colors.white, color: kLinkPink, isLoading: false, text: 'Log In', onTap: (){
+                context.push('/sign-in');
+              }),
+            ],
+          ),
         ),
       ),
     );

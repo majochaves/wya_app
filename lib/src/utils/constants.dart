@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
 
 //Colors
 //PASTEL BLUE COLOR
@@ -23,6 +25,19 @@ const kAlmostBlack = Color(0xFF212121);
 
 const kMainBGColor = Colors.white;
 const kIconDefaultColor = kOrange;
+
+//LINKWAVE COLORS
+const kLinkPink = Color(0xFFDE60BE);
+const kLinkPurple = Color(0xFF9E42C7);
+const kLinkLightPurple = Color(0xFFB9B7FF);
+const kLinkBlue = Color(0xFF158CCE);
+const kLinkHotPink = Color(0xFFF70088);
+
+//LINKWAVE TEXT
+TextStyle kH1SpaceMonoTextStyle = GoogleFonts.spaceMono(textStyle: const TextStyle(fontSize: 40, color: Colors.white,
+fontWeight: FontWeight.bold));
+TextStyle kH3SpaceMonoTextStyle = GoogleFonts.manrope(textStyle: const TextStyle(fontSize: 20, color: Colors.black,
+    fontWeight: FontWeight.bold));
 
 const kBodyTextStyle = TextStyle(fontFamily: 'Source Sans Pro',);
 

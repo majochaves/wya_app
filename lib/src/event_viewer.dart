@@ -205,7 +205,7 @@ class _EventViewerState extends State<EventViewer> {
           child: isLoading ? const Center(child: CircularProgressIndicator(color: kDeepBlue,),) : Padding(
             padding: const EdgeInsets.all(16),
             child: RoundedContainer(
-              backgroundColor: Colors.white,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               padding: 15,
               child: SingleChildScrollView(
                 child: Column(

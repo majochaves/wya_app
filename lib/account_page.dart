@@ -211,7 +211,7 @@ class _AccountPageState extends State<AccountPage> {
                   height: double.infinity,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
+                    color: Theme.of(context).scaffoldBackgroundColor,
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: Column(

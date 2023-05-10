@@ -4,6 +4,8 @@
 
 import 'dart:ui';
 
+import 'package:google_fonts/google_fonts.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_cupertino_date_picker_fork/flutter_cupertino_date_picker_fork.dart';
 import 'package:go_router/go_router.dart';
@@ -151,11 +153,11 @@ class SquareButton extends StatelessWidget {
         child: !isLoading
             ? Text(
                 text,
-                style: TextStyle(
+                style: GoogleFonts.spaceMono(textStyle: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: textColor,
-                    fontSize: 14),
-              )
+                    fontSize: 25),
+              ),)
             : CircularProgressIndicator(
                 color: color,
               ),
@@ -275,12 +277,11 @@ class CircleAvi extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.all(5),
-      width: size,
       height: size,
+      width: size,
       decoration: BoxDecoration(
         image: DecorationImage(fit: BoxFit.cover, image: imageSrc),
-        borderRadius: const BorderRadius.all(Radius.circular(100.0)),
+        borderRadius: const BorderRadius.all(Radius.circular(80.0)),
         color: Colors.redAccent,
       ),
     );
@@ -1472,9 +1473,9 @@ class OptionTile extends StatelessWidget {
     return InkWell(
       child: ListTile(
         leading: RoundedIcon(
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).primaryColor,
           icon: iconData,
-          iconColor: Colors.black,
+          iconColor: Colors.white,
         ),
         title: Text(
           title,
@@ -1512,9 +1513,15 @@ class BottomAppBarCustom extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BottomAppBar(
+      color: Colors.black,
       shape: const CircularNotchedRectangle(),
-      child: SizedBox(
-        height: 100.0,
+      child: Container(
+      decoration: BoxDecoration(
+      // image: DecorationImage(
+      // image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/purpleorangegradient.png').image,
+      // fit: BoxFit.cover),
+      color: kLinkLightPurple),
+        height: 70.0,
         child: Row(
           mainAxisSize: MainAxisSize.max,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1528,8 +1535,8 @@ class BottomAppBarCustom extends StatelessWidget {
                   iconSize: 30,
                   tooltip: 'Home',
                   icon: current == 'home'
-                      ? const Icon(Icons.home)
-                      : const Icon(Icons.home_outlined),
+                      ? const Icon(Icons.home, color: Colors.white, size: 30,)
+                      : const Icon(Icons.home_outlined, color: Colors.white, size: 30,),
                   onPressed: () {
                     context.push('/');
                   },
@@ -1545,8 +1552,8 @@ class BottomAppBarCustom extends StatelessWidget {
                   iconSize: 30,
                   tooltip: 'Search',
                   icon: current == 'search'
-                      ? const Icon(Icons.search)
-                      : const Icon(Icons.search_outlined),
+                      ? const Icon(Icons.search, color: Colors.white, size: 30,)
+                      : const Icon(Icons.search_outlined, color: Colors.white, size: 30,),
                   onPressed: () {
                     context.push('/search');
                   },
@@ -1562,8 +1569,8 @@ class BottomAppBarCustom extends StatelessWidget {
                   iconSize: 30,
                   tooltip: 'Profile',
                   icon: current == 'account'
-                      ? const Icon(Icons.person)
-                      : const Icon(Icons.person_outlined),
+                      ? const Icon(Icons.person, color: Colors.white, size: 30,)
+                      : const Icon(Icons.person_outlined, color: Colors.white, size: 30,),
                   onPressed: () {
                     context.push('/account');
                   },

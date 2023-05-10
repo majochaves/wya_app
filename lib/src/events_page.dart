@@ -71,7 +71,7 @@ class _EventsPageState extends State<EventsPage> {
                 child: Column(
                   children: [
                     Expanded(child: DateSelector(selectedDay: appState.selectedDay, toggleCalendar: toggleCalendar)),
-                    Expanded(flex: 12, child: EventsPreviewer(events: appState.selectedEvents, setSelectedEvent: (event) => appState.selectedEvent = event,)),
+                    Expanded(flex: 8, child: EventsPreviewer(events: appState.selectedEvents, setSelectedEvent: (event) => appState.selectedEvent = event,)),
                   ],
                 )),
           ),

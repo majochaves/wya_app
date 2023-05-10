@@ -32,7 +32,7 @@ class _RequestsViewerState extends State<RequestsViewer> {
   Widget build(BuildContext context) {
     return RoundedContainer(
       padding: 10,
-      backgroundColor: kPastelBlue,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       child: Column(
         children: [
           Row(children: [

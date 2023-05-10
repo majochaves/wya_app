@@ -5,8 +5,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart'
     hide EmailAuthProvider, PhoneAuthProvider;
+import 'package:google_sign_in/google_sign_in.dart';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_ui_auth/firebase_ui_auth.dart';
+import 'package:firebase_ui_oauth_google/firebase_ui_oauth_google.dart';
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_place_picker_mb/google_maps_place_picker.dart';
 import 'package:uuid/uuid.dart';
@@ -218,6 +222,7 @@ class ApplicationState extends ChangeNotifier {
 
     FirebaseUIAuth.configureProviders([
       EmailAuthProvider(),
+      GoogleProvider(clientId: '536153952717-slhgpkmab3a5i2rd1ahe68n3jnc1pgpk.apps.googleusercontent.com'),
     ]);
 
     _endDay = DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day, 23, 59);
@@ -603,10 +608,6 @@ class ApplicationState extends ChangeNotifier {
 
     Reference ref =
     FirebaseStorage.instance.ref().child(childName).child(FirebaseAuth.instance.currentUser!.uid);
-    if(isPost) {
-      String id = const Uuid().v1();
-      ref = ref.child(id);
-    }
 
     // putting in uint8list format -> Upload task like a future but not future
     UploadTask uploadTask = ref.putData(

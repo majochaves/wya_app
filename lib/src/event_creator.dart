@@ -642,7 +642,7 @@ class _EventCreatorState extends State<EventCreator> {
           child: Padding(
               padding: const EdgeInsets.all(16),
               child: RoundedContainer(
-                backgroundColor: Colors.white,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 padding: 15,
                 child: SingleChildScrollView(
                   child: Column(

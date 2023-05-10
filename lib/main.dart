@@ -203,7 +203,7 @@ class App extends StatelessWidget {
           Theme.of(context).textTheme,
         ),
         visualDensity: VisualDensity.adaptivePlatformDensity,
-        useMaterial3: true,
+        useMaterial3: false,
       ),
       routerConfig: _router, // new
     );

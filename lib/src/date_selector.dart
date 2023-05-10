@@ -11,33 +11,26 @@ class DateSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
           flex: 5,
           child: Text(
             StringFormatter.getDayTitle(selectedDay),
-            style: kH2RobotoTextStyle,
+            style: kH1SpaceMonoTextStyle,
           ),
         ),
         IconButton(
           icon: const Icon(
-            Icons.add,
-            color: kHotPink,
+            Icons.add, color: Colors.black,
+            size: 30,
           ),
           onPressed: () {
             context.go('/newEvent');
-            //Navigator.of(context)
-            //.pushReplacement(MaterialPageRoute(
-            //builder: (context) => LocationLoadingScreen(
-            //uid: uid,
-            //edit: false,
-            //eventId: '',
-            //date: _selectedDay,
-            //),
-            //));
           },
         ),
-        IconButton(icon: const Icon(Icons.calendar_month, color: kDeepBlue,), onPressed: () {toggleCalendar();},),
+        IconButton(icon: const Icon(Icons.calendar_month, color: Colors.black,
+          size: 30,), onPressed: () {toggleCalendar();},),
       ],
     );
   }

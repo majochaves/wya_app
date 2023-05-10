@@ -50,7 +50,7 @@ class _ChatViewerState extends State<ChatViewer> {
                 color: Colors.purple.shade100,
                 child: Row(children: [
                   SizedBox(width: 20,),
-                  CircleAvi(imageSrc: NetworkImage(appState.selectedChat!.user.photoUrl), size: 30,),
+                  CircleAvi(imageSrc: NetworkImage(appState.selectedChat!.user.photoUrl), size: 45,),
                   SizedBox(width: 20,),
                   Expanded(
                     child: Column(

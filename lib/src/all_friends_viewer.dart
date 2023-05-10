@@ -24,7 +24,7 @@ class AllFriendsViewer extends StatelessWidget {
   Widget build(BuildContext context) {
     return RoundedContainer(
         padding: 10,
-        backgroundColor: kPastelBlue,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         child: Column(
             crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(

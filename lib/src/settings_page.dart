@@ -38,13 +38,14 @@ class _SettingsPageState extends State<SettingsPage> {
     });
   }
 
-  Future pickImage() async {
+  Future pickImage(Function changeProfilePicture) async {
     try {
       final XFile? image = await ImagePicker().pickImage(source: ImageSource.gallery);
       if(image == null) return;
       final imageTemp = File(image.path);
       setState(() {
         _image = imageTemp.readAsBytesSync();
+        changeProfilePicture(_image);
       }
       );
     } on PlatformException catch(e) {
@@ -264,7 +265,7 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         body: SafeArea(
           child: isLoading ? const Center(child: CircularProgressIndicator(color: kDeepBlue,),) : Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
@@ -292,7 +293,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         bottom: -10,
                         left: 80,
                         child: IconButton(
-                          onPressed: pickImage,
+                          onPressed: () async {await pickImage(appState.changeProfilePicture);},
                           icon: const Icon(Icons.add_a_photo,),
                         ),
                       ),
@@ -322,7 +323,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     const Expanded(child: Text('Name: ')),
                     Expanded(
                       flex: 2,
-                      child: InkWell(onTap: showChangeEmailWindow, child:
+                      child: InkWell(onTap: showChangeNameWindow, child:
                       TextField(
                         enabled: false,
                         readOnly: true,
