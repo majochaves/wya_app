@@ -1,36 +1,45 @@
 import 'dart:async';
 import 'dart:typed_data';
+import 'dart:math' show cos, sqrt, asin;
+
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart'
     hide EmailAuthProvider, PhoneAuthProvider;
-import 'package:google_sign_in/google_sign_in.dart';
-
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_ui_auth/firebase_ui_auth.dart';
 import 'package:firebase_ui_oauth_google/firebase_ui_oauth_google.dart';
 
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_place_picker_mb/google_maps_place_picker.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:uuid/uuid.dart';
-import 'package:wya_final/location.dart';
-import 'package:wya_final/shared_event.dart';
-import 'package:wya_final/src/location_provider.dart';
-import 'package:wya_final/src/notification_user_event.dart';
-import 'package:wya_final/user_data.dart';
-import 'chat_info.dart';
-import 'notification.dart' as model;
-import 'package:wya_final/chat.dart' as model;
-import 'package:wya_final/message.dart' as model;
+import 'package:wya_final/src/managers/chat_manager.dart';
+import 'package:wya_final/src/managers/event_manager.dart';
+import 'package:wya_final/src/managers/group_manager.dart';
+import 'package:wya_final/src/managers/image_manager.dart';
+import 'package:wya_final/src/managers/location_manager.dart';
+import 'package:wya_final/src/managers/notification_manager.dart';
+import 'package:wya_final/src/managers/user_manager.dart';
+import 'package:wya_final/src/managers/username_manager.dart';
+import 'package:wya_final/src/models/location.dart';
+import 'package:wya_final/src/models/shared_event.dart';
+import 'package:wya_final/src/utils/location_provider.dart';
+import 'package:wya_final/src/models/user_data.dart';
+import 'src/models/notification_info.dart';
+import 'src/models/chat_info.dart';
+import 'src/models/notification.dart' as model;
+import 'package:wya_final/src/models/chat.dart' as model;
+import 'package:wya_final/src/models/message.dart' as model;
 import 'package:username_gen/username_gen.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
-import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 
-import 'event.dart';
-import 'group.dart';
-import 'match.dart' as model;
-import 'firebase_options.dart';                    // new
+import 'src/models/event.dart';
+import 'src/models/group.dart';
+import 'src/models/match.dart' as model;
+import 'firebase_options.dart';                       // new
 
 class ApplicationState extends ChangeNotifier {
   ApplicationState() {
@@ -124,6 +133,13 @@ class ApplicationState extends ChangeNotifier {
     _selectedSharedEvent = event;
   }
 
+  Map<DateTime, List<SharedEvent>> _joinedEvents = {};
+  Map<DateTime, List<SharedEvent>> get joinedEvents => _joinedEvents;
+  List<SharedEvent> get selectedJoinedEvents {
+    DateTime dayOfEvent = DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day, 0,0);
+    return _joinedEvents[dayOfEvent] ?? [];
+  }
+
   StreamSubscription<QuerySnapshot>? _chatSubscription;
   List<ChatInfo> _chats = [];
   List<ChatInfo> get chats => _chats;
@@ -133,48 +149,14 @@ class ApplicationState extends ChangeNotifier {
   }
 
   StreamSubscription<QuerySnapshot>? _notificationSubscription;
-  Map<DateTime, List<model.Notification>> _notifications = {};
-  Map<DateTime, List<model.Notification>> get notifications => _notifications;
-  List<model.Notification> get notificationsToday {
-    DateTime today = DateTime(DateTime
-        .now()
-        .year, DateTime
-        .now()
-        .month, DateTime
-        .now()
-        .day, 0, 0);
-    return _notifications[today] ?? [];
-  }
-  List<model.Notification> get notificationsPastWeek {
-    DateTime today = DateTime(DateTime
-        .now()
-        .year, DateTime
-        .now()
-        .month, DateTime
-        .now()
-        .day, 0, 0);
-    DateTime yesterday = today.subtract(const Duration(days:1));
-    DateTime twoDaysBefore = today.subtract(const Duration(days:2));
-    DateTime threeDaysBefore = today.subtract(const Duration(days:3));
-    DateTime fourDaysBefore = today.subtract(const Duration(days:4));
-    DateTime fiveDaysBefore = today.subtract(const Duration(days:5));
-    DateTime sixDaysBefore = today.subtract(const Duration(days:6));
-    DateTime sevenDaysBefore = today.subtract(const Duration(days:7));
-    List<model.Notification> nots = _notifications[yesterday] ?? [];
-    nots.addAll(_notifications[twoDaysBefore] ?? []);
-    nots.addAll(_notifications[threeDaysBefore] ?? []);
-    nots.addAll(_notifications[fourDaysBefore] ?? []);
-    nots.addAll(_notifications[fiveDaysBefore] ?? []);
-    nots.addAll(_notifications[sixDaysBefore] ?? []);
-    nots.addAll(_notifications[sevenDaysBefore] ?? []);
+  Map<DateTime, List<NotificationInfo>> _notifications = {};
+  Map<DateTime, List<NotificationInfo>> get notifications => _notifications;
 
-    return nots;
-  }
   int get unreadNotifications{
     int unread = 0;
     for(MapEntry entry in _notifications.entries){
-      for(model.Notification n in entry.value){
-        if(!n.isRead){
+      for(NotificationInfo n in entry.value){
+        if(!n.notification.isRead){
           unread++;
         }
       }
@@ -193,27 +175,11 @@ class ApplicationState extends ChangeNotifier {
     return unread;
   }
 
-  ChatInfo? _selectedChat = null;
+  ChatInfo? _selectedChat;
   ChatInfo? get selectedChat => _selectedChat;
   set selectedChat(ChatInfo? newSelectedChat){
     _selectedChat = newSelectedChat;
     notifyListeners();
-  }
-
-  Future<List<NotificationUserEvent>> getNotificationInfo(List<model.Notification> notifications) async{
-    List<NotificationUserEvent> info = [];
-    for(model.Notification n in notifications){
-      DocumentSnapshot userSnap = await FirebaseFirestore.instance.collection('userData').doc(n.userId).get();
-      if(n.type == 0 || n.type == 1){
-        NotificationUserEvent notInfo = NotificationUserEvent(notification: n, user: UserData.fromSnap(userSnap), event: null);
-        info.add(notInfo);
-      }else{
-        DocumentSnapshot eventSnap = await FirebaseFirestore.instance.collection('events').doc(n.eventId).get();
-        NotificationUserEvent notInfo = NotificationUserEvent(notification: n, user: UserData.fromSnap(userSnap), event: Event.fromSnap(eventSnap));
-        info.add(notInfo);
-      }
-    }
-    return info;
   }
 
   Future<void> init() async {
@@ -264,32 +230,6 @@ class ApplicationState extends ChangeNotifier {
                   });
             }
 
-            if(userData.notifications.isEmpty){
-              print('notifications is empty');
-              _notifications = {};
-              notifyListeners();
-            }else{
-              _notificationSubscription =
-                  FirebaseFirestore.instance
-                    .collection('notifications')
-                    .where('uid', isEqualTo: userData.uid)
-                    .snapshots()
-                    .listen((snapshot) {
-                      _notifications = {};
-                      for(final document in snapshot.docs) {
-                        model.Notification notification = model.Notification.fromSnap(document);
-                        DateTime dayOfNotification = DateTime(notification.created.year, notification.created.month,
-                        notification.created.day, 0, 0);
-
-                        if(!_notifications.containsKey(dayOfNotification)){
-                          _notifications.putIfAbsent(dayOfNotification, () => [notification]);
-                        }else{
-                          _notifications[dayOfNotification]!.add(notification);
-                        }
-                      }
-                      notifyListeners();
-                  });
-            }
             ///EVENTS
             if(userData.events.isEmpty) {
               _events = {};
@@ -300,6 +240,7 @@ class ApplicationState extends ChangeNotifier {
               _eventSubscription = FirebaseFirestore.instance
                   .collection('events')
                   .where('uid', isEqualTo: userData.uid)
+                  .orderBy('startsAt')
                   .snapshots()
                   .listen((snapshot) {
                 _events = {};
@@ -344,59 +285,6 @@ class ApplicationState extends ChangeNotifier {
                 }
                 notifyListeners();
               });
-
-              if(userData.chats.isEmpty){
-                print('chats is empty');
-                _chats = [];
-                notifyListeners();
-              }else{
-                print('chats is not empty');
-                _chats = [];
-                notifyListeners();
-                _chatSubscription = FirebaseFirestore.instance
-                    .collection('chats')
-                    .where('chatId', whereIn: userData.chats)
-                    .orderBy('lastMessageSentAt')
-                    .snapshots()
-                    .listen((snapshot) async {
-                      _chats = [];
-                      _chats.clear();
-                      notifyListeners();
-                      for(final document in snapshot.docs){
-                        model.Chat chat = model.Chat.fromSnap(document);
-                        if(chat.messages.isNotEmpty){
-                          List<model.Message> messages = [];
-                          QuerySnapshot mess = await FirebaseFirestore.instance
-                          .collection('messages').where('chatId', isEqualTo: chat.chatId)
-                          .get();
-                          for(final message in mess.docs){
-                            model.Message m = model.Message.fromSnap(message);
-                            messages.add(m);
-                          }
-                          UserData friend = UserData.emptyUserData();
-                          if(chat.uid1 == userData.uid){
-                            friend = _friendMap[chat.uid2]!;
-                          }else{
-                            friend = _friendMap[chat.uid1]!;
-                          }
-                          ChatInfo chatInfo = ChatInfo(chat: chat, messages: messages, user: friend);
-                          if(_chats.any((element) => element.chat.chatId == chatInfo.chat.chatId)){
-                            _chats[_chats.indexWhere((element) => element.chat.chatId == chatInfo.chat.chatId)] =
-                            chatInfo;
-                            if(_selectedChat != null){
-                              if(_selectedChat!.chat.chatId == chatInfo.chat.chatId){
-                                _selectedChat = chatInfo;
-                              }
-                            }
-                          }else{
-                            _chats.add(chatInfo);
-                          }
-                        }
-                      }
-                      notifyListeners();
-                });
-              }
-
               if(userData.groups.isEmpty) {
                 print('groups is empty');
                 _groups = {};
@@ -419,50 +307,156 @@ class ApplicationState extends ChangeNotifier {
               }
 
               var sharedEventsRef = FirebaseFirestore.instance
-                .collection('events')
-                .where('sharedWith', arrayContains: user.uid)
-                .where('startsAt', isGreaterThanOrEqualTo: Timestamp.fromDate(_selectedDay));
+                  .collection('events')
+                  .orderBy('startsAt')
+                  .where('sharedWith', arrayContains: user.uid)
+                  .where('startsAt', isGreaterThanOrEqualTo: Timestamp.fromDate(_selectedDay));
 
               _sharedEventSubscription = sharedEventsRef
                   .snapshots()
-                      .listen((snapshot) {
-                      _sharedEvents = {};
-                      _matches = {};
-                      for (final document in snapshot.docs) {
-                        Event event = Event.fromSnap(document);
-                        DateTime startsAt = event.startsAt as DateTime;
-                        DateTime dayOfEvent = DateTime(startsAt.year, startsAt.month, startsAt.day, 0,0);
+                  .listen((snapshot) async {
+                _sharedEvents = {};
+                _matches = {};
+                for (final document in snapshot.docs) {
+                  Event event = Event.fromSnap(document);
+                  DateTime startsAt = event.startsAt as DateTime;
+                  DateTime dayOfEvent = DateTime(startsAt.year, startsAt.month, startsAt.day, 0,0);
 
-                        if(_selectedSharedEvent != null && _selectedSharedEvent!.event.eventId == event.eventId){
-                          _selectedSharedEvent = SharedEvent(event, _friendMap[document.data()['uid']]!);
-                        }
+                  if(_selectedSharedEvent != null && _selectedSharedEvent!.event.eventId == event.eventId){
+                    _selectedSharedEvent = SharedEvent(event, _friendMap[document.data()['uid']]!);
+                  }
 
-                        model.Match? match = isThereMatch(SharedEvent(event, _friendMap[document.data()['uid']]!));
+                  if(event.participants.contains(userData.uid)){
+                    if(!_joinedEvents.containsKey(dayOfEvent)){
+                      print('joined events does not contain key for day ${dayOfEvent.toString()}');
+                      _joinedEvents.putIfAbsent(dayOfEvent, () => [SharedEvent(event, _friendMap[event.uid]!)]);
+                    }else{
+                      print('joined events contains key for day ${dayOfEvent.toString()}');
+                      _joinedEvents[dayOfEvent]!.add(SharedEvent(event, _friendMap[event.uid]!));
+                    }
+                  }
 
-                        if(!_sharedEvents.containsKey(dayOfEvent)){
-                          _sharedEvents.putIfAbsent(dayOfEvent, () => [SharedEvent(event, _friendMap[document.data()['uid']]!)]);
-                        }else{
-                          _sharedEvents[dayOfEvent]!.add(SharedEvent(event, _friendMap[document.data()['uid']]!));
-                        }
+                  if(!_sharedEvents.containsKey(dayOfEvent)){
+                    _sharedEvents.putIfAbsent(dayOfEvent, () => [SharedEvent(event, _friendMap[document.data()['uid']]!)]);
+                  }else{
+                    _sharedEvents[dayOfEvent]!.add(SharedEvent(event, _friendMap[document.data()['uid']]!));
+                  }
 
-                        if(match != null){
-                          if(!_matches.containsKey(dayOfEvent)){
-                            _matches.putIfAbsent(dayOfEvent, () => [match]);
-                          }else{
-                            _matches[dayOfEvent]!.add(match);
-                          }
+                  model.Match? match = await isThereMatch(SharedEvent(event, _friendMap[document.data()['uid']]!));
+
+                  if(match != null){
+                    if(!_matches.containsKey(dayOfEvent)){
+                      _matches.putIfAbsent(dayOfEvent, () => [match]);
+                    }else{
+                      _matches[dayOfEvent]!.add(match);
+                    }
+                  }
+                }
+                notifyListeners();
+              });
+            }
+            if(userData.notifications.isEmpty){
+              print('notifications is empty');
+              _notifications = {};
+              notifyListeners();
+            }else{
+              _notificationSubscription =
+                  FirebaseFirestore.instance
+                      .collection('notifications')
+                      .orderBy('created', descending: true)
+                      .where('uid', isEqualTo: userData.uid)
+                      .snapshots()
+                      .listen((snapshot) async{
+                    _notifications = {};
+                    for(final document in snapshot.docs) {
+                      model.Notification notification = model.Notification.fromSnap(document);
+                      UserData user = UserData.fromSnap(await FirebaseFirestore.instance.collection('userData').doc(notification.userId).get());
+
+                      NotificationInfo notInfo = NotificationInfo(notification: notification, user: user, event: null);
+
+                      if(notification.type != 0 && notification.type != 1){
+                        Event event = Event.fromSnap(await FirebaseFirestore.instance.collection('events').doc(notification.eventId).get());
+                        notInfo = NotificationInfo(notification: notification, user: user, event: event);
+                      }
+                      DateTime dayOfNotification = DateTime(notification.created.year, notification.created.month, notification.created.day, 0, 0);
+
+                      if(!_notifications.containsKey(dayOfNotification)){
+                        _notifications.putIfAbsent(dayOfNotification, () => [notInfo]);
+                      }else{
+                        _notifications[dayOfNotification]!.add(notInfo);
+                      }
+                    }
+                    notifyListeners();
+                  });
+            }
+            if(userData.chats.isEmpty){
+              print('chats is empty');
+              _chats = [];
+              notifyListeners();
+            }else{
+              print('chats is not empty');
+              _chats = [];
+              notifyListeners();
+              _chatSubscription = FirebaseFirestore.instance
+                  .collection('chats')
+                  .where('chatId', whereIn: userData.chats)
+                  .orderBy('lastMessageSentAt', descending: true)
+                  .snapshots()
+                  .listen((snapshot) async {
+                _chats = [];
+                _chats.clear();
+                notifyListeners();
+                for(final document in snapshot.docs){
+                  model.Chat chat = model.Chat.fromSnap(document);
+                  if(chat.messages.isNotEmpty){
+                    List<model.Message> messages = [];
+                    QuerySnapshot mess = await FirebaseFirestore.instance
+                        .collection('messages').where('chatId', isEqualTo: chat.chatId)
+                        .get();
+                    for(final message in mess.docs){
+                      model.Message m = model.Message.fromSnap(message);
+                      messages.add(m);
+                    }
+                    UserData friend = UserData.emptyUserData();
+                    if(chat.uid1 == userData.uid){
+                      if(friendMap.containsKey(chat.uid2)){
+                        friend = _friendMap[chat.uid2]!;
+                      }else{
+                        friend = UserData.fromSnap(await FirebaseFirestore.instance.
+                        collection('userData').doc(chat.uid2).get());
+                      }
+                    }else{
+                      if(friendMap.containsKey(chat.uid1)){
+                        friend = _friendMap[chat.uid1]!;
+                      }else{
+                        friend = UserData.fromSnap(await FirebaseFirestore.instance.
+                        collection('userData').doc(chat.uid1).get());
+                      }
+                    }
+                    ChatInfo chatInfo = ChatInfo(chat: chat, messages: messages, user: friend);
+                    if(_chats.any((element) => element.chat.chatId == chatInfo.chat.chatId)){
+                      _chats[_chats.indexWhere((element) => element.chat.chatId == chatInfo.chat.chatId)] =
+                          chatInfo;
+                      if(_selectedChat != null){
+                        if(_selectedChat!.chat.chatId == chatInfo.chat.chatId){
+                          _selectedChat = chatInfo;
                         }
                       }
-                      notifyListeners();
-                      });
-              }
+                    }else{
+                      _chats.add(chatInfo);
+                    }
+                  }
+                }
+                notifyListeners();
+              });
+            }
 
           }else{
             print('creating user data');
             String randomUsername = '';
             //bool uniqueUsername = false;
             randomUsername = UsernameGen().generate();
-              //uniqueUsername = await usernameIsUnique(randomUsername);
+            //uniqueUsername = await usernameIsUnique(randomUsername);
             //}
             UserData data = UserData(
                 email: user.email ?? '',
@@ -490,7 +484,7 @@ class ApplicationState extends ChangeNotifier {
           }
           notifyListeners();
         });
-        
+
 
       } else {
         _loggedIn = false;
@@ -549,9 +543,19 @@ class ApplicationState extends ChangeNotifier {
     }
   }
 
+  Future<void> setReadNotifications() async{
+    QuerySnapshot nots = await FirebaseFirestore.instance
+        .collection('notifications').where('uid', isEqualTo: userData.uid)
+        .where('isRead', isEqualTo: false)
+        .get();
+    for(final not in nots.docs){
+      await FirebaseFirestore.instance.collection('notifications').doc((not.data() as Map<String, dynamic>)['notificationId']).update({'isRead' : true});
+    }
+  }
+
   void handleNewMessage(types.PartialText message) {
     model.Message newMessage = model.Message(messageId: const Uuid().v1(), senderId: userData.uid,
-    chatId: selectedChat!.chat.chatId, text: message.text, dateSent: DateTime.now(), isRead: false);
+        chatId: selectedChat!.chat.chatId, text: message.text, dateSent: DateTime.now(), isRead: false);
     _selectedChat!.messages.insert(_selectedChat!.messages.length, newMessage);
     FirebaseFirestore.instance.collection('messages').doc(newMessage.messageId).set(newMessage.toJson());
     FirebaseFirestore.instance.collection('chats').doc(newMessage.chatId).update({
@@ -559,15 +563,26 @@ class ApplicationState extends ChangeNotifier {
 
   }
 
-  model.Match? isThereMatch(SharedEvent sharedEvent){
+  Future<model.Match?> isThereMatch(SharedEvent sharedEvent) async {
     model.Match? match;
     DateTime dayOfEvent = DateTime(sharedEvent.event.startsAt.year, sharedEvent.event.startsAt.month, sharedEvent.event.startsAt.day, 0,0);
     if(_events.containsKey(dayOfEvent)){
       for(Event event in _events[dayOfEvent]!){
         if(event.startsAt.isBefore(sharedEvent.event.endsAt) &&
-          event.endsAt.isAfter(sharedEvent.event.startsAt)){
-          match = model.Match(friendEvent: sharedEvent, userEvent: event);
-          break;
+            event.endsAt.isAfter(sharedEvent.event.startsAt)){
+          Location locationEvent = Location.fromSnap(await FirebaseFirestore.instance.collection('locations').doc(event.locationId).get());
+          Location locationSharedEvent = Location.fromSnap(await FirebaseFirestore.instance.collection('locations').doc(sharedEvent.event.locationId).get());
+          double lat1 = locationEvent.latitude;
+          double lon1 = locationEvent.longitude;
+          double lat2 = locationSharedEvent.latitude;
+          double lon2 = locationSharedEvent.longitude;
+          double distanceInMeters = Geolocator.distanceBetween(lat1, lon1, lat2, lon2);
+          double distance = distanceInMeters / 1000;
+          print('distance: ${distance.toString()}km');
+          if(distance <= userData.maxMatchDistance){
+            match = model.Match(friendEvent: sharedEvent, userEvent: event);
+            break;
+          }
         }
       }
     }
@@ -576,7 +591,7 @@ class ApplicationState extends ChangeNotifier {
 
   void changeAllowAdd(bool value){
     if(value != userData.allowAdd){
-     FirebaseFirestore.instance
+      FirebaseFirestore.instance
           .collection('userData')
           .doc(userData.uid)
           .update({
@@ -598,7 +613,7 @@ class ApplicationState extends ChangeNotifier {
 
   Future<void> changeProfilePicture(Uint8List file) async{
     String photoUrl =
-        await uploadImageToStorage('profilePics', file, false);
+    await uploadImageToStorage('profilePics', file, false);
     return FirebaseFirestore.instance.collection('userData').doc(userData.uid).update(
         {'photoUrl' : photoUrl});
   }
@@ -608,6 +623,10 @@ class ApplicationState extends ChangeNotifier {
 
     Reference ref =
     FirebaseStorage.instance.ref().child(childName).child(FirebaseAuth.instance.currentUser!.uid);
+    if(isPost) {
+      String id = const Uuid().v1();
+      ref = ref.child(id);
+    }
 
     // putting in uint8list format -> Upload task like a future but not future
     UploadTask uploadTask = ref.putData(
@@ -642,9 +661,9 @@ class ApplicationState extends ChangeNotifier {
       model.Notification notification = model.Notification(notificationId:  notificationId, type: 0, created: DateTime.now(), uid: uid, isRead: false, userId: userData.uid, eventId: '');
 
       FirebaseFirestore.instance
-        .collection('notifications')
-        .doc(notificationId)
-        .set(notification.toJson());
+          .collection('notifications')
+          .doc(notificationId)
+          .set(notification.toJson());
 
       FirebaseFirestore.instance
           .collection('userData')
@@ -780,7 +799,7 @@ class ApplicationState extends ChangeNotifier {
         .collection('userData')
         .doc(userData.uid)
         .update({
-    'groups': FieldValue.arrayRemove([groupId])
+      'groups': FieldValue.arrayRemove([groupId])
     });
   }
   bool groupNameIsUnique(String groupName, String groupId){
@@ -810,11 +829,9 @@ class ApplicationState extends ChangeNotifier {
         locationId: const Uuid().v1(),
         uid: event.uid,
         formattedAddress: location.formattedAddress,
-        address: location.adrAddress,
         url: location.url,
         latitude: location.geometry!.location.lat,
-        longitude: location.geometry!.location.lng,
-        name: location.name);
+        longitude: location.geometry!.location.lng,);
 
     await FirebaseFirestore.instance.collection('locations').doc(eventLocation.locationId).set(eventLocation.toJson());
 
@@ -873,11 +890,10 @@ class ApplicationState extends ChangeNotifier {
           locationId: const Uuid().v1(),
           uid: event.uid,
           formattedAddress: location.formattedAddress,
-          address: location.adrAddress,
           url: location.url,
           latitude: location.geometry!.location.lat,
           longitude: location.geometry!.location.lng,
-          name: location.name);
+      );
 
       await FirebaseFirestore.instance.collection('locations').doc(eventLocation.locationId).set(eventLocation.toJson());
 
@@ -917,17 +933,23 @@ class ApplicationState extends ChangeNotifier {
     });
   }
 
-  Future<void> requestToJoinEvent(String eventId, String uid) async{
+  Future<void> requestToJoinEvent(String eventId) async{
     if (!_loggedIn) {
       throw Exception('Must be logged in');
     }
-
     DocumentSnapshot doc = await FirebaseFirestore.instance.collection('events').doc(eventId).get();
 
     Event event = Event.fromSnap(doc);
 
     String notificationId = Uuid().v1();
     model.Notification notification = model.Notification(notificationId:  notificationId, type: 2, created: DateTime.now(), uid: event.uid, isRead: false, userId: userData.uid, eventId: eventId);
+
+    await FirebaseFirestore.instance
+        .collection('events')
+        .doc(eventId)
+        .update({
+      'requests': FieldValue.arrayUnion([userData.uid])
+    });
 
     FirebaseFirestore.instance
         .collection('notifications')
@@ -940,54 +962,22 @@ class ApplicationState extends ChangeNotifier {
         .update({
       'notifications': FieldValue.arrayUnion([notificationId])
     });
-
-    await FirebaseFirestore.instance
-        .collection('events')
-        .doc(eventId)
-        .update({
-      'requests': FieldValue.arrayUnion([uid])
-    });
   }
 
-  Future<void> joinEvent(String eventId, String uid) async{
+  Future<void> acceptEventRequest(String eventId, String requesterUID) async{
     if (!_loggedIn) {
       throw Exception('Must be logged in');
     }
 
-    DocumentSnapshot snapshot = await FirebaseFirestore.instance.collection('events').doc(eventId).get();
+    DocumentSnapshot doc = await FirebaseFirestore.instance.collection('events').doc(eventId).get();
 
-    Event event = Event.fromSnap(snapshot);
+    Event event = Event.fromSnap(doc);
 
-    if(event.requests.contains(uid)){
-      ///ACCEPTED REQUEST
-      String notificationId = Uuid().v1();
-      model.Notification notification = model.Notification(notificationId: notificationId, type: 3, created: DateTime.now(), uid: uid, isRead: false, userId: userData.uid, eventId: eventId);
+    if(event.requests.contains(requesterUID)){
 
-      FirebaseFirestore.instance
-          .collection('notifications')
-          .doc(notificationId)
-          .set(notification.toJson());
-
-      FirebaseFirestore.instance
-          .collection('userData')
-          .doc(uid)
-          .update({
-        'notifications': FieldValue.arrayUnion([notificationId])
-      });
-
-      await FirebaseFirestore.instance
-          .collection('events')
-          .doc(eventId)
-          .update({
-        'requests': FieldValue.arrayRemove([uid])
-      });
-    }else{
-      DocumentSnapshot doc = await FirebaseFirestore.instance.collection('events').doc(eventId).get();
-
-      Event event = Event.fromSnap(doc);
-
-      String notificationId = Uuid().v1();
-      model.Notification notification = model.Notification(notificationId: notificationId, type: 4, created: DateTime.now(), uid: event.uid, isRead: false, userId: uid, eventId: eventId);
+      ///Create notification letting requesting user know that their request has been accepted
+      String notificationId = const Uuid().v1();
+      model.Notification notification = model.Notification(notificationId: notificationId, type: 3, created: DateTime.now(), uid: requesterUID, isRead: false, userId: userData.uid, eventId: eventId);
 
       FirebaseFirestore.instance
           .collection('notifications')
@@ -996,17 +986,43 @@ class ApplicationState extends ChangeNotifier {
 
       FirebaseFirestore.instance
           .collection('userData')
-          .doc(event.uid)
+          .doc(requesterUID)
           .update({
         'notifications': FieldValue.arrayUnion([notificationId])
       });
+
     }
+  }
+
+  Future<void> joinEvent(String eventId) async{
+    if (!_loggedIn) {
+      throw Exception('Must be logged in');
+    }
+
+    DocumentSnapshot doc = await FirebaseFirestore.instance.collection('events').doc(eventId).get();
+
+    Event event = Event.fromSnap(doc);
 
     await FirebaseFirestore.instance
         .collection('events')
         .doc(eventId)
         .update({
-      'participants': FieldValue.arrayUnion([uid])
+      'participants': FieldValue.arrayUnion([userData.uid])
+    });
+
+    String notificationId = Uuid().v1();
+    model.Notification notification = model.Notification(notificationId: notificationId, type: 4, created: DateTime.now(), uid: event.uid, isRead: false, userId: userData.uid, eventId: eventId);
+
+    FirebaseFirestore.instance
+        .collection('notifications')
+        .doc(notificationId)
+        .set(notification.toJson());
+
+    FirebaseFirestore.instance
+        .collection('userData')
+        .doc(event.uid)
+        .update({
+      'notifications': FieldValue.arrayUnion([notificationId])
     });
   }
 

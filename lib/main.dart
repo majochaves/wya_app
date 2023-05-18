@@ -1,26 +1,30 @@
 import 'package:firebase_ui_auth/firebase_ui_auth.dart'; // new
+import 'package:firebase_ui_oauth_google/firebase_ui_oauth_google.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';               // new
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';                 // new
-import 'package:wya_final/profile_page.dart';
-import 'package:wya_final/search_page.dart';
-import 'package:wya_final/src/event_creator.dart';
-import 'package:wya_final/src/event_editor.dart';
-import 'package:wya_final/src/friends_page.dart';
-import 'package:wya_final/src/events_page.dart';
-import 'package:wya_final/src/event_viewer.dart';
-import 'package:wya_final/src/settings_page.dart';
-import 'package:wya_final/src/shared_event_viewer.dart';
+import 'package:wya_final/src/pages/auth.dart';
+import 'package:wya_final/src/pages/profile_page.dart';
+import 'package:wya_final/src/pages/search_page.dart';
+import 'package:wya_final/src/pages/event_creator.dart';
+import 'package:wya_final/src/pages/event_editor.dart';
+import 'package:wya_final/src/pages/friends_page.dart';
+import 'package:wya_final/src/pages/events_page.dart';
+import 'package:wya_final/src/pages/event_viewer.dart';
+import 'package:wya_final/src/pages/settings_page.dart';
+import 'package:wya_final/src/pages/shared_event_viewer.dart';
+import 'package:wya_final/src/pages/groups_viewer.dart';
 
-import 'account_page.dart';
+import '/src/pages/account_page.dart';
 import 'app_state.dart';                                 // new
-import 'chat_viewer.dart';
-import 'chats_page.dart';
-import 'home_page.dart';
-import 'notifications_page.dart';
+import 'src/pages/chat_viewer.dart';
+import '/src/pages/chats_page.dart';
+import '/src/pages/home_page.dart';
+import '/src/pages/notifications_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +36,7 @@ void main() {
     builder: ((context, child) => const App()),
   ));
 }
+
 final _router = GoRouter(
   routes: [
     GoRoute(
@@ -41,53 +46,8 @@ final _router = GoRouter(
         GoRoute(
           path: 'sign-in',
           builder: (context, state) {
-            return SignInScreen(
-              actions: [
-                ForgotPasswordAction(((context, email) {
-                  final uri = Uri(
-                    path: '/sign-in/forgot-password',
-                    queryParameters: <String, String?>{
-                      'email': email,
-                    },
-                  );
-                  context.push(uri.toString());
-                })),
-                AuthStateChangeAction(((context, state) {
-                  if (state is SignedIn || state is UserCreated) {
-                    var user = (state is SignedIn)
-                        ? state.user
-                        : (state as UserCreated).credential.user;
-                    if (user == null) {
-                      return;
-                    }
-                    if (state is UserCreated) {
-                      user.updateDisplayName(user.email!.split('@')[0]);
-                    }
-                    if (!user.emailVerified) {
-                      user.sendEmailVerification();
-                      const snackBar = SnackBar(
-                          content: Text(
-                              'Please check your email to verify your email address'));
-                      ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                    }
-                    context.pushReplacement('/');
-                  }
-                })),
-              ],
-            );
+            return const AuthGate();
           },
-          routes: [
-            GoRoute(
-              path: 'forgot-password',
-              builder: (context, state) {
-                final arguments = state.queryParameters;
-                return ForgotPasswordScreen(
-                  email: arguments['email'],
-                  headerMaxExtent: 200,
-                );
-              },
-            ),
-          ],
         ),
         GoRoute(
           path: 'profile-screen',
@@ -136,6 +96,12 @@ final _router = GoRouter(
           path: 'friends',
           builder: (context, state) {
             return const FriendsPage();
+          },
+        ),
+        GoRoute(
+          path: 'groups',
+          builder: (context, state) {
+            return const GroupsViewer();
           },
         ),
         GoRoute(
@@ -196,9 +162,9 @@ class App extends StatelessWidget {
       title: 'WYA',
       theme: ThemeData(
         buttonTheme: Theme.of(context).buttonTheme.copyWith(
-          highlightColor: Colors.deepPurple,
+          highlightColor: Colors.lightGreen,
         ),
-        primarySwatch: Colors.deepPurple,
+        primarySwatch: Colors.teal,
         textTheme: GoogleFonts.robotoTextTheme(
           Theme.of(context).textTheme,
         ),

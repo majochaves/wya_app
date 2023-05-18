@@ -30,6 +30,8 @@ class StringFormatter{
     DateTime now = DateTime.now();
     if(isSameDay(day, now)){
       return 'Today';
+    }else if(isSameDay(day, DateTime(now.year, now.month, now.day - 1))){
+      return 'Yesterday';
     }else if(isSameDay(day, DateTime(now.year, now.month, now.day + 1))){
       return 'Tomorrow';
     }else{
@@ -72,7 +74,7 @@ class StringFormatter{
         monthString = '0${day.month.toString()}';
       }
 
-      return '$weekDay $dayString/$monthString/${day.year.toString()}';
+      return '$dayString/$monthString/${day.year.toString()}';
     }
   }
 
