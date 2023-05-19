@@ -7,24 +7,24 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';                 // new
-import 'package:wya_final/src/pages/auth.dart';
-import 'package:wya_final/src/pages/profile_page.dart';
-import 'package:wya_final/src/pages/search_page.dart';
-import 'package:wya_final/src/pages/event_creator.dart';
-import 'package:wya_final/src/pages/event_editor.dart';
-import 'package:wya_final/src/pages/friends_page.dart';
-import 'package:wya_final/src/pages/events_page.dart';
-import 'package:wya_final/src/pages/event_viewer.dart';
-import 'package:wya_final/src/pages/settings_page.dart';
-import 'package:wya_final/src/pages/shared_event_viewer.dart';
-import 'package:wya_final/src/pages/groups_viewer.dart';
+import 'package:wya_final/pages/auth.dart';
+import 'package:wya_final/pages/profile_page.dart';
+import 'package:wya_final/pages/search_page.dart';
+import 'package:wya_final/pages/event_creator.dart';
+import 'package:wya_final/pages/event_editor.dart';
+import 'package:wya_final/pages/friends_page.dart';
+import 'package:wya_final/pages/events_page.dart';
+import 'package:wya_final/pages/event_viewer.dart';
+import 'package:wya_final/pages/settings_page.dart';
+import 'package:wya_final/pages/shared_event_viewer.dart';
+import 'package:wya_final/pages/groups_viewer.dart';
 
-import '/src/pages/account_page.dart';
+import 'pages/account_page.dart';
 import 'app_state.dart';                                 // new
-import 'src/pages/chat_viewer.dart';
-import '/src/pages/chats_page.dart';
-import '/src/pages/home_page.dart';
-import '/src/pages/notifications_page.dart';
+import 'pages/chat_viewer.dart';
+import 'pages/chats_page.dart';
+import 'pages/home_page.dart';
+import 'pages/notifications_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,19 +47,6 @@ final _router = GoRouter(
           path: 'sign-in',
           builder: (context, state) {
             return const AuthGate();
-          },
-        ),
-        GoRoute(
-          path: 'profile-screen',
-          builder: (context, state) {
-            return ProfileScreen(
-              providers: const [],
-              actions: [
-                SignedOutAction((context) {
-                  context.pushReplacement('/');
-                }),
-              ],
-            );
           },
         ),
         GoRoute(

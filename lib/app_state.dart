@@ -1,7 +1,5 @@
 import 'dart:async';
 import 'dart:typed_data';
-import 'dart:math' show cos, sqrt, asin;
-
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -14,31 +12,22 @@ import 'package:firebase_ui_oauth_google/firebase_ui_oauth_google.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_place_picker_mb/google_maps_place_picker.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:uuid/uuid.dart';
-import 'package:wya_final/src/managers/chat_manager.dart';
-import 'package:wya_final/src/managers/event_manager.dart';
-import 'package:wya_final/src/managers/group_manager.dart';
-import 'package:wya_final/src/managers/image_manager.dart';
-import 'package:wya_final/src/managers/location_manager.dart';
-import 'package:wya_final/src/managers/notification_manager.dart';
-import 'package:wya_final/src/managers/user_manager.dart';
-import 'package:wya_final/src/managers/username_manager.dart';
-import 'package:wya_final/src/models/location.dart';
-import 'package:wya_final/src/models/shared_event.dart';
-import 'package:wya_final/src/utils/location_provider.dart';
-import 'package:wya_final/src/models/user_data.dart';
-import 'src/models/notification_info.dart';
-import 'src/models/chat_info.dart';
-import 'src/models/notification.dart' as model;
-import 'package:wya_final/src/models/chat.dart' as model;
-import 'package:wya_final/src/models/message.dart' as model;
+import 'package:wya_final/models/location.dart';
+import 'package:wya_final/models/shared_event.dart';
+import 'package:wya_final/utils/location_provider.dart';
+import 'package:wya_final/models/user_data.dart';
+import 'models/notification_info.dart';
+import 'models/chat_info.dart';
+import 'models/notification.dart' as model;
+import 'package:wya_final/models/chat.dart' as model;
+import 'package:wya_final/models/message.dart' as model;
 import 'package:username_gen/username_gen.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 
-import 'src/models/event.dart';
-import 'src/models/group.dart';
-import 'src/models/match.dart' as model;
+import 'models/event.dart';
+import 'models/group.dart';
+import '/models/match.dart' as model;
 import 'firebase_options.dart';                       // new
 
 class ApplicationState extends ChangeNotifier {
@@ -563,31 +552,7 @@ class ApplicationState extends ChangeNotifier {
 
   }
 
-  Future<model.Match?> isThereMatch(SharedEvent sharedEvent) async {
-    model.Match? match;
-    DateTime dayOfEvent = DateTime(sharedEvent.event.startsAt.year, sharedEvent.event.startsAt.month, sharedEvent.event.startsAt.day, 0,0);
-    if(_events.containsKey(dayOfEvent)){
-      for(Event event in _events[dayOfEvent]!){
-        if(event.startsAt.isBefore(sharedEvent.event.endsAt) &&
-            event.endsAt.isAfter(sharedEvent.event.startsAt)){
-          Location locationEvent = Location.fromSnap(await FirebaseFirestore.instance.collection('locations').doc(event.locationId).get());
-          Location locationSharedEvent = Location.fromSnap(await FirebaseFirestore.instance.collection('locations').doc(sharedEvent.event.locationId).get());
-          double lat1 = locationEvent.latitude;
-          double lon1 = locationEvent.longitude;
-          double lat2 = locationSharedEvent.latitude;
-          double lon2 = locationSharedEvent.longitude;
-          double distanceInMeters = Geolocator.distanceBetween(lat1, lon1, lat2, lon2);
-          double distance = distanceInMeters / 1000;
-          print('distance: ${distance.toString()}km');
-          if(distance <= userData.maxMatchDistance){
-            match = model.Match(friendEvent: sharedEvent, userEvent: event);
-            break;
-          }
-        }
-      }
-    }
-    return match;
-  }
+
 
   void changeAllowAdd(bool value){
     if(value != userData.allowAdd){
@@ -1099,5 +1064,31 @@ class ApplicationState extends ChangeNotifier {
         .where('uid', isNotEqualTo: userData.uid);
 
     return doc.snapshots().isEmpty;
+  }
+
+  Future<model.Match?> isThereMatch(SharedEvent sharedEvent) async {
+    model.Match? match;
+    DateTime dayOfEvent = DateTime(sharedEvent.event.startsAt.year, sharedEvent.event.startsAt.month, sharedEvent.event.startsAt.day, 0,0);
+    if(_events.containsKey(dayOfEvent)){
+      for(Event event in _events[dayOfEvent]!){
+        if(event.startsAt.isBefore(sharedEvent.event.endsAt) &&
+            event.endsAt.isAfter(sharedEvent.event.startsAt)){
+          Location locationEvent = Location.fromSnap(await FirebaseFirestore.instance.collection('locations').doc(event.locationId).get());
+          Location locationSharedEvent = Location.fromSnap(await FirebaseFirestore.instance.collection('locations').doc(sharedEvent.event.locationId).get());
+          double lat1 = locationEvent.latitude;
+          double lon1 = locationEvent.longitude;
+          double lat2 = locationSharedEvent.latitude;
+          double lon2 = locationSharedEvent.longitude;
+          double distanceInMeters = Geolocator.distanceBetween(lat1, lon1, lat2, lon2);
+          double distance = distanceInMeters / 1000;
+          print('distance: ${distance.toString()}km');
+          if(distance <= userData.maxMatchDistance){
+            match = model.Match(friendEvent: sharedEvent, userEvent: event);
+            break;
+          }
+        }
+      }
+    }
+    return match;
   }
 }
