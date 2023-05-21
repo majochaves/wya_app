@@ -2,13 +2,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:wya_final/providers/user_provider.dart';
 import 'package:wya_final/utils/constants.dart';
+import '../providers/auth_provider.dart';
 import '/widgets/widgets.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:email_validator/email_validator.dart';
 
-
-import '../../app_state.dart';
 import 'welcome_page.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -31,9 +31,9 @@ class _SettingsPageState extends State<SettingsPage> {
 
   void changeProfilePic() async{
     WidgetsBinding.instance.addPostFrameCallback((_){
-      final appState = Provider.of<ApplicationState>(context, listen: false);
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
       if(_image != null){
-        appState.changeProfilePicture(_image!);
+        userProvider.changeProfilePicture(_image!);
       }
     });
   }
@@ -61,10 +61,10 @@ class _SettingsPageState extends State<SettingsPage> {
 
   void getData(){
     WidgetsBinding.instance.addPostFrameCallback((_){
-      final appState = Provider.of<ApplicationState>(context, listen: false);
-      usernameTextEditingController.text = appState.userData.username;
-      nameTextEditingController.text = appState.userData.name;
-      emailTextEditingController.text = appState.userData.email;
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      usernameTextEditingController.text = userProvider.username!;
+      nameTextEditingController.text = userProvider.name!;
+      emailTextEditingController.text = userProvider.email!;
     });
     isLoading = false;
   }
@@ -75,8 +75,8 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return Consumer<ApplicationState>(
-          builder: (context, appState, _) => AlertDialog(
+        return Consumer<UserProvider>(
+          builder: (context, userProvider, _) => AlertDialog(
             title: const Text('Change your username'),
             content: Form(
               key: _usernameFormKey,
@@ -90,7 +90,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           hintText: 'Enter your username',
                         ),
                         validator: (value) {
-                          if (value == appState.userData.username){
+                          if (value == userProvider.username!){
                             return null;
                           }else if(value == null || value.isEmpty){
                             return 'Please enter a username.';
@@ -108,17 +108,17 @@ class _SettingsPageState extends State<SettingsPage> {
               TextButton(
                 child: const Text('Cancel'),
                 onPressed: () {
-                  usernameTextEditingController.text = appState.userData.username;
+                  usernameTextEditingController.text = userProvider.username!;
                   Navigator.of(context).pop();
                 },
               ),
               TextButton(
                 child: const Text('Done'),
                 onPressed: () async {
-                  bool isUnique = await appState.usernameIsUnique(usernameTextEditingController.text);
+                  bool isUnique = await userProvider.usernameIsUnique(usernameTextEditingController.text);
                   if (isUnique && _usernameFormKey.currentState!.validate()) {
                     error = '';
-                    await appState.changeUsername(usernameTextEditingController.text);
+                    await userProvider.changeUsername(usernameTextEditingController.text);
                     Navigator.of(context).pop();
                   }else{
                     error = 'Sorry, that username already exists.';
@@ -138,8 +138,8 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return Consumer<ApplicationState>(
-          builder: (context, appState, _) => AlertDialog(
+        return Consumer<UserProvider>(
+          builder: (context, userProvider, _) => AlertDialog(
             title: const Text('Change your name'),
             content: Form(
               key: _nameFormKey,
@@ -153,7 +153,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           hintText: 'Enter your name',
                         ),
                         validator: (value) {
-                          if (value == appState.userData.name){
+                          if (value == userProvider.name!){
                             return null;
                           }else if(value == null || value.isEmpty){
                             return 'Please enter a name.';
@@ -171,7 +171,7 @@ class _SettingsPageState extends State<SettingsPage> {
               TextButton(
                 child: const Text('Cancel'),
                 onPressed: () {
-                  nameTextEditingController.text = appState.userData.name;
+                  nameTextEditingController.text = userProvider.name!;
                   Navigator.of(context).pop();
                 },
               ),
@@ -179,7 +179,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: const Text('Done'),
                 onPressed: () async {
                   if (_nameFormKey.currentState!.validate()) {
-                    await appState.changeName(nameTextEditingController.text);
+                    await userProvider.changeName(nameTextEditingController.text);
                     Navigator.of(context).pop();
                   }
                 },
@@ -197,8 +197,8 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return Consumer<ApplicationState>(
-          builder: (context, appState, _) => AlertDialog(
+        return Consumer<UserProvider>(
+          builder: (context, userProvider, _) => AlertDialog(
             title: const Text('Change your email'),
             content: Form(
               key: _emailFormKey,
@@ -212,7 +212,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           hintText: 'Enter your email',
                         ),
                         validator: (value) {
-                          if (value == appState.userData.email){
+                          if (value == userProvider.email){
                             return null;
                           }else if(value == null || value.isEmpty){
                             return 'Please enter an email.';
@@ -231,19 +231,19 @@ class _SettingsPageState extends State<SettingsPage> {
               TextButton(
                 child: const Text('Cancel'),
                 onPressed: () {
-                  emailTextEditingController.text = appState.userData.email;
+                  emailTextEditingController.text = userProvider.email!;
                   Navigator.of(context).pop();
                 },
               ),
               TextButton(
                 child: const Text('Done'),
                 onPressed: () async {
-                  bool isUnique = await appState.emailIsUnique(emailTextEditingController.text);
+                  bool isUnique = await userProvider.emailIsUnique(emailTextEditingController.text);
                   if(!isUnique){
                     error = 'Sorry, that email is already linked to another account. ';
                   }else{
                     if (_emailFormKey.currentState!.validate()) {
-                      await appState.changeEmail(emailTextEditingController.text);
+                      await userProvider.changeEmail(emailTextEditingController.text);
                       Navigator.of(context).pop();
                     }
                   }
@@ -258,8 +258,9 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ApplicationState>(
-      builder: (context, appState, _) => appState.loggedIn ? Scaffold(
+    final authProvider = Provider.of<Auth>(context);
+    return Consumer<UserProvider>(
+      builder: (context, userProvider, _) => authProvider.loggedIn ? Scaffold(
         appBar: const AppBarCustom(),
         body: SafeArea(
           child: isLoading ? const Center(child: CircularProgressIndicator(color: kDeepBlue,),) : Padding(
@@ -285,13 +286,13 @@ class _SettingsPageState extends State<SettingsPage> {
                       )
                           : CircleAvatar(
                           radius: 35,
-                          backgroundImage: NetworkImage(appState.userData.photoUrl)
+                          backgroundImage: NetworkImage(userProvider.photoUrl!)
                       ),
                       Positioned(
                         bottom: -10,
                         left: 45,
                         child: IconButton(
-                          onPressed: () async {await pickImage(appState.changeProfilePicture);},
+                          onPressed: () async {await pickImage(userProvider.changeProfilePicture);},
                           icon: const Icon(Icons.add_a_photo,),
                         ),
                       ),
@@ -355,20 +356,20 @@ class _SettingsPageState extends State<SettingsPage> {
                   children: [
                     const Expanded(child: Text('Allow to be added to events automatically: ')),
                     Expanded(
-                      child: OptionSwitch(boolValue: appState.userData.allowAdd, onChanged: (value) => appState.changeAllowAdd(value),),
+                      child: OptionSwitch(boolValue: userProvider.allowAdd!, onChanged: (value) => userProvider.changeAllowAdd(value),),
                     ),
                   ],
                 )),
                 const SizedBox(height: 20,),
                 Expanded(child: Text('Match settings: ', style: kH3SourceSansTextStyle.copyWith(decoration: TextDecoration.underline),),),
-                Expanded(child: Text('Maximum distance for matches: ${appState.userData.maxMatchDistance}km')),
+                Expanded(child: Text('Maximum distance for matches: ${userProvider.maxMatchDistance!}km')),
                 Expanded(child: Slider(
-                  value: appState.userData.maxMatchDistance.toDouble(),
+                  value: userProvider.maxMatchDistance!.toDouble(),
                   min: 1,
                   max: 200,
                   divisions: 20,
-                  label: appState.userData.maxMatchDistance.toDouble().toString(),
-                  onChanged: (double value) => appState.changeMaxMatchDistance(value),
+                  label: userProvider.maxMatchDistance!.toDouble().toString(),
+                  onChanged: (double value) => userProvider.changeMaxMatchDistance(value.toInt()),
                 ),),
               ],
             ),

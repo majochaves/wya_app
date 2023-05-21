@@ -3,11 +3,13 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:wya_final/utils/constants.dart';
+import '../providers/auth_provider.dart';
+import '../providers/chat_provider.dart';
+import '../providers/user_provider.dart';
 import '/widgets/widgets.dart';
 import 'package:wya_final/models/user_data.dart';
 import 'package:wya_final/pages/welcome_page.dart';
 
-import '../../app_state.dart';
 import '../models/chat_info.dart';
 class ChatsPage extends StatefulWidget {
   const ChatsPage({Key? key}) : super(key: key);
@@ -33,9 +35,10 @@ class _ChatsPageState extends State<ChatsPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_){
-      final appState = Provider.of<ApplicationState>(context, listen: false);
-      appState.selectedChat = null;
-      friends = appState.friends;
+      final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      chatProvider.selectedChat = null;
+      friends = userProvider.friendInfo;
     });
   }
 
@@ -69,8 +72,8 @@ class _ChatsPageState extends State<ChatsPage> {
           title: const Text('New message: '),
           content: StatefulBuilder(
               builder: (BuildContext context, StateSetter setState) {
-                return Consumer<ApplicationState>(
-                  builder: (context, appState, _) =>
+                return Consumer<ChatProvider>(
+                  builder: (context, chatProvider, _) =>
                   SizedBox(
                     height: 350,
                     width: 300,
@@ -115,7 +118,7 @@ class _ChatsPageState extends State<ChatsPage> {
                                   setState((){
                                     isLoading = true;
                                   });
-                                  await appState.startChatWith(user);
+                                  await chatProvider.startChatWith(user);
                                   context.go('/viewChat');
                               }),
                         ),
@@ -138,11 +141,12 @@ class _ChatsPageState extends State<ChatsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ApplicationState>(
-      builder: (context, appState, _) => appState.loggedIn ? Scaffold(
+    final authProvider = Provider.of<Auth>(context);
+    return Consumer<ChatProvider>(
+      builder: (context, chatProvider, _) => authProvider.loggedIn ? Scaffold(
         appBar: AppBar(
           backgroundColor: kWYATeal,
-          title: Text('Chats', style: GoogleFonts.pattaya(textStyle: TextStyle(color: Colors.white)),),
+          title: Text('Chats', style: GoogleFonts.pattaya(textStyle: const TextStyle(color: Colors.white)),),
           actions: [IconButton(onPressed: (){
             _newChatWindow();
           }, icon: const Icon(Icons.chat))],),
@@ -151,8 +155,8 @@ class _ChatsPageState extends State<ChatsPage> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                appState.chats.isEmpty ? const Center(child: Text('You have no chats'),) :
-                Expanded(child: ListView(children: getChatList(appState.chats),))
+                chatProvider.chats.isEmpty ? const Center(child: Text('You have no chats'),) :
+                Expanded(child: ListView(children: getChatList(chatProvider.chats),))
               ],
             ),
           ),

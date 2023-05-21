@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../app_state.dart';
+import '../providers/user_provider.dart';
 import '/pages/profile_page.dart';
 import 'package:wya_final/utils/constants.dart';
 import '/widgets/widgets.dart';
@@ -22,8 +23,8 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ApplicationState>(
-      builder: (context, appState, _) => Scaffold(
+    final userProvider = Provider.of<UserProvider>(context);
+    return Scaffold(
         appBar: AppBar(
           backgroundColor: kWYATeal,
           title: Form(
@@ -59,7 +60,7 @@ class _SearchPageState extends State<SearchPage> {
               itemBuilder: (context, index) {
                 return InkWell(
                   onTap: () {
-                    if(appState.userData.uid == (snapshot.data! as dynamic).docs[index]['uid']){
+                    if(userProvider.uid! == (snapshot.data! as dynamic).docs[index]['uid']){
                       context.go('/account');
                     }else{
                       Navigator.of(context).push(
@@ -87,7 +88,6 @@ class _SearchPageState extends State<SearchPage> {
         ) : const Center(),
 
         bottomNavigationBar: const BottomAppBarCustom(current: 'search'),
-      ),
     );
   }
 }

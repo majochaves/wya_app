@@ -1,26 +1,29 @@
-import 'package:firebase_ui_auth/firebase_ui_auth.dart'; // new
-import 'package:firebase_ui_oauth_google/firebase_ui_oauth_google.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';               // new
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:provider/provider.dart';                 // new
-import 'package:wya_final/pages/auth.dart';
-import 'package:wya_final/pages/profile_page.dart';
-import 'package:wya_final/pages/search_page.dart';
-import 'package:wya_final/pages/event_creator.dart';
-import 'package:wya_final/pages/event_editor.dart';
-import 'package:wya_final/pages/friends_page.dart';
-import 'package:wya_final/pages/events_page.dart';
-import 'package:wya_final/pages/event_viewer.dart';
-import 'package:wya_final/pages/settings_page.dart';
-import 'package:wya_final/pages/shared_event_viewer.dart';
-import 'package:wya_final/pages/groups_viewer.dart';
+import 'package:provider/provider.dart';
 
+import 'providers/auth_provider.dart';
+import 'providers/chat_provider.dart';
+import 'providers/event_provider.dart';
+import 'providers/group_provider.dart';
+import 'providers/notification_provider.dart';
+import 'providers/user_provider.dart';
+
+import 'pages/auth.dart';
+import 'pages/profile_page.dart';
+import 'pages/search_page.dart';
+import 'pages/event_creator.dart';
+import 'pages/event_editor.dart';
+import 'pages/friends_page.dart';
+import 'pages/events_page.dart';
+import 'pages/event_viewer.dart';
+import 'pages/settings_page.dart';
+import 'pages/shared_event_viewer.dart';
+import 'pages/groups_viewer.dart';
 import 'pages/account_page.dart';
-import 'app_state.dart';                                 // new
 import 'pages/chat_viewer.dart';
 import 'pages/chats_page.dart';
 import 'pages/home_page.dart';
@@ -31,10 +34,48 @@ void main() {
   if (defaultTargetPlatform == TargetPlatform.android) {
     AndroidGoogleMapsFlutter.useAndroidViewSurface = true;
   }
-  runApp(ChangeNotifierProvider(
-    create: (context) => ApplicationState(),
-    builder: ((context, child) => const App()),
-  ));
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<Auth>(
+          create: (context) => Auth(),
+        ),
+        ChangeNotifierProvider<UserProvider>(
+          create: (context) => UserProvider(),
+        ),
+        ChangeNotifierProxyProvider<UserProvider, GroupProvider>(
+          create: (context) => GroupProvider(),
+            update: (_, userProvider, groupProvider){
+              groupProvider?.update(userProvider);
+              return groupProvider!;
+            }
+        ),
+        ChangeNotifierProxyProvider<UserProvider, EventProvider>(
+          create: (context) => EventProvider(),
+          update: (_, userProvider, eventProvider){
+            eventProvider?.update(userProvider);
+            return eventProvider!;
+          }
+        ),
+        ChangeNotifierProxyProvider<EventProvider, NotificationProvider>(
+          create: (context) => NotificationProvider(),
+          update: (_, eventProvider, notificationProvider){
+            notificationProvider?.update(eventProvider);
+            return notificationProvider!;
+          }
+        ),
+
+        ChangeNotifierProxyProvider<UserProvider, ChatProvider>(
+          create: (context) => ChatProvider(),
+          update: (_, userProvider, chatProvider){
+            chatProvider?.update(userProvider);
+            return chatProvider!;
+          }
+        ),
+      ],
+      child:  const App(),
+    ),
+  );
 }
 
 final _router = GoRouter(

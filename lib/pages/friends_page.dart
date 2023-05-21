@@ -1,15 +1,11 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:wya_final/app_state.dart';
+import 'package:wya_final/providers/user_provider.dart';
 import '../utils/constants.dart';
 import '/widgets/all_friends_viewer.dart';
 import '/widgets/requests_viewer.dart';
 import '/widgets/widgets.dart';
-
-import 'groups_viewer.dart';
 
 class FriendsPage extends StatelessWidget {
   const FriendsPage({
@@ -18,7 +14,7 @@ class FriendsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ApplicationState>(builder: (context, appState, _) =>
+    return Consumer<UserProvider>(builder: (context, userProvider, _) =>
       Scaffold(
         appBar: const AppBarCustom(),
         body: SafeArea(
@@ -28,17 +24,17 @@ class FriendsPage extends StatelessWidget {
                 mainAxisSize: MainAxisSize.max,
                 children: [
                   RequestsViewer(
-                    requests: appState.requests,
-                    addFriend: appState.addFriend,
-                    deleteRequest: appState.deleteRequest,
+                    requests: userProvider.requestInfo,
+                    addFriend: userProvider.addFriend,
+                    deleteRequest: userProvider.removeRequest,
                   ),
                   const SizedBox(height: 10,),
                   Expanded(
                     flex: 6,
                       child: AllFriendsViewer(
-                        uid: appState.userData.uid,
-                        friends: appState.friends,
-                        deleteFriend: appState.removeFriend,
+                        uid: userProvider.uid!,
+                        friends: userProvider.friendInfo,
+                        deleteFriend: userProvider.removeFriend,
                       )),
                   const SizedBox(height: 10,),
                   InkWell(

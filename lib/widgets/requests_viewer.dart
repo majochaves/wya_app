@@ -8,6 +8,7 @@ import 'package:wya_final/widgets/widgets.dart';
 
 import '../../app_state.dart';
 import '../models/user_data.dart';
+import '../providers/user_provider.dart';
 
 class RequestsViewer extends StatefulWidget {
 
@@ -25,17 +26,17 @@ class _RequestsViewerState extends State<RequestsViewer> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ApplicationState>(builder: (context, appState, _) =>
+    return Consumer<UserProvider>(builder: (context, userProvider, _) =>
       RoundedContainer(
         padding: 10,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Friend requests (${appState.requests.length})', style: kH3RobotoTextStyle,
+            Text('Friend requests (${userProvider.requestInfo.length})', style: kH3RobotoTextStyle,
             textAlign: TextAlign.start,),
             Visibility(
-              visible: appState.requests.isNotEmpty,
+              visible: userProvider.requestInfo.isNotEmpty,
               child: SizedBox(
                 height: 120,
                 child: Row(
@@ -43,18 +44,18 @@ class _RequestsViewerState extends State<RequestsViewer> {
                     ListView.builder(
                         scrollDirection: Axis.horizontal,
                         shrinkWrap: true,
-                        itemCount: appState.requests.length,
+                        itemCount: userProvider.requestInfo.length,
                         itemBuilder: (context, index) {
                           return InkWell(
                             onTap: () => context.push(
-                                '/profile:${appState.requests[index].uid}'),
+                                '/profile:${userProvider.requestInfo[index].uid}'),
                             child: Column(
                               children: [
                                 Expanded(
                                   flex: 2,
                                   child: CircleAvatar(
                                     backgroundImage: NetworkImage(
-                                      appState.requests[index].photoUrl,
+                                      userProvider.requestInfo[index].photoUrl,
                                     ),
                                     radius: 25,
                                   ),
@@ -63,7 +64,7 @@ class _RequestsViewerState extends State<RequestsViewer> {
                                   flex: 1,
                                   child: Center(
                                     child: Text(
-                                      appState.requests[index].username,
+                                      userProvider.requestInfo[index].username,
                                     ),
                                   ),
                                 ),
@@ -78,8 +79,8 @@ class _RequestsViewerState extends State<RequestsViewer> {
                                           color: Colors.green,
                                         ),
                                         onPressed: () {
-                                          appState.addFriend(
-                                              appState.requests[index].uid);
+                                          userProvider.addFriend(
+                                              userProvider.requestInfo[index].uid);
                                         },
                                       ),
                                       IconButton(
@@ -89,8 +90,8 @@ class _RequestsViewerState extends State<RequestsViewer> {
                                           color: Colors.red,
                                         ),
                                         onPressed: () {
-                                          appState.deleteRequest(
-                                              appState.requests[index].uid);
+                                          userProvider.removeRequest(
+                                              userProvider.requestInfo[index].uid);
                                         },
                                       )
                                     ],

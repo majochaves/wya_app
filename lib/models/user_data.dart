@@ -6,20 +6,18 @@ class UserData {
   final String photoUrl;
   final String username;
   final String name;
-  final List friends;
-  final List requests;
   final List events;
   final List groups;
   final bool allowAdd;
   final int maxMatchDistance;
   final List notifications;
   final List chats;
+  final List friends;
+  final List requests;
 
-  const UserData({
+  UserData({
     required this.name,
     required this.email,
-    required this.friends,
-    required this.requests,
     required this.photoUrl,
     required this.uid,
     required this.username,
@@ -29,6 +27,8 @@ class UserData {
     required this.maxMatchDistance,
     required this.notifications,
     required this.chats,
+    required this.friends,
+    required this.requests
   });
 
   Map<String, dynamic> toJson() => {
@@ -37,10 +37,10 @@ class UserData {
     "uid": uid,
     "email": email,
     "photoUrl": photoUrl,
-    "friends": friends,
-    "requests": requests,
     "events": events,
     "groups": groups,
+    "friends": friends,
+    "requests": requests,
     "allowAdd" : allowAdd,
     "maxMatchDistance" : maxMatchDistance,
     "notifications" : notifications,
@@ -56,32 +56,14 @@ class UserData {
       uid: snapshot['uid'],
       email: snapshot['email'],
       photoUrl: snapshot['photoUrl'],
-      friends: snapshot['friends'],
-      requests: snapshot['requests'],
       events: snapshot['events'],
       groups: snapshot['groups'],
       allowAdd: snapshot['allowAdd'],
       maxMatchDistance: snapshot['maxMatchDistance'],
       notifications: snapshot['notifications'],
-      chats: snapshot['chats']
-    );
-  }
-
-  static UserData emptyUserData() {
-    return const UserData(
-        email: '',
-        name: '',
-        friends: [],
-        requests: [],
-        photoUrl: '',
-        uid: '',
-        username: '',
-        events: [],
-        groups: [],
-        notifications: [],
-        allowAdd: true,
-        maxMatchDistance: 200,
-        chats: []
+      chats: snapshot['chats'],
+      friends: snapshot['friends'],
+      requests: snapshot['requests'],
     );
   }
 }

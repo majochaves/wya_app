@@ -12,17 +12,19 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:wya_final/models/event_category.dart';
+import 'package:wya_final/providers/event_provider.dart';
+import 'package:wya_final/providers/user_provider.dart';
 import 'package:wya_final/utils/constants.dart';
 import 'package:wya_final/utils/string_formatter.dart';
 
 import 'package:wya_final/models/event.dart';
-import '../../app_state.dart';
 import '../models/chat_info.dart';
 import '../models/group.dart';
 import '../models/shared_event.dart';
 import '../models/user_data.dart';
 import 'package:wya_final/models/match.dart' as model;
 
+import '../providers/chat_provider.dart';
 import '/models/notification_info.dart';
 
 class Header extends StatelessWidget {
@@ -365,7 +367,7 @@ class MatchCard extends StatelessWidget {
               child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-              Expanded(child: Text('${match.friendEvent.user.username}', style: matchUsernameText,),),
+              Expanded(child: Text(match.friendEvent.user.username, style: matchUsernameText,),),
               Expanded(
                 flex: 2,
                 child: SvgPicture.asset('/Users/majochaves/StudioProjects/wya_app/assets/icons/category${match.friendEvent.event.category}.svg', color: Colors.white,)
@@ -502,7 +504,7 @@ class JoinedEventCard extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Expanded(child: Text('${event.user.username}', style: matchUsernameText,),),
+                    Expanded(child: Text(event.user.username, style: matchUsernameText,),),
                     Expanded(
                         flex: 2,
                         child: SvgPicture.asset('/Users/majochaves/StudioProjects/wya_app/assets/icons/category${event.event.category}.svg', color: Colors.white,)
@@ -606,12 +608,9 @@ class EventCategoryChip extends StatelessWidget {
             backgroundColor: kPastelBlue,
             selectedColor: kPastelPink,
             disabledColor: kPastelBlue,
-            label: Container(
-              //color: backgroundColor,
-              child: Text(
-                categoryName,
-                textAlign: TextAlign.center,
-              ),
+            label: Text(
+              categoryName,
+              textAlign: TextAlign.center,
             ),
             selected: isSelected,
             onSelected: (bool selected) {
@@ -625,12 +624,9 @@ class EventCategoryChip extends StatelessWidget {
             backgroundColor: kPastelBlue,
             selectedColor: kPastelPink,
             disabledColor: kPastelBlue,
-            label: Container(
-              //color: backgroundColor,
-              child: Text(
-                categoryName,
-                textAlign: TextAlign.center,
-              ),
+            label: Text(
+              categoryName,
+              textAlign: TextAlign.center,
             ),
             selected: isSelected,
             onSelected: (bool selected) {
@@ -715,33 +711,35 @@ class YesNoChip extends StatelessWidget {
 }
 
 class ChatPreviewer extends StatelessWidget {
+
   final ChatInfo chat;
   const ChatPreviewer({Key? key, required this.chat}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ApplicationState>(
-        builder: (context, appState, _) => InkWell(
-              onTap: () {
-                appState.selectedChat = chat;
-                context.go('/viewChat');
-              },
-              child: ListTile(
-                leading: CircleAvi(
-                  imageSrc: NetworkImage(chat.user.photoUrl),
-                  size: 30,
-                ),
-                title: Text(chat.user.name, style:
-                (chat.messages.last.senderId != appState.userData.uid &&
-                    chat.messages.last.isRead == false) ?
-                    const TextStyle(fontWeight: FontWeight.bold) : null,),
-                subtitle: Text(chat.messages.last.text, style:
-                (chat.messages.last.senderId != appState.userData.uid &&
-                    chat.messages.last.isRead == false) ?
-                const TextStyle(fontWeight: FontWeight.bold) : null,),
-                trailing: isSameDay(DateTime.now(), chat.chat.lastMessageSentAt!) ? Text(StringFormatter.getTimeString(
-                    chat.chat.lastMessageSentAt!)) : Text(StringFormatter.getDayTitle(chat.chat.lastMessageSentAt!))),
-            ));
+    final chatProvider = Provider.of<ChatProvider>(context);
+    final userProvider = Provider.of<UserProvider>(context);
+    return InkWell(
+      onTap: () {
+        chatProvider.selectedChat = chat;
+        context.go('/viewChat');
+      },
+      child: ListTile(
+        leading: CircleAvi(
+          imageSrc: NetworkImage(chat.user.photoUrl),
+          size: 30,
+        ),
+        title: Text(chat.user.name, style:
+        (chat.messages.last.senderId != userProvider.uid! &&
+            chat.messages.last.isRead == false) ?
+            const TextStyle(fontWeight: FontWeight.bold) : null,),
+        subtitle: Text(chat.messages.last.text, style:
+        (chat.messages.last.senderId != userProvider.uid! &&
+            chat.messages.last.isRead == false) ?
+        const TextStyle(fontWeight: FontWeight.bold) : null,),
+        trailing: isSameDay(DateTime.now(), chat.chat.lastMessageSentAt!) ? Text(StringFormatter.getTimeString(
+            chat.chat.lastMessageSentAt!)) : Text(StringFormatter.getDayTitle(chat.chat.lastMessageSentAt!))),
+    );
   }
 }
 
@@ -851,7 +849,7 @@ class StatColumn extends StatelessWidget {
         }
       },
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -989,10 +987,10 @@ class NotificationType2 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ApplicationState>(
-        builder: (context, appState, _) => InkWell(
+    return Consumer<EventProvider>(
+        builder: (context, eventProvider, _) => InkWell(
               onTap: () {
-                appState.selectedEvent = notification.event;
+                eventProvider.selectedEvent = notification.event;
                 context.go('/viewEvent');
               },
               child: ListTile(
@@ -1014,10 +1012,10 @@ class NotificationType3 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ApplicationState>(
-        builder: (context, appState, _) => InkWell(
+    return Consumer<EventProvider>(
+        builder: (context, eventProvider, _) => InkWell(
               onTap: () {
-                appState.selectedSharedEvent =
+                eventProvider.selectedSharedEvent =
                     SharedEvent(notification.event!, notification.user);
                 context.go('/viewSharedEvent');
               },
@@ -1040,10 +1038,10 @@ class NotificationType4 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ApplicationState>(
-        builder: (context, appState, _) => InkWell(
+    return Consumer<EventProvider>(
+        builder: (context, eventProvider, _) => InkWell(
               onTap: () {
-                appState.selectedEvent = notification.event;
+                eventProvider.selectedEvent = notification.event;
                 context.go('/viewEvent');
               },
               child: ListTile(
@@ -1295,7 +1293,7 @@ class CircleIcon extends StatelessWidget {
         borderRadius: BorderRadius.circular(100),
       ),
       child: Padding(
-        padding: EdgeInsets.all(10),
+        padding: const EdgeInsets.all(10),
         child: Icon(
           icon,
           color: iconColor,
@@ -1326,7 +1324,7 @@ class RoundedIcon extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
       ),
       child: Padding(
-        padding: EdgeInsets.all(7),
+        padding: const EdgeInsets.all(7),
         child: Icon(
           icon,
           color: iconColor,
@@ -1555,7 +1553,7 @@ class UserInkWellListTiles extends StatelessWidget {
 }
 
 class GroupListTiles extends StatelessWidget {
-  final Map<Group, List<UserData>> groups;
+  final List<Group> groups;
   final IconData icon;
   final Function onPressed;
   const GroupListTiles(
@@ -1572,11 +1570,11 @@ class GroupListTiles extends StatelessWidget {
         itemCount: groups.length,
         itemBuilder: (context, index) {
           return ListTile(
-            title: Text(groups.keys.elementAt(index).name),
+            title: Text(groups.elementAt(index).name),
             trailing: IconButton(
               icon: Icon(icon),
               onPressed: () {
-                onPressed(groups.entries.elementAt(index));
+                onPressed(groups.elementAt(index));
               },
             ),
           );
@@ -1595,7 +1593,7 @@ class AppBarCustom extends StatelessWidget with PreferredSizeWidget{
   }
 
   @override
-  Size get preferredSize => Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
 
 

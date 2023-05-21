@@ -3,17 +3,13 @@ import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:wya_final/models/event_category.dart';
+import 'package:wya_final/providers/event_provider.dart';
 import 'package:wya_final/utils/constants.dart';
 import 'package:wya_final/utils/string_formatter.dart';
 import '/widgets/widgets.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../app_state.dart';
-import '../models/event.dart';
-import '../models/location.dart';
-import '../models/user_data.dart';
-
-
 
 class EventViewer extends StatefulWidget {
   const EventViewer({Key? key}) : super(key: key);
@@ -30,59 +26,19 @@ class _EventViewerState extends State<EventViewer> {
 
   bool isLoading = true;
 
-  Event? event;
-  Location? location;
-  String description = '';
-  String categoryName = '';
-  DateTime startsAt = DateTime.now();
-  DateTime endsAt = DateTime.now();
-  bool isOpen = true;
-  int joinRequests = 0;
-  int participants = 0;
-  bool isPublic = true;
-  String locationAddress = '';
-
-  List<UserData> friends = [];
-
   @override
   void initState() {
     super.initState();
-    getData();
-  }
-
-
-  void getData() async{
-  WidgetsBinding.instance.addPostFrameCallback((_) async {
-    final appState = Provider.of<ApplicationState>(context, listen: false);
-    event = appState.selectedEvent;
-    location = await appState.getLocationById(event!.locationId);
-    setState(() {
-        _kMapCenter = LatLng(location!.latitude, location!.longitude);
-        friends = appState.friends;
-        description = event!.description;
-        categoryName = EventCategory.getCategoryById(event!.category).name;
-        startsAt = event!.startsAt;
-        endsAt = event!.endsAt;
-        isOpen = event!.isOpen;
-        joinRequests = event!.requests.length;
-        participants = event!.participants.length;
-        isPublic = event!.sharedWithAll;
-        locationAddress = location!.formattedAddress!;
-
-        isLoading = false;
-      });
-    });
   }
 
   Future<void> _showRequestsWindow() async {
-    List<UserData> requests = List.from(friends);
-    requests.removeWhere((element) => !event!.requests.contains(element.uid));
+    final eventProvider = Provider.of<EventProvider>(context);
 
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
       builder: (BuildContext context) {
-        return requests.isEmpty
+        return eventProvider.requests.isEmpty
             ? AlertDialog(
           content: const SizedBox(
             height: 100,
@@ -105,8 +61,7 @@ class _EventViewerState extends State<EventViewer> {
           title: const Text('Requests: '),
           content: StatefulBuilder(
               builder: (BuildContext context, StateSetter setState) {
-                return Consumer<ApplicationState>(
-                    builder: (context, appState, _) => SizedBox(
+                return SizedBox(
                   height: 350,
                   width: 300,
                   child: Column(
@@ -117,23 +72,20 @@ class _EventViewerState extends State<EventViewer> {
                         'Requests: ',
                         style: kH4SourceSansTextStyle,
                       ),
-                      requests.isEmpty ? const Center(child: Text('You have no requests'),) : Expanded(
+                      eventProvider.requests.isEmpty ? const Center(child: Text('You have no requests'),) : Expanded(
                         flex: 4,
                         child: UserListTiles(
-                            users: requests,
+                            users: eventProvider.requests,
                             icon: Icons.check,
                             onPressed: (user) {
                               setState(() {
-                                appState.acceptEventRequest(event!.eventId, user.uid);
-                                event!.participants.add(user.uid);
-                                event!.requests.remove(user.uid);
-                                requests.remove(user);
+                                eventProvider.acceptEventRequest(eventProvider.eventId!, user.uid);
                               });
                             }),
                       ),
                     ],
                   ),
-                ),);
+                );
               }),
           actions: <Widget>[
             TextButton(
@@ -149,9 +101,7 @@ class _EventViewerState extends State<EventViewer> {
   }
 
   Future<void> _showParticipantsWindow() async {
-    List<UserData> participants = List.from(friends);
-    participants.removeWhere((element) => !event!.participants.contains(element.uid));
-
+    final eventProvider = Provider.of<EventProvider>(context);
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
@@ -160,8 +110,7 @@ class _EventViewerState extends State<EventViewer> {
           title: const Text('Participants: '),
           content: StatefulBuilder(
               builder: (BuildContext context, StateSetter setState) {
-                return Consumer<ApplicationState>(
-                  builder: (context, appState, _) => SizedBox(
+                return SizedBox(
                     height: 350,
                     width: 300,
                     child: Column(
@@ -172,22 +121,20 @@ class _EventViewerState extends State<EventViewer> {
                           'Participants: ',
                           style: kH4SourceSansTextStyle,
                         ),
-                        appState.selectedEvent!.participants.isEmpty ? const Center(child: Text('Your event has no participants'),) : Expanded(
+                        eventProvider.participants.isEmpty ? const Center(child: Text('Your event has no participants'),) : Expanded(
                           flex: 4,
                           child: UserListTiles(
-                              users: participants,
+                              users: eventProvider.participants,
                               icon: Icons.close,
                               onPressed: (user) {
                                 setState(() {
-                                  appState.removeParticipant(event!.eventId, user.uid);
-                                  event!.participants.remove(user.uid);
-                                  participants.remove(user);
+                                  eventProvider.removeParticipantFromEvent(eventProvider.eventId!, user.uid);
                                 });
                               }),
                         ),
                       ],
                     ),
-                  ),);
+                  );
               }),
           actions: <Widget>[
             TextButton(
@@ -217,6 +164,8 @@ class _EventViewerState extends State<EventViewer> {
 
   @override
   Widget build(BuildContext context) {
+    final eventProvider = Provider.of<EventProvider>(context);
+    _kMapCenter = LatLng(eventProvider.location!.latitude, eventProvider.location!.longitude);
     return Consumer<ApplicationState>(
       builder: (context, appState, _) => Scaffold(
         appBar: const AppBarCustom(),
@@ -230,7 +179,7 @@ class _EventViewerState extends State<EventViewer> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Event: $description',
+                    Text('Event: ${eventProvider.description}',
                       style: kH2SourceSansTextStyle,),
                     Row(
                       mainAxisSize: MainAxisSize.max,
@@ -240,11 +189,11 @@ class _EventViewerState extends State<EventViewer> {
                           decoration: BoxDecoration(
                             borderRadius: const BorderRadius.all(Radius.circular(20)),
                             //border: Border.all(color: Colors.black),
-                            image: DecorationImage(image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/gradient${appState.selectedEvent!.category}.png').image),
+                            image: DecorationImage(image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/gradient${eventProvider.category}.png').image),
                           ),
                           child: Padding(
                             padding: const EdgeInsets.all(16),
-                            child: SvgPicture.asset('/Users/majochaves/StudioProjects/wya_app/assets/icons/category${appState.selectedEvent!.category}.svg',
+                            child: SvgPicture.asset('/Users/majochaves/StudioProjects/wya_app/assets/icons/category${eventProvider.category}.svg',
                             color: Colors.black, width: 100,),
                           ),
                         ),
@@ -256,32 +205,32 @@ class _EventViewerState extends State<EventViewer> {
                             Row(
                               children: [
                                 const Text('Category: ', style: kH4SourceSansTextStyle,),
-                                Text(categoryName),
+                                Text(EventCategory.getCategoryById(eventProvider.category).name),
                               ],
                             ),
                             Row(
                               children: [
                                 const Text('Date: ', style: kH4SourceSansTextStyle,),
-                                Text(StringFormatter.getDayText(startsAt))
+                                Text(StringFormatter.getDayText(eventProvider.startsAt))
                               ],
                             ),
                             Row(
                               children: [
                                 const Text('Time: ', style: kH4SourceSansTextStyle,),
-                                Text('${StringFormatter.getTimeString(startsAt)}'
-                                    '-${StringFormatter.getTimeString(endsAt)}')
+                                Text('${StringFormatter.getTimeString(eventProvider.startsAt)}'
+                                    '-${StringFormatter.getTimeString(eventProvider.endsAt)}')
                               ],
                             ),
                             Row(
                               children: [
                                 const Text('Open event: ', style: kH4SourceSansTextStyle,),
-                                isOpen ? const Text('True') : const Text('False')
+                                eventProvider.isOpen ? const Text('True') : const Text('False')
                               ],
                             ),
                             Row(
                               children: [
                                 const Text('Shared with: ', style: kH4SourceSansTextStyle,),
-                                isPublic ? const Text('All friends') : TextButton(child: const Text('View shared with'), onPressed: () {},)
+                                eventProvider.sharedWithAll ? const Text('All friends') : TextButton(child: const Text('View shared with'), onPressed: () {},)
                               ],
                             ),
                           ],
@@ -291,7 +240,7 @@ class _EventViewerState extends State<EventViewer> {
                     ),
                     const Text('Location: ', style: kH3SourceSansTextStyle,),
                     const SizedBox(height: 10,),
-                    Text(locationAddress),
+                    Text(eventProvider.location!.formattedAddress!),
                     const SizedBox(height: 10,),
                     Center(child: SizedBox(height: 200, width: 250, child:
                     GoogleMap(
@@ -304,12 +253,12 @@ class _EventViewerState extends State<EventViewer> {
                     ),)
                     ,),
                     Visibility(
-                      visible: !isOpen,
+                      visible: !eventProvider.isOpen,
                       child: Row(
                         children: [
                           const Text('Join requests: ', style: kH4SourceSansTextStyle,),
-                          appState.selectedEvent!.requests.isEmpty ?  const Text('None yet') :
-                              Text('(${appState.selectedEvent!.requests.length})'),
+                          eventProvider.requests.isEmpty ?  const Text('None yet') :
+                              Text('(${eventProvider.requests.length})'),
                           TextButton(child: const Text('View requests'), onPressed: (){
                             _showRequestsWindow();
                           },),
@@ -319,8 +268,8 @@ class _EventViewerState extends State<EventViewer> {
                     Row(
                       children: [
                         const Text('Participants: ', style: kH4SourceSansTextStyle,),
-                        appState.selectedEvent!.participants.isEmpty ? const Text('None yet') :
-                        Text('(${appState.selectedEvent!.participants.length})'),
+                        eventProvider.participants.isEmpty ? const Text('None yet') :
+                        Text('(${eventProvider.participants.length})'),
                         TextButton(child: const Text('View participants'), onPressed: (){
                           _showParticipantsWindow();
                         },),
@@ -335,7 +284,7 @@ class _EventViewerState extends State<EventViewer> {
                       },),
                       const SizedBox(width: 50,),
                       TextButton(child: const Text('Delete event'), onPressed: () {
-                        appState.deleteEvent(event!.eventId);
+                        eventProvider.deleteEvent(eventProvider.eventId!);
                         context.go('/events');
                       },),
                     ],)

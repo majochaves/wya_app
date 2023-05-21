@@ -5,13 +5,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:wya_final/providers/chat_provider.dart';
+import 'package:wya_final/providers/event_provider.dart';
+import 'package:wya_final/providers/user_provider.dart';
+import '../providers/auth_provider.dart';
+import '../providers/notification_provider.dart';
 import '/widgets/calendar.dart';
 import 'package:wya_final/widgets/match_previewer.dart';
 import '/widgets/shared_event_previewer.dart';
 import 'package:wya_final/utils/constants.dart';
 import 'package:wya_final/pages/welcome_page.dart';
 
-import '../../app_state.dart';
 import '/widgets/widgets.dart';
 import '/widgets/date_selector.dart';
 
@@ -28,8 +32,8 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_){
-      final appState = Provider.of<ApplicationState>(context, listen: false);
-      appState.selectedDay = DateTime.now();
+      final eventProvider = Provider.of<EventProvider>(context, listen: false);
+      eventProvider.selectedDay = DateTime.now();
     });
   }
 
@@ -40,13 +44,13 @@ class _HomePageState extends State<HomePage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Select Date'),
-          content: Consumer<ApplicationState>(
-              builder: (context, appState, _)
+          content: Consumer<EventProvider>(
+              builder: (context, eventProvider, _)
                 => SizedBox(height:350, width: 300,
                     child: Calendar(
-                      events: appState.selectedSharedEvents.map((e) => e.event).toList(),
-                      selectedDay: appState.selectedDay,
-                      onSelectDay: (selectedDay) => appState.selectedDay = selectedDay,
+                      events: eventProvider.sharedEventsForDay(eventProvider.selectedDay).map((e) => e.event).toList(),
+                      selectedDay: eventProvider.selectedDay,
+                      onSelectDay: (selectedDay) => eventProvider.selectedDay = selectedDay,
                       monthView: true)),),
           actions: <Widget>[
             TextButton(
@@ -63,8 +67,12 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ApplicationState>(
-        builder: (context, appState, _) => appState.loggedIn ? Scaffold(
+    final authProvider = Provider.of<Auth>(context);
+    final notificationProvider = Provider.of<NotificationProvider>(context);
+    final chatProvider = Provider.of<ChatProvider>(context);
+    final eventProvider = Provider.of<EventProvider>(context);
+    final userProvider = Provider.of<UserProvider>(context);
+    return authProvider.loggedIn ? Scaffold(
               appBar: AppBar(
                 backgroundColor: kWYATeal,
                 title: Image(image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/wyatextorange.png').image, width: 80,),
@@ -91,7 +99,7 @@ class _HomePageState extends State<HomePage> {
                                   minHeight: 12,
                                 ),
                                 child: Text(
-                                  '${appState.unreadNotifications}',
+                                  '${notificationProvider.unreadNotifications}',
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 8,
@@ -122,7 +130,7 @@ class _HomePageState extends State<HomePage> {
                                   minHeight: 12,
                                 ),
                                 child: Text(
-                                  '${appState.unreadMessages}',
+                                  '${chatProvider.unreadMessages}',
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 8,
@@ -149,23 +157,22 @@ class _HomePageState extends State<HomePage> {
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       children: <Widget>[
-                        Expanded(child: DateSelector(selectedDay: appState.selectedDay, toggleCalendar: toggleCalendar)),
+                        Expanded(child: DateSelector(selectedDay: eventProvider.selectedDay, toggleCalendar: toggleCalendar)),
                         const SizedBox(height: 15),
                         const Divider(height: 5, thickness: 3, color: kWYAOrange,),
                         const SizedBox(height: 20),
-                        Expanded(flex: 3, child: MatchPreviewer(matches: appState.selectedMatches, uid: appState.userData.uid,)),
+                        Expanded(flex: 3, child: MatchPreviewer(matches: eventProvider.matchesForDay(eventProvider.selectedDay), uid: userProvider.uid!,)),
                         const SizedBox(height: 20),
                         const Divider(height: 5, thickness: 3, color: kWYAOrange,),
                         const SizedBox(height: 20),
-                        Expanded(flex: 5, child: SharedEventPreviewer(sharedEvents: appState.selectedSharedEvents, setSelectedSharedEvent: (sharedEvent) => appState.selectedSharedEvent = sharedEvent,
-                        uid: appState.userData.uid,)),
+                        Expanded(flex: 5, child: SharedEventPreviewer(sharedEvents: eventProvider.sharedEventsForDay(eventProvider.selectedDay), setSelectedSharedEvent: (sharedEvent) => eventProvider.setSelectedSharedEvent(sharedEvent),
+                        uid: userProvider.uid!,)),
                       ],
                     ),
                   ),
                 ),
               ),
               bottomNavigationBar: const BottomAppBarCustom(current: 'home',),
-        ) : const WelcomePage(),
-    );
+        ) : const WelcomePage();
   }
 }

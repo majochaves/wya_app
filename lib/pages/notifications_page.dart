@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:wya_final/providers/notification_provider.dart';
+import '../providers/auth_provider.dart';
 import '../utils/constants.dart';
 import '/widgets/widgets.dart';
 import 'package:wya_final/pages/welcome_page.dart';
@@ -24,13 +26,15 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   void setReadNotifications(){
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final appState = Provider.of<ApplicationState>(context, listen: false);
-      appState.setReadNotifications();
+      final notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
+      notificationProvider.setReadNotifications();
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<Auth>(context);
+    final notificationProvider = Provider.of<NotificationProvider>(context);
     return Consumer<ApplicationState>(
       builder: (context, appState, _) => appState.loggedIn ? Scaffold(
         appBar: AppBar(
@@ -41,10 +45,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                Visibility(visible: appState.notifications.isEmpty,
+                Visibility(visible: notificationProvider.notifications.isEmpty,
                     child: const Center(child: Text('You have no notifications'),)),
-                Visibility(visible: appState.notifications.isNotEmpty, child:
-                  Expanded(child: NotificationsBuilder(notifications: appState.notifications))),
+                Visibility(visible: notificationProvider.notifications.isNotEmpty, child:
+                  Expanded(child: NotificationsBuilder(notifications: notificationProvider.notifications))),
           ],
             ),
           ),

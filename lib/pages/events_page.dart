@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:wya_final/app_state.dart';
+import 'package:wya_final/providers/event_provider.dart';
+import 'package:wya_final/providers/user_provider.dart';
 import '../utils/constants.dart';
 import '../widgets/joined_event_previewer.dart';
 import '/widgets/events_previewer.dart';
@@ -29,13 +30,12 @@ class _EventsPageState extends State<EventsPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Select Date'),
-          content: Consumer<ApplicationState>(
-            builder: (context, appState, _)
-            => SizedBox(height:350, width: 300,
+          content: Consumer<EventProvider>(builder: (context, eventProvider, _) =>
+              SizedBox(height:350, width: 300,
                 child: Calendar(
-                    events: appState.selectedEvents,
-                    selectedDay: appState.selectedDay,
-                    onSelectDay: (selectedDay) => appState.selectedDay = selectedDay,
+                    events: eventProvider.eventsForDay(eventProvider.selectedDay),
+                    selectedDay: eventProvider.selectedDay,
+                    onSelectDay: (selectedDay) => eventProvider.selectedDay = selectedDay,
                     monthView: true)),),
           actions: <Widget>[
             TextButton(
@@ -54,15 +54,16 @@ class _EventsPageState extends State<EventsPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_){
-      final appState = Provider.of<ApplicationState>(context, listen: false);
-      appState.selectedEvent = null;
-      appState.selectedDay = DateTime.now();
+      final eventProvider = Provider.of<EventProvider>(context, listen: false);
+      eventProvider.selectedEvent = null;
+      eventProvider.selectedDay = DateTime.now();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ApplicationState>(builder: (context, appState, _) =>
+    final userProvider = Provider.of<UserProvider>(context);
+    return Consumer<EventProvider>(builder: (context, eventProvider, _) =>
         Scaffold(
           appBar: const AppBarCustom(),
           body: Container(
@@ -74,16 +75,16 @@ class _EventsPageState extends State<EventsPage> {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      Expanded(child: DateSelector(selectedDay: appState.selectedDay, toggleCalendar: toggleCalendar)),
+                      Expanded(child: DateSelector(selectedDay: eventProvider.selectedDay, toggleCalendar: toggleCalendar)),
                       const SizedBox(height: 15),
                       const Divider(height: 5, thickness: 3, color: kWYAOrange,),
                       const SizedBox(height: 20),
-                      Expanded(flex: 5, child: EventsPreviewer(events: appState.selectedEvents, setSelectedEvent: (event) => appState.selectedEvent = event,)),
+                      Expanded(flex: 5, child: EventsPreviewer(events: eventProvider.eventsForDay(eventProvider.selectedDay), setSelectedEvent: (event) => eventProvider.setSelectedEvent(event),)),
                       const SizedBox(height: 20),
                       const Divider(height: 5, thickness: 3, color: kWYAOrange,),
                       const SizedBox(height: 20),
-                      Expanded(flex: 3, child: JoinedEventPreviewer(joinedEvents: appState.selectedJoinedEvents, setSelectedSharedEvent: (sharedEvent) => appState.selectedSharedEvent = sharedEvent,
-                        uid: appState.userData.uid,)),
+                      Expanded(flex: 3, child: JoinedEventPreviewer(joinedEvents: eventProvider.joinedEventsForDay(eventProvider.selectedDay), setSelectedSharedEvent: (sharedEvent) => eventProvider.setSelectedSharedEvent(sharedEvent),
+                        uid: userProvider.uid!,)),
                     ],
                   )),
             ),

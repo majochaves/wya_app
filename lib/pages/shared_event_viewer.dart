@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:wya_final/main.dart';
 import 'package:wya_final/models/event_category.dart';
+import 'package:wya_final/providers/event_provider.dart';
+import 'package:wya_final/providers/user_provider.dart';
 import 'package:wya_final/utils/constants.dart';
 import 'package:wya_final/utils/string_formatter.dart';
 import '/widgets/widgets.dart';
 
-import '../../app_state.dart';
-import '../models/event.dart';
-import '../models/location.dart';
-import '../models/shared_event.dart';
 class SharedEventViewer extends StatefulWidget {
   const SharedEventViewer({Key? key}) : super(key: key);
 
@@ -26,48 +22,12 @@ class _SharedEventViewerState extends State<SharedEventViewer> {
 
   GoogleMapController? controller;
 
-  bool isLoading = true;
-
-  SharedEvent? event;
-  Location? location;
-  String description = '';
-  String categoryName = '';
-  Image categoryImage = Image.asset('assets/icons/nightlife.png');
-  DateTime startsAt = DateTime.now();
-  DateTime endsAt = DateTime.now();
-  bool isOpen = true;
-  int participants = 0;
-  bool isPublic = true;
-  String locationAddress = '';
-
   bool isLoadingRequesting = false;
   bool isLoadingJoining = false;
 
   @override
   void initState() {
     super.initState();
-    getData();
-  }
-
-  void getData() async{
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final appState = Provider.of<ApplicationState>(context, listen: false);
-      event = appState.selectedSharedEvent;
-      location = await appState.getLocationById(event!.event.locationId);
-      setState(() {
-        _kMapCenter = LatLng(location!.latitude, location!.longitude);
-        description = event!.event.description;
-        categoryName = EventCategory.getCategoryById(event!.event.category).name;
-        startsAt = event!.event.startsAt;
-        endsAt = event!.event.endsAt;
-        isOpen = event!.event.isOpen;
-        participants = event!.event.participants.length;
-        isPublic = event!.event.sharedWithAll;
-        locationAddress = location!.formattedAddress!;
-
-        isLoading = false;
-      });
-    });
   }
 
   Marker _createMarker() {
@@ -85,11 +45,13 @@ class _SharedEventViewerState extends State<SharedEventViewer> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ApplicationState>(
-      builder: (context, appState, _) => Scaffold(
+    final userProvider = Provider.of<UserProvider>(context);
+    final eventProvider = Provider.of<EventProvider>(context);
+    _kMapCenter = LatLng(eventProvider.location!.latitude, eventProvider.location!.longitude);
+    return Scaffold(
         appBar: const AppBarCustom(),
         body: SafeArea(
-          child: isLoading ? const Center(child: CircularProgressIndicator(color: kDeepBlue,),) : Padding(
+          child: Padding(
             padding: const EdgeInsets.all(16),
             child: RoundedContainer(
               backgroundColor: Colors.white,
@@ -98,7 +60,7 @@ class _SharedEventViewerState extends State<SharedEventViewer> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Event: $description',
+                    Text('Event: ${eventProvider.description}',
                       style: kH2SourceSansTextStyle,),
                     Row(
                       mainAxisSize: MainAxisSize.max,
@@ -108,11 +70,11 @@ class _SharedEventViewerState extends State<SharedEventViewer> {
                           decoration: BoxDecoration(
                             borderRadius: const BorderRadius.all(Radius.circular(20)),
                             //border: Border.all(color: Colors.black),
-                            image: DecorationImage(image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/gradient${appState.selectedSharedEvent!.event.category}.png').image),
+                            image: DecorationImage(image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/gradient${eventProvider.selectedSharedEvent!.event.category}.png').image),
                           ),
                           child: Padding(
                             padding: const EdgeInsets.all(16),
-                            child: SvgPicture.asset('/Users/majochaves/StudioProjects/wya_app/assets/icons/category${appState.selectedSharedEvent!.event.category}.svg',
+                            child: SvgPicture.asset('/Users/majochaves/StudioProjects/wya_app/assets/icons/category${eventProvider.selectedSharedEvent!.event.category}.svg',
                               color: Colors.black, width: 100,),
                           ),
                         ),
@@ -124,20 +86,20 @@ class _SharedEventViewerState extends State<SharedEventViewer> {
                             Row(
                               children: [
                                 const Text('Category: ', style: kH4SourceSansTextStyle,),
-                                Text(categoryName),
+                                Text(EventCategory.getCategoryById(eventProvider.category).name),
                               ],
                             ),
                             Row(
                               children: [
                                 const Text('Date: ', style: kH4SourceSansTextStyle,),
-                                Text(StringFormatter.getDayText(startsAt))
+                                Text(StringFormatter.getDayText(eventProvider.startsAt))
                               ],
                             ),
                             Row(
                               children: [
                                 const Text('Time: ', style: kH4SourceSansTextStyle,),
-                                Text('${StringFormatter.getTimeString(startsAt)}'
-                                    '-${StringFormatter.getTimeString(endsAt)}')
+                                Text('${StringFormatter.getTimeString(eventProvider.startsAt)}'
+                                    '-${StringFormatter.getTimeString(eventProvider.endsAt)}')
                               ],
                             ),
                       ]),
@@ -145,7 +107,7 @@ class _SharedEventViewerState extends State<SharedEventViewer> {
                     ),
                     const Text('Location: ', style: kH3SourceSansTextStyle,),
                     const SizedBox(height: 10,),
-                    Text(locationAddress),
+                    Text(eventProvider.location!.formattedAddress!),
                     const SizedBox(height: 10,),
                     Center(child: SizedBox(height: 200, width: 250, child:
                     GoogleMap(
@@ -159,12 +121,12 @@ class _SharedEventViewerState extends State<SharedEventViewer> {
                       ,),
                     const SizedBox(height: 30,),
                     Visibility(
-                      visible: !isOpen,
+                      visible: !eventProvider.isOpen,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          !appState.selectedSharedEvent!.event.requests.contains(appState.userData.uid) ?
-                          appState.selectedSharedEvent!.event.participants.contains(appState.userData.uid) ?
+                          !eventProvider.selectedSharedEvent!.event.requests.contains(userProvider.uid!) ?
+                          eventProvider.selectedSharedEvent!.event.participants.contains(userProvider.uid!) ?
                               const Text('Joined') : SizedBox(
                             width: 300,
                             height: 50,
@@ -172,7 +134,7 @@ class _SharedEventViewerState extends State<SharedEventViewer> {
                                   setState(() {
                                     isLoadingJoining = true;
                                   });
-                                  await appState.requestToJoinEvent(appState.selectedSharedEvent!.event.eventId);
+                                  await eventProvider.requestToJoinEvent(eventProvider.selectedSharedEvent!.event.eventId);
                                   setState(() {
                                     isLoadingJoining = false;
                                   });
@@ -183,11 +145,11 @@ class _SharedEventViewerState extends State<SharedEventViewer> {
                       ),
                     ),
                     Visibility(
-                      visible: isOpen,
+                      visible: eventProvider.isOpen,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          !appState.selectedSharedEvent!.event.participants.contains(appState.userData.uid) ?
+                          !eventProvider.selectedSharedEvent!.event.participants.contains(userProvider.uid!) ?
                           SizedBox(
                             width: 300,
                             height: 50,
@@ -195,7 +157,7 @@ class _SharedEventViewerState extends State<SharedEventViewer> {
                               setState(() {
                                 isLoadingRequesting = true;
                               });
-                              await appState.joinEvent(appState.selectedSharedEvent!.event.eventId);
+                              await eventProvider.joinEvent(eventProvider.selectedSharedEvent!.event.eventId);
                               setState(() {
                                 isLoadingRequesting = false;
                               });
@@ -212,7 +174,6 @@ class _SharedEventViewerState extends State<SharedEventViewer> {
           ),
         ),
         bottomNavigationBar: const BottomAppBarCustom(current: 'account',),
-      ),
     );
   }
 }

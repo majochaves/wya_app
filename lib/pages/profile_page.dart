@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:wya_final/providers/user_provider.dart';
 import 'package:wya_final/utils/constants.dart';
 import '/widgets/widgets.dart';
 import '../../app_state.dart';
@@ -73,6 +74,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
     return isLoading
         ? const Center(
       child: CircularProgressIndicator(),
@@ -126,7 +128,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   textColor: Colors.black,
                                   borderColor: Colors.grey,
                                   function: () {
-                                    appState.removeFriend(userData['uid']);
+                                    userProvider.removeFriend(userData['uid']);
                                     setState(() {
                                       isFriend = false;
                                       friends--;
@@ -146,7 +148,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   textColor: Colors.white,
                                   borderColor: Colors.blue,
                                   function: () {
-                                    appState.requestFriend(userData['uid'] as String);
+                                    userProvider.sendFriendRequest(userData['uid'] as String);
                                     setState(() {
                                       isRequested = true;
                                     });

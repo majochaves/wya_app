@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:wya_final/providers/group_provider.dart';
+import 'package:wya_final/providers/user_provider.dart';
 import 'package:wya_final/utils/constants.dart';
 import 'package:wya_final/widgets/widgets.dart';
 
-import '../../app_state.dart';
-import '../models/group.dart';
 import '../models/user_data.dart';
 
 class GroupsViewer extends StatefulWidget {
@@ -25,20 +25,19 @@ class _GroupsViewerState extends State<GroupsViewer> {
   final TextEditingController _errorController = TextEditingController();
   List<UserData> selectedFriends = [];
 
-  Future<void> viewGroupWidget(
-      Group group, List<UserData> members, bool isNewGroup, List<UserData> friends) async {
-    final appState = Provider.of<ApplicationState>(context, listen: false);
+  Future<void> viewGroupWidget(bool isNewGroup) async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final groupProvider = Provider.of<GroupProvider>(context, listen: false);
     bool isChangeGroup = isNewGroup;
-    _groupNameController.text = group.name;
+    _groupNameController.text = groupProvider.name!;
     _errorController.text = '';
-    List<UserData> friendsNotInGroup = List<UserData>.from(friends);
-    friendsNotInGroup.removeWhere((element) => members.contains(element));
+    List<UserData> friendsNotInGroup = List<UserData>.from(userProvider.friendInfo);
 
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
       builder: (BuildContext context) {
-        return friends.isEmpty
+        return userProvider.friendInfo.isEmpty
             ? AlertDialog(
                 content: const SizedBox(
                   height: 100,
@@ -59,8 +58,8 @@ class _GroupsViewerState extends State<GroupsViewer> {
                 ],
               )
             : AlertDialog(
-                content: Consumer<ApplicationState>(
-                  builder: (context, appState, _) => StatefulBuilder(
+                content: Consumer<GroupProvider>(
+                  builder: (context, groupProvider, _) => StatefulBuilder(
                       builder: (BuildContext context, StateSetter setState) {
                     return SizedBox(
                       height: 450,
@@ -95,13 +94,8 @@ class _GroupsViewerState extends State<GroupsViewer> {
                                       onPressed: () {
                                         if (_groupNameFormKey.currentState!
                                             .validate()) {
+                                          groupProvider.name = _groupNameController.text;
                                           setState(() {
-                                            group = Group(
-                                              groupId: group.groupId,
-                                              name: _groupNameController.text,
-                                              uid: group.uid,
-                                              members: group.members,
-                                            );
                                             _errorController.text = '';
                                             isChangeGroup = false;
                                           });
@@ -127,7 +121,7 @@ class _GroupsViewerState extends State<GroupsViewer> {
                               child: Row(
                                 mainAxisSize: MainAxisSize.max,
                                 children: [
-                                  Expanded(child: Text(group.name)),
+                                  Expanded(child: Text(groupProvider.name!)),
                                   IconButton(
                                       onPressed: () {
                                         setState(() {
@@ -139,7 +133,8 @@ class _GroupsViewerState extends State<GroupsViewer> {
                                     visible: !isNewGroup,
                                     child: TextButton(
                                       onPressed: () {
-                                        appState.deleteGroup(group.groupId);
+                                        groupProvider.deleteGroup(groupProvider.groupId!);
+                                        groupProvider.newGroup();
                                         Navigator.of(context).pop();
                                       },
                                       child: const Text('Delete group'),
@@ -163,18 +158,17 @@ class _GroupsViewerState extends State<GroupsViewer> {
                           ),
                           Expanded(
                             flex: 4,
-                            child: members.isEmpty
+                            child: groupProvider.members.isEmpty
                                 ? const Center(
                                     child: Text(
                                         'Your group has no members yet. Add a friend.'),
                                   )
                                 : UserListTiles(
-                                    users: members,
+                                    users: groupProvider.members,
                                     icon: Icons.close,
                                     onPressed: (user) {
                                       setState(() {
-                                        group.members.remove(user.uid);
-                                        members.remove(user);
+                                        groupProvider.removeMember(user);
                                         friendsNotInGroup.add(user);
                                       });
                                     }),
@@ -201,8 +195,7 @@ class _GroupsViewerState extends State<GroupsViewer> {
                                     icon: Icons.add,
                                     onPressed: (user) {
                                       setState(() {
-                                        group.members.add(user.uid);
-                                        members.add(user);
+                                        groupProvider.addMember(user);
                                         friendsNotInGroup.remove(user);
                                       });
                                     }),
@@ -234,23 +227,19 @@ class _GroupsViewerState extends State<GroupsViewer> {
                   TextButton(
                     child: const Text('Done'),
                     onPressed: () {
-                      if (group.members.isEmpty) {
+                      if (groupProvider.members.isEmpty) {
                         setState(() {
                           _errorController.text =
                               'Group must have at least one member.';
                         });
-                      } else if (group.name.isEmpty) {
+                      } else if (groupProvider.name!.isEmpty) {
                         setState(() {
                           _errorController.text =
                               'Group name must not be empty';
                         });
                       } else {
-                        if (isNewGroup) {
-                          appState.addGroup(group);
-                        } else {
-                          appState.updateGroup(group);
-                        }
-
+                        groupProvider.saveGroup();
+                        groupProvider.newGroup();
                         _groupNameController.clear();
                         Navigator.of(context).pop();
                       }
@@ -264,8 +253,8 @@ class _GroupsViewerState extends State<GroupsViewer> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ApplicationState>(
-      builder: (context, appState, _) => Scaffold(
+    return Consumer<GroupProvider>(
+      builder: (context, groupProvider, _) => Scaffold(
         appBar: const AppBarCustom(),
         body: SafeArea(
           child: Padding(
@@ -273,30 +262,29 @@ class _GroupsViewerState extends State<GroupsViewer> {
             child: Column(children: [
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                 Text(
-                  'My groups (${appState.groups.length})',
+                  'My groups (${groupProvider.groups.length})',
                   style: kH3RobotoTextStyle,
                 ),
                 IconButton(
                   icon: const Icon(Icons.add, color: kWYAOrange,),
                   onPressed: () {
-                    viewGroupWidget(Group.emptyGroup(appState.userData.uid), [], true, appState.friends);
+                    viewGroupWidget(true);
                   },
                 ),
               ]),
-              appState.groups.isNotEmpty
+              groupProvider.groups.isNotEmpty
                   ? ListView.builder(
                       scrollDirection: Axis.vertical,
                       shrinkWrap: true,
-                      itemCount: appState.groups.length,
+                      itemCount: groupProvider.groups.length,
                       itemBuilder: (context, index) {
                         return InkWell(
                           child: ListTile(
-                            title:
-                                Text(appState.groups.keys.elementAt(index).name),
+                            title: Text(groupProvider.groups.elementAt(index).name),
                           ),
                           onTap: () {
-                            viewGroupWidget(appState.groups.keys.elementAt(index),
-                                appState.groups.values.elementAt(index), false, appState.friends);
+                            groupProvider.loadGroup(groupProvider.groups.elementAt(index));
+                            viewGroupWidget(false);
                           },
                         );
                       })

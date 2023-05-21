@@ -3,12 +3,12 @@ import 'package:provider/provider.dart';
 import 'package:wya_final/models/message.dart' as model;
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
+import 'package:wya_final/providers/chat_provider.dart';
+import 'package:wya_final/providers/user_provider.dart';
 import 'package:wya_final/utils/constants.dart';
-import '/widgets/widgets.dart';
+import '../providers/auth_provider.dart';
 import 'package:wya_final/models/user_data.dart';
 import 'package:wya_final/pages/welcome_page.dart';
-
-import '../../app_state.dart';
 
 class ChatViewer extends StatefulWidget {
   const ChatViewer({Key? key}) : super(key: key);
@@ -30,8 +30,8 @@ class _ChatViewerState extends State<ChatViewer> {
 
   void setReadMessages() async{
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final appState = Provider.of<ApplicationState>(context, listen: false);
-      await appState.setReadMessages();
+      final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+      await chatProvider.setReadMessages();
     });
   }
 
@@ -41,21 +41,22 @@ class _ChatViewerState extends State<ChatViewer> {
     setReadMessages();
   }
 
-
   @override
   Widget build(BuildContext context) {
-    return Consumer<ApplicationState>(
-      builder: (context, appState, _) => appState.loggedIn ? Scaffold(
+    final authProvider = Provider.of<Auth>(context);
+    final userProvider = Provider.of<UserProvider>(context);
+    return Consumer<ChatProvider>(
+      builder: (context, chatProvider, _) => authProvider.loggedIn ? Scaffold(
         appBar: AppBar(
           backgroundColor: kWYATeal,
           title: Row(
             children: [
-              CircleAvatar(backgroundImage: NetworkImage(appState.selectedChat!.user.photoUrl), radius: 25,),
+              CircleAvatar(backgroundImage: NetworkImage(chatProvider.selectedChat!.user.photoUrl), radius: 25,),
               const SizedBox(width: 10,),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.start, children: [
-                Text(appState.selectedChat!.user.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),),
-                Text(appState.selectedChat!.user.username, style: const TextStyle(fontSize: 10, color: Colors.white),),
+                Text(chatProvider.selectedChat!.user.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),),
+                Text(chatProvider.selectedChat!.user.username, style: const TextStyle(fontSize: 10, color: Colors.white),),
               ],),
             ],
           ),
@@ -66,9 +67,9 @@ class _ChatViewerState extends State<ChatViewer> {
               Expanded(
                 child: Chat(
                   theme: const DefaultChatTheme(primaryColor: kWYAOrange),
-                  messages: getMessages(appState.selectedChat!.messages),
-                  user: getUser(appState.userData),
-                  onSendPressed: appState.handleNewMessage,
+                  messages: getMessages(chatProvider.selectedChat!.messages),
+                  user: getUser(userProvider.currentUserData!),
+                  onSendPressed: chatProvider.handleNewMessage,
                 ),
               ),
             ],

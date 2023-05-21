@@ -2,10 +2,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:wya_final/providers/user_provider.dart';
 import 'package:wya_final/utils/constants.dart';
 import 'package:wya_final/pages/welcome_page.dart';
 
-import '../../app_state.dart';
+import '../providers/auth_provider.dart';
 import '/widgets/widgets.dart';
 
 
@@ -17,11 +18,11 @@ class AccountPage extends StatefulWidget {
 }
 
 class _AccountPageState extends State<AccountPage> {
-
   @override
   Widget build(BuildContext context) {
-    return Consumer<ApplicationState>(
-      builder: (context, appState, _) => appState.loggedIn ? Scaffold(
+    final authProvider = Provider.of<Auth>(context);
+    return Consumer<UserProvider>(
+      builder: (context, userProvider, _) => authProvider.loggedIn ? Scaffold(
         appBar: AppBar(
           backgroundColor: kWYATeal,
           title: Image(image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/wyatextorange.png').image, width: 80,),
@@ -48,8 +49,8 @@ class _AccountPageState extends State<AccountPage> {
                         child: CircleAvatar(
                           radius: 50.0,
                           backgroundColor: Colors.transparent,
-                          backgroundImage: appState.userData.photoUrl.isNotEmpty ? Image.network(
-                            appState.userData.photoUrl,
+                          backgroundImage: userProvider.photoUrl!.isNotEmpty ? Image.network(
+                            userProvider.photoUrl!,
                           ).image : Image.asset('assets/images/noProfilePic.png').image,
                         ),
                       ),
@@ -59,7 +60,7 @@ class _AccountPageState extends State<AccountPage> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              '@${appState.userData.username}',
+                              '@${userProvider.username}',
                               style: kHandleTextStyle,
                             ),
                           ],
@@ -69,7 +70,7 @@ class _AccountPageState extends State<AccountPage> {
                         flex: 2,
                         child:
                         Text(
-                          appState.userData.name,
+                          userProvider.name!,
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -79,8 +80,8 @@ class _AccountPageState extends State<AccountPage> {
                           mainAxisSize: MainAxisSize.max,
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            StatColumn(num: appState.userData.events.length, label: "events", pushTo: '/events', isEnabled: true),
-                            StatColumn(num: appState.userData.friends.length, label: "friends", pushTo: '/friends', isEnabled: true),
+                            StatColumn(num: userProvider.events.length, label: "events", pushTo: '/events', isEnabled: true),
+                            StatColumn(num: userProvider.friends.length, label: "friends", pushTo: '/friends', isEnabled: true),
                           ],
                         ),
                       ),

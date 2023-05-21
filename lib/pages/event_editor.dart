@@ -7,14 +7,14 @@ import 'package:google_maps_webservice/directions.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:wya_final/utils/constants.dart';
+import '../providers/event_provider.dart';
+import '../providers/group_provider.dart';
+import '../providers/user_provider.dart';
 import '/widgets/widgets.dart';
-import '../../app_state.dart';
 import '../models/event_category.dart';
 import '../models/group.dart';
 import '../models/user_data.dart';
-import 'package:wya_final/models/location.dart' as model;
 import '../utils/location_provider.dart';
-import '../models/event.dart';
 
 class EventEditor extends StatefulWidget {
   const EventEditor({Key? key}) : super(key: key);
@@ -34,29 +34,12 @@ class _EventEditorState extends State<EventEditor> {
   PickResult? locationResult;
 
   bool isLoading = true;
-
-  Event? event;
-  int category = 0;
-  DateTime startsAt = DateTime.now();
-  DateTime endsAt = DateTime.now();
-  bool isOpen = false;
-  bool isPublic = true;
   bool addMembers = false;
-  model.Location? location;
 
   DateTime eventDate = DateTime.now();
-
   DateTime startTime = DateTime.now();
-
   DateTime endTime = DateTime.now();
 
-  List<UserData> friends = [];
-  Map<Group, List<UserData>> groups = {};
-
-  List<UserData> eventParticipants = [];
-
-  List<UserData> sharedWith = [];
-  Map<Group, List<UserData>> eventGroups = {};
 
   @override
   void initState() {
@@ -66,105 +49,32 @@ class _EventEditorState extends State<EventEditor> {
 
   void getData() async{
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final appState = Provider.of<ApplicationState>(context, listen: false);
-      event = appState.selectedEvent;
-      location = await appState.getLocationById(event!.locationId);
-      locationProvider = await appState.location;
+      final eventProvider = Provider.of<EventProvider>(context);
       setState(() {
-        event = appState.selectedEvent;
+        _descriptionController.text = eventProvider.description;
+        eventDate = eventProvider.selectedDay;
+        startTime = isSameDay(eventProvider.selectedDay, DateTime.now())
+            ? DateTime.now()
+            : DateTime(eventDate.year, eventDate.month, eventDate.day, 0, 0);
+        endTime = DateTime(eventDate.year, eventDate.month, eventDate.day, 23, 59);
 
-        friends = appState.friends;
-        groups = appState.groups;
+        eventProvider.startsAt = startTime;
+        eventProvider.endsAt = endTime;
+        _locationController.text = eventProvider.location!.formattedAddress!;
+        locationResult
+          = PickResult(
+            formattedAddress: eventProvider.location!.formattedAddress,
+            geometry: Geometry(
+              location: Location(
+                  lat: eventProvider.location!.latitude,
+                  lng: eventProvider.location!.longitude
+              ),
+            )
+          );
 
-        category = event!.category;
-        startsAt = event!.startsAt;
-        eventDate = event!.startsAt;
-        startTime = event!.startsAt;
-        endTime = event!.endsAt;
-        endsAt = event!.endsAt;
-        isOpen = event!.isOpen;
-        event!.sharedWithAll;
-        addMembers = event!.participants != 0;
-
-        _descriptionController.text = event!.description;
-        _locationController.text = location!.formattedAddress!;
-
-        sharedWith = List.from(appState.friends);
-        sharedWith.removeWhere((element) => !event!.sharedWith.contains(element.uid));
-
-        eventParticipants = List.from(appState.friends);
-        eventParticipants
-            .removeWhere((element) => !event!.participants.contains(element.uid));
-
-        eventGroups = Map.from(groups);
-        for(MapEntry group in eventGroups.entries){
-          if(event!.groups.contains(group.key.groupId)){
-            eventGroups.remove(group.key);
-          }
-        }
-
-        locationResult = PickResult(formattedAddress: location!.formattedAddress, geometry: Geometry(
-          location: Location(lat: location!.latitude, lng: location!.longitude),
-        ));
+        _errorController.text = '';
         isLoading = false;
       });
-    });
-  }
-
-  ///SELECTORS
-
-  void selectEventCategory(int typeIndex, bool isSelected) {
-    int selectedCategory = 0;
-    setState(() {
-      if (isSelected) {
-        if (typeIndex == 0) {
-          selectedCategory = 0;
-        } else if (typeIndex == 1) {
-          if (event!.category == 0) {
-            selectedCategory = 1;
-          }
-        } else {
-          selectedCategory = typeIndex - 1;
-        }
-
-        event = Event(
-            description: event!.description,
-            uid: event!.uid,
-            eventId: event!.eventId,
-            datePublished: event!.datePublished,
-            startsAt: event!.startsAt,
-            endsAt: event!.endsAt,
-            participants: event!.participants,
-            locationId: event!.locationId,
-            sharedWithAll: event!.sharedWithAll,
-            isOpen: event!.isOpen,
-            groups: event!.groups,
-            category: selectedCategory,
-            sharedWith: event!.sharedWith,
-            requests: event!.requests
-        );
-      }
-    });
-  }
-
-  selectIsOpen(bool isOpen) {
-    setState(() {
-      event = Event(
-        description: event!.description,
-        uid: event!.uid,
-        eventId: event!.eventId,
-        datePublished: event!.datePublished,
-        startsAt: event!.startsAt,
-        endsAt: event!.endsAt,
-        participants: event!.participants,
-        locationId: event!.locationId,
-        sharedWithAll: event!.sharedWithAll,
-        isOpen: isOpen,
-        groups: event!.groups,
-        category: event!.category,
-        sharedWith: event!.sharedWith,
-        requests: event!.requests,
-      );
     });
   }
 
@@ -174,28 +84,8 @@ class _EventEditorState extends State<EventEditor> {
     });
   }
 
-  selectIsSharedWithAll(bool isSharedWithAll) {
-    setState(() {
-      event = Event(
-        description: event!.description,
-        uid: event!.uid,
-        eventId: event!.eventId,
-        datePublished: event!.datePublished,
-        startsAt: event!.startsAt,
-        endsAt: event!.endsAt,
-        participants: event!.participants,
-        locationId: event!.locationId,
-        sharedWithAll: isSharedWithAll,
-        isOpen: event!.isOpen,
-        groups: event!.groups,
-        category: event!.category,
-        sharedWith: event!.sharedWith,
-        requests: event!.requests,
-      );
-    });
-  }
-
   changeStartDate(DateTime newEventDate) {
+    final eventProvider = Provider.of<EventProvider>(context);
     setState(() {
       eventDate = newEventDate;
       if(!isSameDay(eventDate, DateTime.now())){
@@ -205,10 +95,14 @@ class _EventEditorState extends State<EventEditor> {
       }
       startTime = eventDate;
       endTime = eventDate;
+      eventProvider.startsAt = startTime;
+      eventProvider.endsAt = endTime;
+
     });
   }
 
   changeStartTime(DateTime newStartTime) {
+    final eventProvider = Provider.of<EventProvider>(context);
     setState(() {
       startTime = DateTime(eventDate.year, eventDate.month, eventDate.day, newStartTime.hour, newStartTime.minute);
       DateTime newEndTime = DateTime(eventDate.year, eventDate.month, eventDate.day, endTime.hour, endTime.minute);
@@ -218,27 +112,33 @@ class _EventEditorState extends State<EventEditor> {
         endTime = newEndTime;
       }
     });
+    eventProvider.startsAt = startTime;
+    eventProvider.endsAt = endTime;
   }
 
   changeEndTime(DateTime newEndTime) {
+    final eventProvider = Provider.of<EventProvider>(context);
     if (DateTime(eventDate.year, eventDate.month, eventDate.day, newEndTime.hour, newEndTime.minute).isAfter(startTime)) {
       setState(() {
         endTime = DateTime(eventDate.year, eventDate.month, eventDate.day, newEndTime.hour, newEndTime.minute);
       });
+      eventProvider.startsAt = startTime;
+      eventProvider.endsAt = endTime;
     }
   }
 
   ///WINDOWS
-  Future<void> _showAddMembersWindow() async {
-    List<UserData> friendsNotAdded = List.from(friends);
+  Future<void> _showAddMembersWindow(EventProvider eventProvider) async {
+    final UserProvider userProvider = Provider.of<UserProvider>(context);
+    List<UserData> friendsNotAdded = List.from(userProvider.friendInfo);
     friendsNotAdded
-        .removeWhere((element) => event!.participants.contains(element.uid));
+        .removeWhere((element) => eventProvider.participants.contains(element));
 
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
       builder: (BuildContext context) {
-        return friends.isEmpty
+        return userProvider.friendInfo.isEmpty
             ? AlertDialog(
           content: const SizedBox(
             height: 100,
@@ -274,18 +174,17 @@ class _EventEditorState extends State<EventEditor> {
                       ),
                       Expanded(
                         flex: 4,
-                        child: eventParticipants.isEmpty
+                        child: eventProvider.participants.isEmpty
                             ? const Center(
                           child: Text(
                               'Your event has no members yet. Add a friend.'),
                         )
                             : UserListTiles(
-                            users: eventParticipants,
+                            users: eventProvider.participants,
                             icon: Icons.close,
                             onPressed: (user) {
                               setState(() {
-                                event!.participants.remove(user.uid);
-                                eventParticipants.remove(user);
+                                eventProvider.removeParticipant(user);
                                 friendsNotAdded.add(user);
                               });
                             }),
@@ -307,8 +206,7 @@ class _EventEditorState extends State<EventEditor> {
                             icon: Icons.add,
                             onPressed: (user) {
                               setState(() {
-                                event!.participants.add(user.uid);
-                                eventParticipants.add(user);
+                                eventProvider.addParticipant(user);
                                 friendsNotAdded.remove(user);
                               });
                             }),
@@ -336,19 +234,23 @@ class _EventEditorState extends State<EventEditor> {
     );
   }
 
-  Future<void> _showShareWithWindow() async {
-    Map<Group, List<UserData>> groupsNotAdded = Map.from(groups);
+  Future<void> _showShareWithWindow(EventProvider eventProvider) async {
+    final userProvider = Provider.of<UserProvider>(context);
+    final groupProvider = Provider.of<GroupProvider>(context);
+
+    List<Group> groupsNotAdded = List.from(groupProvider.groups);
     groupsNotAdded
-        .removeWhere((key, value) => event!.groups.contains(key.groupId));
-    List<UserData> friendsNotAdded = List.from(friends);
+        .removeWhere((element) => eventProvider.groups.contains(element));
+
+    List<UserData> friendsNotAdded = List.from(userProvider.friendInfo);
     friendsNotAdded
-        .removeWhere((element) => event!.sharedWith.contains(element.uid));
+        .removeWhere((element) => eventProvider.sharedWith.contains(element));
 
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
       builder: (BuildContext context) {
-        return friends.isEmpty
+        return userProvider.friendInfo.isEmpty
             ? AlertDialog(
           content: const SizedBox(
             height: 100,
@@ -381,7 +283,7 @@ class _EventEditorState extends State<EventEditor> {
                           child:
                           Row(mainAxisSize: MainAxisSize.max, children: [
                             Visibility(
-                              visible: groups.isNotEmpty,
+                              visible: eventProvider.groups.isNotEmpty,
                               child: Expanded(
                                 child: Column(
                                   children: [
@@ -393,23 +295,17 @@ class _EventEditorState extends State<EventEditor> {
                                         )),
                                     Expanded(
                                       flex: 5,
-                                      child: eventGroups.isEmpty
+                                      child: eventProvider.groups.isEmpty
                                           ? const Center(
                                           child: Text(
                                               "You haven't added any groups"))
                                           : GroupListTiles(
-                                          groups: eventGroups,
+                                          groups: eventProvider.groups,
                                           icon: Icons.close,
-                                          onPressed: (MapEntry group) {
+                                          onPressed: (Group group) {
                                             setState(() {
-                                              eventGroups.removeWhere(
-                                                      (key, value) =>
-                                                  key == group.key);
-                                              event!.groups.remove(
-                                                  group.key.groupId);
-                                              groupsNotAdded.putIfAbsent(
-                                                  group.key,
-                                                      () => group.value);
+                                              eventProvider.removeGroup(group);
+                                              eventProvider.removeUsersFromSharedWith(groupProvider.getFriendsContainedIn(group.members));
                                             });
                                           }),
                                     )
@@ -428,18 +324,16 @@ class _EventEditorState extends State<EventEditor> {
                                       )),
                                   Expanded(
                                     flex: 5,
-                                    child: sharedWith.isEmpty
+                                    child: eventProvider.sharedWith.isEmpty
                                         ? const Center(
                                         child: Text(
                                             "You haven't added any friends"))
                                         : UserListTiles(
-                                        users: sharedWith,
+                                        users: eventProvider.sharedWith,
                                         icon: Icons.close,
                                         onPressed: (UserData user) {
                                           setState(() {
-                                            sharedWith.remove(user);
-                                            event!.sharedWith
-                                                .remove(user.uid);
+                                            eventProvider.removeUserFromSharedWith(user);
                                             friendsNotAdded.add(user);
                                           });
                                         }),
@@ -452,17 +346,17 @@ class _EventEditorState extends State<EventEditor> {
                         height: 10,
                       ),
                       Visibility(
-                          visible: groups.isNotEmpty,
+                          visible: eventProvider.groups.isNotEmpty,
                           child: const Text('Your groups:',
                               style: kH4SourceSansTextStyle)),
                       Visibility(
-                        visible: groups.isNotEmpty,
+                        visible: eventProvider.groups.isNotEmpty,
                         child: const SizedBox(
                           height: 10,
                         ),
                       ),
                       Visibility(
-                        visible: groups.isNotEmpty,
+                        visible: eventProvider.groups.isNotEmpty,
                         child: Expanded(
                             flex: 2,
                             child: groupsNotAdded.isEmpty
@@ -473,22 +367,20 @@ class _EventEditorState extends State<EventEditor> {
                                 : GroupListTiles(
                                 groups: groupsNotAdded,
                                 icon: Icons.add,
-                                onPressed: (MapEntry group) {
+                                onPressed: (Group group) {
                                   setState(() {
-                                    eventGroups.putIfAbsent(
-                                        group.key, () => group.value);
+                                    List<UserData> groupMembers = groupProvider.getFriendsContainedIn(group.members);
+                                    eventProvider.addGroup(group);
                                     for (UserData groupMember
-                                    in group.value) {
-                                      if (!sharedWith
+                                    in groupMembers) {
+                                      if (!eventProvider.sharedWith
                                           .contains(groupMember)) {
-                                        sharedWith.add(groupMember);
-                                        event!.sharedWith
-                                            .add(groupMember.uid);
+                                        eventProvider.addUserToSharedWith(groupMember);
                                       }
                                     }
                                     groupsNotAdded.remove(group);
                                     friendsNotAdded.removeWhere(
-                                            (element) => group.value
+                                            (element) => groupMembers
                                             .contains(element));
                                   });
                                 })),
@@ -513,8 +405,7 @@ class _EventEditorState extends State<EventEditor> {
                               icon: Icons.add,
                               onPressed: (user) {
                                 setState(() {
-                                  sharedWith.add(user);
-                                  event!.sharedWith.add(user.uid);
+                                  eventProvider.addUserToSharedWith(user);
                                   friendsNotAdded.remove(user);
                                 });
                               })),
@@ -544,7 +435,7 @@ class _EventEditorState extends State<EventEditor> {
             TextButton(
               child: const Text('Done'),
               onPressed: () {
-                if (event!.sharedWith.isEmpty) {
+                if (eventProvider.sharedWith.isEmpty) {
                   setState(() {
                     _errorController.text =
                     'Group must be shared with at least one friend.';
@@ -614,43 +505,32 @@ class _EventEditorState extends State<EventEditor> {
     );
   }
 
-  ///CHIP GENERATORS
+  @override
+  Widget build(BuildContext context) {
+    final eventProvider = Provider.of<EventProvider>(context);
 
-  List<Widget> getEventCategoryChips() {
-    List<Widget> eventChips = [
-      EventCategoryChip(
-          icon: null,
-          categoryName: 'Hang Out',
-          index: 0,
-          isSelected: event == null ? category == 0 : event!.category == 0,
-          selectEventCategoryCallback: selectEventCategory),
-      EventCategoryChip(
-          icon: null,
-          categoryName: 'Other',
-          index: 1,
-          isSelected: event == null ? category != 0 :event!.category != 0,
-          selectEventCategoryCallback: selectEventCategory),
-    ];
-    return eventChips;
-  }
-
-  List<Widget> getOtherEventCategoryChips() {
     List<Widget> eventChips = [];
     List<EventCategory> eventCategories = EventCategory.getEventCategories();
-    for (int i = 1; i < eventCategories.length; i++) {
+    for (int i = 0; i < eventCategories.length; i++) {
       EventCategoryChip chip = EventCategoryChip(
           icon: SvgPicture.asset('/Users/majochaves/StudioProjects/wya_app/assets/icons/category$i.svg'),
           categoryName: eventCategories[i].name,
-          index: i + 1,
-          isSelected: event == null ? category == i : event!.category == i,
-          selectEventCategoryCallback: selectEventCategory);
+          index: i,
+          isSelected: eventProvider.category == i,
+          selectEventCategoryCallback: (int index, bool isSelected) {
+            if(isSelected){
+              eventProvider.category = index;
+            }
+          });
       eventChips.add(chip);
     }
-    return eventChips;
-  }
 
-  @override
-  Widget build(BuildContext context) {
+    DateTime eventDate = DateTime.now();
+
+    DateTime startTime = DateTime.now();
+
+    DateTime endTime = DateTime.now();
+
     var datePicker = DateChooser(
       minDate: DateTime.now(),
       maxDate: DateTime(
@@ -673,91 +553,77 @@ class _EventEditorState extends State<EventEditor> {
       maxDate: DateTime(startTime.year, startTime.month, startTime.day, 23, 59),
     );
 
-    return Consumer<ApplicationState>(
-      builder: (context, appState, _) => Scaffold(
-        appBar: const AppBarCustom(),
-        body: SafeArea(
-          child: isLoading ? const Center(child: CircularProgressIndicator(color: kDeepBlue,),) : Padding(
-              padding: const EdgeInsets.all(16),
-              child: RoundedContainer(
-                backgroundColor: Colors.white,
-                padding: 15,
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Form(
-                        key: _eventFormKey,
-                        child: Column(
-                          children: [
-                            ///Event category
-                            ChipsField(
-                                title: const Text(
-                                  'Event category: ',
+    return Scaffold(
+      appBar: const AppBarCustom(),
+      body: SafeArea(
+        child: isLoading ? const Center(child: CircularProgressIndicator(color: kDeepBlue,),) : Padding(
+            padding: const EdgeInsets.all(16),
+            child: RoundedContainer(
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              padding: 15,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Form(
+                      key: _eventFormKey,
+                      child: Column(
+                        children: [
+                          const Text(
+                            'Event category: ',
+                            style: kEventFieldTitleTextStyle,
+                          ),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 150,
+                            child: Wrap(
+                              spacing: 10.0,
+                              alignment: WrapAlignment.spaceAround,
+                              children: eventChips,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            height: 100,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Description: ',
                                   style: kEventFieldTitleTextStyle,
                                 ),
-                                height: 55,
-                                flex1: 2,
-                                flex2: 5,
-                                chips: getEventCategoryChips()),
-                            SizedBox(
-                              height: event == null ? category != 0 ? 20 : 0 : event!.category != 0 ? 20 : 0,
-                            ),
-                            Visibility(
-                              visible: event == null ? category != 0 : event!.category != 0,
-                              child: SizedBox(
-                                width: double.infinity,
-                                height: 150,
-                                child: Wrap(
-                                  spacing: 10.0,
-                                  alignment: WrapAlignment.spaceAround,
-                                  children: getOtherEventCategoryChips(),
+                                TextFormField(
+                                  controller: _descriptionController,
+                                  decoration: const InputDecoration(
+                                    hintText: 'Enter event description',
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return "Enter your event's description-";
+                                    }
+                                    return null;
+                                  },
+                                  onChanged: (value) => eventProvider.description = value,
                                 ),
-                              ),
+                              ],
                             ),
-                            const SizedBox(height: 20),
+                          ),
 
-                            ///Event description
-                            SizedBox(
-                              height: 100,
+                          ///Event location
+                          SizedBox(
+                            height: 100,
+                            child: InkWell(
+                              onTap: () {
+                                _showLocationWindow();
+                              },
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Text(
-                                    'Description: ',
+                                    'Location: ',
                                     style: kEventFieldTitleTextStyle,
                                   ),
                                   TextFormField(
-                                    controller: _descriptionController,
-                                    decoration: const InputDecoration(
-                                      hintText: 'Enter event description',
-                                    ),
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return "Enter your event's description-";
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            ///Event location
-                            SizedBox(
-                              height: 100,
-                              child: InkWell(
-                                onTap: () {
-                                  _showLocationWindow();
-                                },
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Location: ',
-                                      style: kEventFieldTitleTextStyle,
-                                    ),
-                                    TextFormField(
                                       enabled: false,
                                       readOnly: true,
                                       controller: _locationController,
@@ -771,199 +637,190 @@ class _EventEditorState extends State<EventEditor> {
                                         }
                                         return null;
                                       },
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-
-                            ///Event date and time
-                            SizedBox(
-                              height: 60,
-                              child: Row(
-                                children: <Widget>[
-                                  const Expanded(
-                                      flex: 1,
-                                      child: Text(
-                                        'Date: ',
-                                        style: kEventFieldTitleTextStyle,
-                                      )),
-                                  Expanded(flex: 3, child: datePicker),
-                                ],
-                              ),
-                            ),
-                            SizedBox(
-                              height: 70,
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: <Widget>[
-                                  const Expanded(
-                                      child: Text(
-                                        'Start: ',
-                                        style: kEventFieldTitleTextStyle,
-                                      )),
-                                  Expanded(child: startTimePicker),
-                                  const Expanded(
-                                      child: Text(
-                                        'End: ',
-                                        style: kEventFieldTitleTextStyle,
-                                      )),
-                                  Expanded(child: endTimePicker),
-                                ],
-                              ),
-                            ),
-
-                            ///MEMBERS AND PRIVACY SETTINGS
-                            SizedBox(
-                              height: 100,
-                              child: Row(
-                                children: [
-                                  const Expanded(
-                                    flex: 5,
-                                    child: TitleDescriptionColumn(
-                                        title: 'Open event: ',
-                                        description:
-                                        'Your friends can join automatically'),
+                                      onChanged: (value) {
+                                        eventProvider.setLocation(locationResult!.formattedAddress!, locationResult!.url!, locationResult!.geometry!.location.lat,locationResult!.geometry!.location.lng);
+                                      }
                                   ),
-                                  Expanded(
-                                      child: OptionSwitch(
-                                          boolValue: event == null ? isOpen : event!.isOpen,
-                                          onChanged: selectIsOpen)),
                                 ],
                               ),
                             ),
-                            SizedBox(
-                              height: 100,
-                              child: Row(
-                                children: [
-                                  const Expanded(
-                                    flex: 5,
-                                    child: TitleDescriptionColumn(
-                                        title: 'Add members: ',
-                                        description:
-                                        'Add friends who you know are coming \nto your event.'),
-                                  ),
-                                  Expanded(
-                                      child: OptionSwitch(
-                                          boolValue: addMembers,
-                                          onChanged: selectAddMembers)),
-                                ],
-                              ),
-                            ),
-                            Visibility(
-                              visible: addMembers,
-                              child: InkWell(
-                                onTap: _showAddMembersWindow,
-                                child: const RoundedContainer(
-                                  backgroundColor: kPastelBlue,
-                                  padding: 10,
-                                  child: Center(
-                                      child: Text(
-                                        'Select members',
-                                        style: kH3SourceSansTextStyle,
-                                      )),
-                                ),
-                              ),
-                            ),
-                            SizedBox(
-                              height: 100,
-                              child: Row(
-                                children: [
-                                  const Expanded(
-                                    flex: 5,
-                                    child: TitleDescriptionColumn(
-                                        title: 'Public event: ',
-                                        description:
-                                        'Share with all your friends'),
-                                  ),
-                                  Expanded(
-                                      child: OptionSwitch(
-                                          boolValue: event == null ? isPublic : event!.sharedWithAll,
-                                          onChanged: selectIsSharedWithAll)),
-                                ],
-                              ),
-                            ),
-                            Visibility(
-                              visible: event == null ? !isPublic :  !event!.sharedWithAll,
-                              child: InkWell(
-                                onTap: _showShareWithWindow,
-                                child: const RoundedContainer(
-                                  backgroundColor: kPastelBlue,
-                                  padding: 10,
-                                  child: Center(
-                                      child: Text(
-                                        'Share with: ',
-                                        style: kH3SourceSansTextStyle,
-                                      )),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Visibility(
-                        visible: _errorController.text.isNotEmpty,
-                        child: SizedBox(
-                          height: 20,
-                          width: 300,
-                          child: TextField(
-                            style: TextStyle(color: Colors.red.shade700),
-                            controller: _errorController,
-                            readOnly: true,
-                            enabled: false,
-                            decoration: const InputDecoration(),
                           ),
+
+                          ///Event date and time
+                          SizedBox(
+                            height: 60,
+                            child: Row(
+                              children: <Widget>[
+                                const Expanded(
+                                    flex: 1,
+                                    child: Text(
+                                      'Date: ',
+                                      style: kEventFieldTitleTextStyle,
+                                    )),
+                                Expanded(flex: 3, child: datePicker),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            height: 70,
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: <Widget>[
+                                const Expanded(
+                                    child: Text(
+                                      'Start: ',
+                                      style: kEventFieldTitleTextStyle,
+                                    )),
+                                Expanded(child: startTimePicker),
+                                const Expanded(
+                                    child: Text(
+                                      'End: ',
+                                      style: kEventFieldTitleTextStyle,
+                                    )),
+                                Expanded(child: endTimePicker),
+                              ],
+                            ),
+                          ),
+
+                          ///MEMBERS AND PRIVACY SETTINGS
+                          SizedBox(
+                            height: 100,
+                            child: Row(
+                              children: [
+                                const Expanded(
+                                  flex: 5,
+                                  child: TitleDescriptionColumn(
+                                      title: 'Open event: ',
+                                      description:
+                                      'Your friends can join automatically'),
+                                ),
+                                Expanded(
+                                    child: OptionSwitch(
+                                        boolValue: eventProvider.isOpen,
+                                        onChanged: (bool value) {
+                                          eventProvider.isOpen = value;
+                                        })),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            height: 100,
+                            child: Row(
+                              children: [
+                                const Expanded(
+                                  flex: 5,
+                                  child: TitleDescriptionColumn(
+                                      title: 'Add members: ',
+                                      description:
+                                      'Add friends who you know are coming \nto your event.'),
+                                ),
+                                Expanded(
+                                    child: OptionSwitch(
+                                        boolValue: addMembers,
+                                        onChanged: selectAddMembers)),
+                              ],
+                            ),
+                          ),
+                          Visibility(
+                            visible: addMembers,
+                            child: InkWell(
+                              onTap: () {_showAddMembersWindow(eventProvider);},
+                              child: const RoundedContainer(
+                                backgroundColor: kPastelBlue,
+                                padding: 10,
+                                child: Center(
+                                    child: Text(
+                                      'Select members',
+                                      style: kH3SourceSansTextStyle,
+                                    )),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 100,
+                            child: Row(
+                              children: [
+                                const Expanded(
+                                  flex: 5,
+                                  child: TitleDescriptionColumn(
+                                      title: 'Public event: ',
+                                      description:
+                                      'Share with all your friends'),
+                                ),
+                                Expanded(
+                                  child: OptionSwitch(
+                                      boolValue: eventProvider.sharedWithAll,
+                                      onChanged: (bool value){
+                                        eventProvider.sharedWithAll = value;
+                                      }),
+                                ),],
+                            ),
+                          ),
+                          Visibility(
+                            visible: !eventProvider.sharedWithAll,
+                            child: InkWell(
+                              onTap: () {_showShareWithWindow(eventProvider);},
+                              child: const RoundedContainer(
+                                backgroundColor: kPastelBlue,
+                                padding: 10,
+                                child: Center(
+                                    child: Text(
+                                      'Share with: ',
+                                      style: kH3SourceSansTextStyle,
+                                    )),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Visibility(
+                      visible: _errorController.text.isNotEmpty,
+                      child: SizedBox(
+                        height: 20,
+                        width: 300,
+                        child: TextField(
+                          style: TextStyle(color: Colors.red.shade700),
+                          controller: _errorController,
+                          readOnly: true,
+                          enabled: false,
+                          decoration: const InputDecoration(),
                         ),
                       ),
-                      Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            TextButton(
-                              style: ButtonStyle(
-                                backgroundColor:
-                                MaterialStateProperty.all<Color>(
-                                    kDeepBlue),
-                                padding: MaterialStateProperty.all<EdgeInsets>(
-                                    const EdgeInsets.all(10)),
-                              ),
-                              child: const Text('Save'),
-                              onPressed: () async {
-                                if(locationResult == null){
-                                  _errorController.text = 'Please select a location for your event';
-                                }else if(event!.sharedWithAll == false && sharedWith.isEmpty){
-                                  _errorController.text = 'Event must be shared with at least one friend';
-                                }else{
-                                  event = Event(
-                                      description: _descriptionController.text,
-                                      uid: event!.uid,
-                                      eventId: event!.eventId,
-                                      datePublished: event!.datePublished,
-                                      startsAt: startTime,
-                                      endsAt: endTime,
-                                      participants: event!.participants,
-                                      locationId: event!.locationId,
-                                      sharedWithAll: event!.sharedWithAll,
-                                      isOpen: event!.isOpen,
-                                      groups: event!.groups,
-                                      category: event!.category,
-                                      sharedWith: event!.sharedWith,
-                                      requests: event!.requests
-                                  );
-                                  if(_eventFormKey.currentState!.validate()){
-                                    await appState.updateEvent(event!, locationResult!);
-                                    context.go('/events');
-                                  }
+                    ),
+                    Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          TextButton(
+                            style: ButtonStyle(
+                              backgroundColor:
+                              MaterialStateProperty.all<Color>(
+                                  kDeepBlue),
+                              padding: MaterialStateProperty.all<EdgeInsets>(
+                                  const EdgeInsets.all(10)),
+                            ),
+                            child: const Text('Save'),
+                            onPressed: () async {
+                              if(locationResult == null){
+                                _errorController.text = 'Please select a location for your event';
+                              }else if(eventProvider.sharedWithAll == false && eventProvider.sharedWith.isEmpty){
+                                _errorController.text = 'Event must be shared with at least one friend';
+                              }else{
+                                if(_eventFormKey.currentState!.validate()){
+                                  ///SAVE EVENT
+                                  eventProvider.saveEvent();
+                                  context.go('/events');
                                 }
-                              },
-                            )
-                          ])
-                    ],
-                  ),
+                              }
+                            },
+                          )
+                        ])
+                  ],
                 ),
-              )),
-        ),
-        bottomNavigationBar: const BottomAppBarCustom(current: 'account'),
+              ),
+            )),
       ),
+      bottomNavigationBar: const BottomAppBarCustom(current: 'account'),
     );
   }
 }
