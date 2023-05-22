@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:table_calendar/table_calendar.dart';
 import 'package:uuid/uuid.dart';
 import 'package:wya_final/providers/user_provider.dart';
 
@@ -50,39 +51,47 @@ class EventProvider with ChangeNotifier {
   int? maxMatchDistance = 0;
 
   ///Provider values
-  DateTime selectedDay = DateTime.now();
+  DateTime _selectedDay = DateTime.now();
+  DateTime get selectedDay => _selectedDay;
+  DateTime _endDay = DateTime.now();
+  DateTime get endDay => _endDay;
+  set selectedDay(DateTime selectedDay){
+    _selectedDay = selectedDay;
+    _endDay = DateTime(selectedDay.year, selectedDay.month, selectedDay.day, 23, 59);
+    notifyListeners();
+  }
 
   Map<DateTime, List<Event>> eventMap = {};
   List<Event> events = [];
   List<Event> eventsForDay(DateTime day){
-    DateTime dayOfEvent = DateTime(selectedDay.year, selectedDay.month, selectedDay.day, 0,0);
+    DateTime dayOfEvent = DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day, 0,0);
     return eventMap[dayOfEvent] ?? [];
   }
 
   Map<DateTime, List<SharedEvent>> sharedEventsMap = {};
   List<SharedEvent> sharedEvents = [];
   List<SharedEvent> sharedEventsForDay(DateTime day){
-    DateTime dayOfEvent = DateTime(selectedDay.year, selectedDay.month, selectedDay.day, 0,0);
+    DateTime dayOfEvent = DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day, 0,0);
     return sharedEventsMap[dayOfEvent] ?? [];
   }
 
   Map<DateTime, List<SharedEvent>> joinedEvents = {};
   List<SharedEvent> joinedEventsForDay(DateTime day){
-    DateTime dayOfEvent = DateTime(selectedDay.year, selectedDay.month, selectedDay.day, 0,0);
+    DateTime dayOfEvent = DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day, 0,0);
     return joinedEvents[dayOfEvent] ?? [];
   }
 
   Map<DateTime, List<model.Match>> matches = {};
   List<model.Match> matchesForDay(DateTime day){
-    DateTime dayOfEvent = DateTime(selectedDay.year, selectedDay.month, selectedDay.day, 0,0);
+    DateTime dayOfEvent = DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day, 0,0);
     return matches[dayOfEvent] ?? [];
   }
 
   Event? selectedEvent;
-  void setSelectedEvent(Event event){
+  Future<void> setSelectedEvent(Event event) async{
     selectedEvent = event;
     if(selectedEvent != null){
-      loadEvent(selectedEvent!);
+      await loadEvent(event);
     }else{
       newEvent();
     }
@@ -90,10 +99,10 @@ class EventProvider with ChangeNotifier {
   }
 
   SharedEvent? selectedSharedEvent;
-  void setSelectedSharedEvent(SharedEvent event){
+  Future<void> setSelectedSharedEvent(SharedEvent event) async{
     selectedSharedEvent = event;
     if(selectedSharedEvent != null){
-      loadEvent(selectedSharedEvent!.event);
+      await loadEvent(selectedSharedEvent!.event);
     }else{
       newEvent();
     }
@@ -102,6 +111,14 @@ class EventProvider with ChangeNotifier {
 
   List<Group> groupInfo = [];
 
+  StreamSubscription? getEventsStream;
+  StreamSubscription? getSharedEventsStream;
+
+  void cancelStreams(){
+    getEventsStream?.cancel();
+    getSharedEventsStream?.cancel();
+  }
+
   void init(){
     FirebaseAuth.instance.userChanges().listen((user) {
       if (user != null) {
@@ -109,8 +126,9 @@ class EventProvider with ChangeNotifier {
           groupInfo = groupList;
           notifyListeners();
         });
-        eventService.getEvents(user.uid).listen((eventsList) {
+        getEventsStream = eventService.getEvents(user.uid).listen((eventsList) {
           events = eventsList;
+          eventMap = {};
            for(Event event in eventsList){
              DateTime startsAt = event.startsAt as DateTime;
              DateTime dayOfEvent = DateTime(startsAt.year, startsAt.month, startsAt.day, 0,0);
@@ -132,11 +150,17 @@ class EventProvider with ChangeNotifier {
            }
            notifyListeners();
          });
-        eventService.getSharedEvents(user.uid).listen((sharedEventsList) async {
+        getSharedEventsStream = eventService.getSharedEvents(user.uid).listen((sharedEventsList) async {
+          print('received stream: ${sharedEventsList.toString()}');
+          sharedEvents = [];
+          sharedEventsMap = {};
+          joinedEvents = {};
+          matches = {};
+          notifyListeners();
            for(Event event in sharedEventsList){
              DateTime startsAt = event.startsAt as DateTime;
              DateTime dayOfEvent = DateTime(startsAt.year, startsAt.month, startsAt.day, 0,0);
-             UserData friend = friendInfo[friendInfo.indexWhere((element) => element.uid == event.uid)];
+             UserData friend = await getFriendFromId(event.uid);
 
              if(sharedEvents.any((element) => element.event.eventId == event.eventId)){
                sharedEvents[sharedEvents.indexWhere((element) => element.event.eventId == event.eventId)] = SharedEvent(event, friend);
@@ -184,6 +208,9 @@ class EventProvider with ChangeNotifier {
            }
            notifyListeners();
          });
+      }else{
+        getEventsStream?.cancel();
+        getSharedEventsStream?.cancel();
       }
     });
   }
@@ -212,6 +239,14 @@ class EventProvider with ChangeNotifier {
       }
     }
     return match;
+  }
+  Future<UserData> getFriendFromId(String id) async{
+    if(friendInfo.any((element) => element.uid == id)){
+      return friendInfo[friendInfo.indexWhere((element) => element.uid == id)];
+    }else{
+      return await userService.getUserById(id);
+    }
+
   }
 
   ///Event model values
@@ -270,6 +305,11 @@ class EventProvider with ChangeNotifier {
   bool get sharedWithAll => _sharedWithAll;
   set sharedWithAll(bool value) {
     _sharedWithAll = value;
+    if(value){
+      sharedWith = friendInfo;
+    }else{
+      sharedWith = [];
+    }
     notifyListeners();
   }
   bool get isOpen => _isOpen;
@@ -301,6 +341,7 @@ class EventProvider with ChangeNotifier {
 
   void setLocation(String formattedAddress, String url, double latitude, double longitude) {
     Location location = Location(locationId: const Uuid().v1(), uid: user!.uid, formattedAddress: formattedAddress, url: url, latitude: latitude, longitude: longitude);
+    print('new location set: ${location.locationId}');
     _location = location;
     notifyListeners();
   }
@@ -358,9 +399,9 @@ class EventProvider with ChangeNotifier {
           eventId: eventId
       );
 
-    await notificationService.saveNotification(notification);
+    notificationService.saveNotification(notification);
 
-    await userService.addNotification(event.uid, notificationId);
+    userService.addNotification(event.uid, notificationId);
   }
 
   Future<void> joinEvent(String eventId) async{
@@ -379,8 +420,8 @@ class EventProvider with ChangeNotifier {
           eventId: eventId
       );
 
-    await notificationService.saveNotification(notification);
-    await userService.addNotification(event.uid, notificationId);
+    notificationService.saveNotification(notification);
+    userService.addNotification(event.uid, notificationId);
   }
 
   Future<void> acceptEventRequest(String eventId, UserData requester) async{
@@ -404,8 +445,8 @@ class EventProvider with ChangeNotifier {
             eventId: eventId
         );
 
-      await notificationService.saveNotification(notification);
-      await userService.addNotification(requester.uid, notificationId);
+      notificationService.saveNotification(notification);
+      userService.addNotification(requester.uid, notificationId);
     }
   }
 
@@ -437,17 +478,19 @@ class EventProvider with ChangeNotifier {
   }
 
   ///Load event values
-  void loadEvent(Event event) async{
+  Future<void> loadEvent(Event event) async{
+    Location? eventLocation = await eventLocationService.getLocationById(event.locationId);
+    print('got event location');
     _eventId = event.eventId;
     _uid = event.uid;
     _description = event.description;
-    _location = await eventLocationService.getLocationById(event.locationId);
-    _category = 0;
-    _datePublished;
-    _startsAt = DateTime.now();
-    _endsAt = DateTime.now();
-    _sharedWithAll = true;
-    _isOpen = false;
+    _location = eventLocation;
+    _category = event.category;
+    _datePublished = event.datePublished;
+    _startsAt = event.startsAt;
+    _endsAt = event.endsAt;
+    _sharedWithAll = event.sharedWithAll;
+    _isOpen = event.isOpen;
     _groups = getGroupsContainedIn(event.groups);
     _sharedWith = getFriendsContainedIn(event.sharedWith);
     _participants = getFriendsContainedIn(event.participants);
@@ -462,12 +505,12 @@ class EventProvider with ChangeNotifier {
     _location;
     _category = 0;
     _datePublished;
-    _startsAt = DateTime.now();
-    _endsAt = DateTime.now();
+    _startsAt = isSameDay(_selectedDay, DateTime.now()) ? DateTime.now() : DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day, 0, 0);
+    _endsAt = DateTime(_startsAt.year, _startsAt.month, _startsAt.day, 23, 59);
     _sharedWithAll = true;
     _isOpen = false;
     _groups = [];
-    _sharedWith = [];
+    _sharedWith = friendInfo;
     _participants = [];
     _requests = [];
     notifyListeners();
@@ -477,12 +520,12 @@ class EventProvider with ChangeNotifier {
   saveEvent(){
     eventLocationService.saveLocation(location!);
     if(eventId == null){
-      eventId == uuid.v1();
+      eventId = uuid.v1();
       Event newEvent = Event(
           description: description,
           uid: uid,
           eventId: eventId!,
-          datePublished: datePublished,
+          datePublished: DateTime.now(),
           startsAt: startsAt,
           endsAt: endsAt,
           participants: participants.map((e) => e.uid).toList(),

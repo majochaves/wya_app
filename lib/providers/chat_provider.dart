@@ -54,31 +54,42 @@ class ChatProvider extends ChangeNotifier {
     return unread;
   }
 
+  StreamSubscription? getChatStream;
+
+  void cancelStreams(){
+    getChatStream?.cancel();
+  }
 
   ///Get chats from chat stream
   void init(){
     FirebaseAuth.instance.userChanges().listen((user) {
       if (user != null) {
-        chatService.getChats(userChatIds).listen((chatList) async{
-          for(model.Chat chat in chatList){
-            if(chat.messages.isNotEmpty){
-              List<model.Message> messages = await chatService.getMessages(chat.chatId);
+        getChatStream = chatService.getChats(userChatIds).listen((chatList) async {
+          for (model.Chat chat in chatList) {
+            if (chat.messages.isNotEmpty) {
+              List<model.Message> messages = await chatService.getMessages(
+                  chat.chatId);
               UserData friend = await getFriendForChat(chat);
-              ChatInfo chatInfo = ChatInfo(chat: chat, messages: messages, user: friend);
-              if(chats.any((element) => element.chat.chatId == chatInfo.chat.chatId)){
-                chats[chats.indexWhere((element) => element.chat.chatId == chatInfo.chat.chatId)] =
-                  chatInfo;
-                if(selectedChat != null){
-                  if(selectedChat!.chat.chatId == chatInfo.chat.chatId){
+              ChatInfo chatInfo = ChatInfo(
+                  chat: chat, messages: messages, user: friend);
+              if (chats.any((element) =>
+              element.chat.chatId == chatInfo.chat.chatId)) {
+                chats[chats.indexWhere((element) =>
+                element.chat.chatId == chatInfo.chat.chatId)] =
+                    chatInfo;
+                if (selectedChat != null) {
+                  if (selectedChat!.chat.chatId == chatInfo.chat.chatId) {
                     selectedChat = chatInfo;
                   }
                 }
-              }else{
-              chats.add(chatInfo);
+              } else {
+                chats.add(chatInfo);
               }
             }
           }
         });
+      }else{
+        getChatStream?.cancel();
       }
     });
   }

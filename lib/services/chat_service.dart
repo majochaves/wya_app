@@ -10,6 +10,7 @@ class ChatService {
 
 
   Stream<List<model.Chat>> getChats(List chats) {
+    if(chats.isEmpty) return const Stream.empty();
     return _db
         .collection('chats')
         .where('chatId', whereIn: chats)

@@ -273,7 +273,6 @@ class FollowButton extends StatelessWidget {
             text,
             style: TextStyle(
               color: textColor,
-              fontWeight: FontWeight.bold,
             ),
           ),
         ),
@@ -335,254 +334,6 @@ class CircleAvi extends StatelessWidget {
   }
 }
 
-///Cards
-
-class MatchCard extends StatelessWidget {
-  final model.Match match;
-  final String uid;
-
-  const MatchCard(
-      {Key? key,
-      required this.match,
-      required this.uid})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(80),
-          //side: BorderSide(color: match.friendEvent.event.participants.contains(uid) ? kWYATeal : match.friendEvent.event.requests.contains(uid) ? kWYALightOrange : kWYALightCamoGreen, width: 5)
-      ),
-      child: Container(
-        width: 110,
-        height: 150,
-        decoration: BoxDecoration(
-          image: DecorationImage(image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/gradient${match.friendEvent.event.category}.png').image, fit: BoxFit.cover),
-          borderRadius: const BorderRadius.all(Radius.circular(80)),
-        ),
-        child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-              Expanded(child: Text(match.friendEvent.user.username, style: matchUsernameText,),),
-              Expanded(
-                flex: 2,
-                child: SvgPicture.asset('/Users/majochaves/StudioProjects/wya_app/assets/icons/category${match.friendEvent.event.category}.svg', color: Colors.white,)
-                //child: CircleAvatar(backgroundImage: EventCategory.getCategoryById(match.friendEvent.event.category).icon.image, radius: 25,backgroundColor: Colors.transparent,),
-              ),
-              Expanded(
-                  child: Text(
-                      StringFormatter.getTimeString(match.friendEvent.event.startsAt), style: const TextStyle(color: Colors.black54),)),
-          ],
-        ),
-            )),
-      ),
-    );
-  }
-}
-
-class SharedEventCard extends StatelessWidget {
-  final SharedEvent sharedEvent;
-  final String uid;
-  final Function setSelectedSharedEvent;
-
-  const SharedEventCard({
-    Key? key,
-    required this.sharedEvent,
-    required this.setSelectedSharedEvent,
-    required this.uid,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        setSelectedSharedEvent(sharedEvent);
-        context.go('/viewSharedEvent');
-      },
-      child: Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(40),
-          //side: BorderSide(color: sharedEvent.event.participants.contains(uid) ? kWYATeal : sharedEvent.event.requests.contains(uid) ? kWYALightOrange : kWYALightCamoGreen, width: 5)
-        ),
-        child: Container(
-          width: 150,
-          height: 100,
-          decoration: BoxDecoration(
-            image: DecorationImage(image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/gradient${sharedEvent.event.category}.png').image, fit: BoxFit.cover),
-            borderRadius: const BorderRadius.all(Radius.circular(40)),
-          ),
-          child: Center(
-              child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircleAvi(
-                          imageSrc: NetworkImage(sharedEvent.user.photoUrl),
-                          size: 40),
-                      const SizedBox(height:5),
-                      Text(sharedEvent.user.username, style: kH6RubikTextStyle,),
-                    ],
-                  )),
-              Expanded(
-                flex: 2,
-                child: Column(
-                  children: [
-                    Expanded(
-                      flex:4,
-                      child: FittedBox(
-                        fit: BoxFit.fitHeight,
-                        child: Text(
-                          EventCategory.getCategoryById(sharedEvent.event.category)
-                              .name,
-                          style: sharedEventCardText,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: FittedBox(
-                        fit: BoxFit.fitHeight,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [Text('${StringFormatter.getTimeString(sharedEvent.event.startsAt)}-${StringFormatter.getTimeString(sharedEvent.event.endsAt)}',
-                            style: kMatchCardTextStyle,
-                          ),]
-                        ),
-                      ),
-                    ),
-                  ]
-                ),
-              ),
-            ],
-          )),
-        ),
-      ),
-    );
-  }
-}
-
-class JoinedEventCard extends StatelessWidget {
-  final SharedEvent event;
-  final String uid;
-  final Function setSelectedSharedEvent;
-
-  const JoinedEventCard(
-      {Key? key,
-        required this.event,
-        required this.uid, required this.setSelectedSharedEvent})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        setSelectedSharedEvent(event);
-        context.go('/viewSharedEvent');
-      },
-      child: Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(80),
-          //side: BorderSide(color: match.friendEvent.event.participants.contains(uid) ? kWYATeal : match.friendEvent.event.requests.contains(uid) ? kWYALightOrange : kWYALightCamoGreen, width: 5)
-        ),
-        child: Container(
-          width: 110,
-          height: 150,
-          decoration: BoxDecoration(
-            image: DecorationImage(image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/gradient${event.event.category}.png').image, fit: BoxFit.cover),
-            borderRadius: const BorderRadius.all(Radius.circular(80)),
-          ),
-          child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Expanded(child: Text(event.user.username, style: matchUsernameText,),),
-                    Expanded(
-                        flex: 2,
-                        child: SvgPicture.asset('/Users/majochaves/StudioProjects/wya_app/assets/icons/category${event.event.category}.svg', color: Colors.white,)
-                      //child: CircleAvatar(backgroundImage: EventCategory.getCategoryById(match.friendEvent.event.category).icon.image, radius: 25,backgroundColor: Colors.transparent,),
-                    ),
-                    Expanded(
-                        child: Text(
-                          StringFormatter.getTimeString(event.event.startsAt), style: const TextStyle(color: Colors.black54),)),
-                  ],
-                ),
-              )),
-        ),
-      ),
-    );
-  }
-}
-
-class EventCard extends StatelessWidget {
-  final Event event;
-  final Function setSelectedEvent;
-
-  const EventCard({
-    Key? key,
-    required this.event,
-    required this.setSelectedEvent,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        setSelectedEvent(event);
-        context.go('/viewEvent');
-      },
-      child: Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20), // if you need this
-        ),
-        child: Container(
-          width: 150,
-          height: 100,
-          decoration: BoxDecoration(
-            image: DecorationImage(
-                image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/gradient${event.category}.png').image,
-                fit: BoxFit.cover),
-              borderRadius: const BorderRadius.all(Radius.circular(20))),
-          child: Center(
-              child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                  child: Center(
-                child: Text(
-                  '${StringFormatter.getTimeString(event.startsAt)}-\n${StringFormatter.getTimeString(event.endsAt)}',
-                  style: kSubtitleTextStyle,
-                ),
-              )),
-              Expanded(
-                flex: 2,
-                child: ListTile(
-                  title: FittedBox(
-                    fit: BoxFit.fitWidth,
-                    child: Text(
-                      EventCategory.getCategoryById(event.category).name,
-                      style: sharedEventCardText,
-                    ),
-                  ),
-                  trailing: SizedBox(width: 40, height:40, child: SvgPicture.asset('/Users/majochaves/StudioProjects/wya_app/assets/icons/category${event.category}.svg', color: Colors.white,)),
-                ),
-              ),
-            ],
-          )),
-        ),
-      ),
-    );
-  }
-}
 
 ///Chips
 class EventCategoryChip extends StatelessWidget {
@@ -771,28 +522,6 @@ class RoundedContainer extends StatelessWidget {
   }
 }
 
-class BioBox extends StatelessWidget {
-  final String content;
-  const BioBox({Key? key, required this.content}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 100,
-      height: 40,
-      decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10), color: kPastelOrangeYellow),
-      alignment: Alignment.center,
-      padding: const EdgeInsets.only(
-        top: 1,
-      ),
-      child: Text(
-        content,
-      ),
-    );
-  }
-}
-
 class ChipsField extends StatelessWidget {
   final Widget title;
   final double height;
@@ -879,182 +608,7 @@ class StatColumn extends StatelessWidget {
   }
 }
 
-class NotificationsBuilder extends StatefulWidget {
-  final Map<DateTime, List<NotificationInfo>> notifications;
-  const NotificationsBuilder({Key? key, required this.notifications})
-      : super(key: key);
 
-  @override
-  State<NotificationsBuilder> createState() => _NotificationsBuilderState();
-}
-
-class _NotificationsBuilderState extends State<NotificationsBuilder> {
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  List<Widget> getNotificationTiles() {
-    List<Widget> notificationTiles = [];
-    for(MapEntry day in widget.notifications.entries){
-      notificationTiles.add(Text(StringFormatter.getDayTitle(day.key)));
-      for (NotificationInfo n in day.value) {
-        if (n.notification.type == 0) {
-          notificationTiles.add(NotificationType0(
-            notification: n,
-          ));
-        } else if (n.notification.type == 1) {
-          notificationTiles.add(NotificationType1(
-            notification: n,
-          ));
-        } else if (n.notification.type == 2) {
-          notificationTiles.add(NotificationType2(
-            notification: n,
-          ));
-        } else if (n.notification.type == 3) {
-          notificationTiles.add(NotificationType3(
-            notification: n,
-          ));
-        } else {
-          notificationTiles.add(NotificationType4(
-            notification: n,
-          ));
-        }
-      }
-    }
-    return notificationTiles;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return widget.notifications.isEmpty
-            ? const Center(child: Text('You have no notifications'))
-            : ListView(
-                children: getNotificationTiles(),
-              );
-  }
-}
-
-class NotificationType0 extends StatelessWidget {
-  final NotificationInfo notification;
-  const NotificationType0({Key? key, required this.notification})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        context.go('/friends');
-      },
-      child: ListTile(
-        leading: CircleAvi(
-          imageSrc: NetworkImage(notification.user.photoUrl),
-          size: 30,
-        ),
-        title: Text('${notification.user.username} sent you a follow request'),
-      ),
-    );
-  }
-}
-
-class NotificationType1 extends StatelessWidget {
-  final NotificationInfo notification;
-  const NotificationType1({Key? key, required this.notification})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        context.go('/friends');
-      },
-      child: ListTile(
-        leading: CircleAvi(
-          imageSrc: NetworkImage(notification.user.photoUrl),
-          size: 30,
-        ),
-        title:
-            Text('${notification.user.username} accepted your follow request'),
-      ),
-    );
-  }
-}
-
-class NotificationType2 extends StatelessWidget {
-  final NotificationInfo notification;
-  const NotificationType2({Key? key, required this.notification})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<EventProvider>(
-        builder: (context, eventProvider, _) => InkWell(
-              onTap: () {
-                eventProvider.selectedEvent = notification.event;
-                context.go('/viewEvent');
-              },
-              child: ListTile(
-                leading: CircleAvi(
-                  imageSrc: NetworkImage(notification.user.photoUrl),
-                  size: 30,
-                ),
-                title: Text(
-                    '${notification.user.username} has requested to join your event'),
-              ),
-            ));
-  }
-}
-
-class NotificationType3 extends StatelessWidget {
-  final NotificationInfo notification;
-  const NotificationType3({Key? key, required this.notification})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<EventProvider>(
-        builder: (context, eventProvider, _) => InkWell(
-              onTap: () {
-                eventProvider.selectedSharedEvent =
-                    SharedEvent(notification.event!, notification.user);
-                context.go('/viewSharedEvent');
-              },
-              child: ListTile(
-                leading: CircleAvi(
-                  imageSrc: NetworkImage(notification.user.photoUrl),
-                  size: 30,
-                ),
-                title: Text(
-                    '${notification.user.username} accepted your request to join their event'),
-              ),
-            ));
-  }
-}
-
-class NotificationType4 extends StatelessWidget {
-  final NotificationInfo notification;
-  const NotificationType4({Key? key, required this.notification})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<EventProvider>(
-        builder: (context, eventProvider, _) => InkWell(
-              onTap: () {
-                eventProvider.selectedEvent = notification.event;
-                context.go('/viewEvent');
-              },
-              child: ListTile(
-                leading: CircleAvi(
-                  imageSrc: NetworkImage(notification.user.photoUrl),
-                  size: 30,
-                ),
-                title:
-                    Text('${notification.user.username} has joined your event'),
-              ),
-            ));
-  }
-}
 
 class OptionSwitch extends StatelessWidget {
   final bool boolValue;
@@ -1634,23 +1188,86 @@ class OptionTile extends StatelessWidget {
     );
   }
 }
+class CustomDivider extends StatelessWidget {
+  const CustomDivider({Key? key}) : super(key: key);
 
-///Scrolling
-class MyCustomScrollBehavior extends MaterialScrollBehavior {
-  // Override behavior methods and getters like dragDevices
   @override
-  Set<PointerDeviceKind> get dragDevices => {
-        PointerDeviceKind.touch,
-        PointerDeviceKind.mouse,
-      };
+  Widget build(BuildContext context) {
+    return Column(children: const [
+      SizedBox(height: 20),
+      Divider(height: 5, thickness: 3, color: kWYAOrange,),
+      SizedBox(height: 20),
+    ],);
+  }
 }
+
+class UserDetailsViewer extends StatelessWidget {
+  final String photoUrl;
+  final String username;
+  final String name;
+  final int friendsCount;
+  final int eventsCount;
+  final bool isUserAccount;
+  const UserDetailsViewer({Key? key, required this.photoUrl, required this.username, required this.name, required this.friendsCount, required this.eventsCount, required this.isUserAccount}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        const SizedBox(height: 20,),
+        Expanded(
+          flex: 4,
+          child: CircleAvatar(
+            radius: 50.0,
+            backgroundColor: Colors.transparent,
+            backgroundImage: photoUrl.isNotEmpty ? Image.network(
+              photoUrl,
+            ).image : Image.asset('assets/images/noProfilePic.png').image,
+          ),
+        ),
+        Expanded(
+          flex: 2,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '@$username',
+                style: kHandleTextStyle,
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          flex: 2,
+          child:
+          Text(
+            name,
+            textAlign: TextAlign.center,
+          ),
+        ),
+        Expanded(
+          flex: 4,
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              StatColumn(num: eventsCount, label: "events", pushTo: '/events', isEnabled: isUserAccount),
+              StatColumn(num: friendsCount, label: "friends", pushTo: '/friends', isEnabled: isUserAccount),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 
 ///App bars
 
-class BottomAppBarCustom extends StatelessWidget {
+class CustomBottomAppBar extends StatelessWidget {
   final String current;
 
-  const BottomAppBarCustom({Key? key, required this.current}) : super(key: key);
+  const CustomBottomAppBar({Key? key, required this.current}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

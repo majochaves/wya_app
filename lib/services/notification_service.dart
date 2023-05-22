@@ -1,35 +1,26 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
 
 import '../models/notification.dart' as model;
-import '../models/user_data.dart';
 
 class NotificationService {
   NotificationService();
 
   final FirebaseFirestore _db = FirebaseFirestore.instance;
-  User? user = FirebaseAuth.instance.currentUser;
 
-  UserData? userData;
-
-  Stream<List<model.Notification>> getNotifications() {
-    if (userData == null) {
-      return const Stream.empty();
-    } else {
+  Stream<List<model.Notification>> getNotifications(String uid) {
       return _db
           .collection('notifications')
           .orderBy('created', descending: true)
-          .where('uid', isEqualTo: userData!.uid)
+          .where('uid', isEqualTo: uid)
           .snapshots()
           .map((snapshot) => snapshot.docs
               .map((document) => model.Notification.fromSnap(document))
               .toList());
-    }
   }
 
-  Future<void> saveNotification(model.Notification notification) async {
-    await _db
+  Future<void> saveNotification(model.Notification notification) async{
+    return await _db
         .collection('notifications')
         .doc(notification.notificationId)
         .set(notification.toJson());

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:uuid/uuid.dart';
@@ -32,11 +34,17 @@ class GroupProvider extends ChangeNotifier{
   List<Group> groups = [];
   Map<Group, List<UserData>> groupMap = {};
 
+  StreamSubscription? getGroupsStream;
+
+  void cancelStreams(){
+    getGroupsStream?.cancel();
+  }
+
   ///Get groups from Group Stream
   init(){
     FirebaseAuth.instance.userChanges().listen((user) {
       if (user != null) {
-        groupService.getGroups(user.uid).listen((groupList) {
+        getGroupsStream = groupService.getGroups(user.uid).listen((groupList) {
           groups = groupList;
           notifyListeners();
           groupMap.clear();
@@ -46,6 +54,8 @@ class GroupProvider extends ChangeNotifier{
           }
           notifyListeners();
         });
+      }else{
+        getGroupsStream?.cancel();
       }
     });
   }

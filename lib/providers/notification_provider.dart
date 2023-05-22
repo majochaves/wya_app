@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart';
+import 'package:wya_final/services/event_service.dart';
+import 'package:wya_final/services/user_service.dart';
 
 import '../models/event.dart';
 import '../models/notification_info.dart';
@@ -32,6 +32,8 @@ class NotificationProvider extends ChangeNotifier {
 
   ///Services
   NotificationService notificationService = NotificationService();
+  EventService eventService = EventService();
+  UserService userService = UserService();
 
   ///Shared data from Event provider
   List<SharedEvent> sharedEvents = [];
@@ -52,19 +54,28 @@ class NotificationProvider extends ChangeNotifier {
     return unread;
   }
 
+  StreamSubscription? getNotificationStream;
+
+  void cancelStreams(){
+    getNotificationStream?.cancel();
+  }
+
   ///Get notifications from Notification Stream
   void init() {
     FirebaseAuth.instance.userChanges().listen((user) {
       if (user != null) {
-        notificationService.getNotifications().listen((notificationsList) {
+        getNotificationStream = notificationService.getNotifications(user.uid).listen((notificationsList) async {
           for(model.Notification notification in notificationsList){
-            Event notificationEvent;
-            UserData notificationUser = getFriendFromId(notification.userId);
-            if(notification.type == 2 || notification.type == 4){
-              notificationEvent = getEventFromId(notification.eventId);
-            }else{
-              notificationEvent = getSharedEventFromId(notification.eventId);
+            Event? notificationEvent;
+            UserData notificationUser = await getFriendFromId(notification.userId);
+            if(notification.eventId != ''){
+              if(notification.type == 2 || notification.type == 4){
+                notificationEvent = getEventFromId(notification.eventId);
+              }else{
+                notificationEvent = await getSharedEventFromId(notification.eventId);
+              }
             }
+
             NotificationInfo notInfo = NotificationInfo(notification: notification, user: notificationUser, event: notificationEvent);
 
             DateTime dayOfNotification = DateTime(notification.created.year, notification.created.month, notification.created.day, 0, 0);
@@ -78,23 +89,37 @@ class NotificationProvider extends ChangeNotifier {
               notifications[dayOfNotification]!.add(notInfo);
             }
           }
+          notifications = Map.fromEntries(
+              notifications.entries.toList()..sort((e1, e2) => e1.key.compareTo(e2.key)));
           notifyListeners();
         });
+      }else{
+        getNotificationStream?.cancel();
       }
     });
   }
 
   ///Aux methods to get user and event data mentioned in notification
-  UserData getFriendFromId(String id){
-    return friendInfo[friendInfo.indexWhere((element) => element.uid == id)];
+  Future<UserData> getFriendFromId(String id) async{
+    if(friendInfo.any((element) => element.uid == id)){
+      return friendInfo[friendInfo.indexWhere((element) => element.uid == id)];
+    }else{
+      return await userService.getUserById(id);
+    }
+
   }
 
   Event getEventFromId(String id){
     return events[events.indexWhere((element) => element.eventId == id)];
   }
 
-  Event getSharedEventFromId(String id){
-    return sharedEvents[sharedEvents.indexWhere((element) => element.event.eventId == id)].event;
+  Future<Event> getSharedEventFromId(String id) async{
+    if(sharedEvents.any((element) => element.event.eventId == id)){
+      return sharedEvents[sharedEvents.indexWhere((element) => element.event.eventId == id)].event;
+    }else{
+      return await eventService.getEventById(id);
+    }
+
   }
 
   ///Provided methods

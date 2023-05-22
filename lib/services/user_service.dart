@@ -17,21 +17,29 @@ class UserService {
         .doc(uid)
         .snapshots().map((snapshot) => UserData.fromSnap(snapshot));
   }
-
-  Stream<List<UserData>> getFriends(List friends) {
+  Stream<List> getUserFriends(String uid){
     return FirebaseFirestore.instance
         .collection('userData')
-        .where('uid', arrayContains: friends)
-        .snapshots().map((snapshot) =>
-        snapshot.docs
-            .map((document) => UserData.fromSnap(document))
-            .toList());
+        .doc(uid)
+        .snapshots().map((snapshot) => UserData.fromSnap(snapshot).friends);
   }
 
-  Stream<List<UserData>> getRequests(List requests) {
+  Stream<List> getUserRequests(String uid){
     return FirebaseFirestore.instance
         .collection('userData')
-        .where('uid', arrayContains: requests)
+        .doc(uid)
+        .snapshots().map((snapshot) => UserData.fromSnap(snapshot).requests);
+  }
+
+  /*Stream<List<UserData>> getFriends(String uid) {
+    return getUserFriends(uid).map((event) => FirebaseFirestore.instance.collection('userData').where('uid', whereIn: event).get().then((value) => value.docs.map((e) => UserData.fromSnap(e)).toList())).asBroadcastStream();
+  }*/
+
+  Stream<List<UserData>> getRequests(List requests) {
+    if(requests.isEmpty) return const Stream.empty();
+    return FirebaseFirestore.instance
+        .collection('userData')
+        .where('uid', whereIn: requests)
         .snapshots().map((snapshot) =>
         snapshot.docs
             .map((document) => UserData.fromSnap(document))
@@ -119,7 +127,7 @@ class UserService {
 
   /*Update: add request to requests */
   Future<void> requestFriend(String uid, String requesterUID) async{
-    await FirebaseFirestore.instance
+    return await FirebaseFirestore.instance
         .collection('userData')
         .doc(uid)
         .update({
@@ -129,7 +137,7 @@ class UserService {
 
   /*Update: remove request from requests */
   Future<void> deleteRequest(String uid, String requesterUID) async{
-    await FirebaseFirestore.instance
+    return await FirebaseFirestore.instance
         .collection('userData')
         .doc(uid)
         .update({
@@ -139,7 +147,7 @@ class UserService {
 
   /*Update: add friend to friends */
   Future<void> addFriend(String uid, String requesterUID) async{
-    await FirebaseFirestore.instance
+    return await FirebaseFirestore.instance
         .collection('userData')
         .doc(uid)
         .update({
@@ -149,7 +157,7 @@ class UserService {
 
   /*Update: remove friend from friends */
   Future<void> removeFriend(String uid, friendUID) async{
-    await FirebaseFirestore.instance
+    return await FirebaseFirestore.instance
         .collection('userData')
         .doc(uid)
         .update({

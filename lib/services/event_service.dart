@@ -27,17 +27,6 @@ class EventService {
               .toList());
   }
 
-  ///POSSIBLY NOT NECESSARY
-  Stream<List<Event>> getJoinedEvents(String uid){
-      return _db
-          .collection('events')
-          .orderBy('startsAt')
-          .where('participants', arrayContains: uid)
-          .snapshots().map((snapshot) =>
-          snapshot.docs
-              .map((document) => Event.fromSnap(document))
-              .toList());
-  }
 
   Future<Event> getEventById(String eventId) async {
     DocumentSnapshot doc = await _db.collection('events')
@@ -109,21 +98,21 @@ class EventService {
     });
   }
 
-  Future<void> removeOldFriends(String eventId, List oldFriends) async {
-    await _db
-        .collection('events')
-        .doc(eventId)
-        .update({
-      'sharedWith': FieldValue.arrayRemove(oldFriends),
-    });
-  }
-
   Future<void> updateSharedWith(String eventId, List sharedWith) async {
     await _db
         .collection('events')
         .doc(eventId)
         .update({
       'sharedWith': sharedWith,
+    });
+  }
+
+  Future<void> removeOldFriends(String eventId, List oldFriends) async {
+    await _db
+        .collection('events')
+        .doc(eventId)
+        .update({
+      'sharedWith': FieldValue.arrayRemove(oldFriends),
     });
   }
 

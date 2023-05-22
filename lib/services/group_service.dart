@@ -53,6 +53,24 @@ class GroupService{
         .update({
       'members': FieldValue.arrayRemove(oldFriends),
     });
+    Group group = Group.fromSnap(await _db
+        .collection('groups')
+        .doc(groupId).get());
+    if(group.members.isEmpty){
+      deleteGroup(groupId);
+    }
+  }
+
+  Future<void> removeFriendFromUserGroups(String userId, String friendId) async {
+    Query doc = _db
+        .collection('groups')
+        .where('uid', isEqualTo: userId)
+        .where('members', arrayContains: friendId);
+
+    doc.get().then((value) => value.docs.forEach((element) {
+      Group group = Group.fromSnap(element);
+      removeOldFriends(group.groupId, [friendId]);
+    }));
   }
 
 }

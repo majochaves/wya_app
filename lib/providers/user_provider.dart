@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart'
     hide EmailAuthProvider, PhoneAuthProvider;
 
@@ -9,6 +10,8 @@ import 'package:uuid/uuid.dart';
 import 'package:wya_final/models/user_data.dart';
 import 'package:username_gen/username_gen.dart';
 
+import '../services/event_service.dart';
+import '../services/group_service.dart';
 import '../services/image_service.dart';
 import '../services/notification_service.dart';
 import '../services/user_service.dart';
@@ -27,78 +30,115 @@ class UserProvider extends ChangeNotifier {
   final usernameService = UsernameService();
   final imageService = ImageService();
   final notificationService = NotificationService();
+  final eventService = EventService();
+  final groupService = GroupService();
   var uuid = const Uuid();
 
   /// Provider values
   /* UserData model values*/
-  String? _email;
-  String? _uid;
-  String? _photoUrl;
-  String? _username;
-  String? _name;
-  bool? _allowAdd;
-  int? _maxMatchDistance;
-  List _friends = [];
-  List _requests = [];
-  List _groups = [];
-  List _events = [];
-  List _notifications = [];
-  List _chats = [];
+  String? email;
+  String? uid;
+  String? photoUrl;
+  String? username;
+  String? name;
+  bool? allowAdd;
+  int? maxMatchDistance;
+  List friends = [];
+  List requests = [];
+  List groups = [];
+  List events = [];
+  List notifications = [];
+  List chats = [];
 
   /* Additional values*/
-  UserData? currentUserData;
+  UserData? userData;
   List<UserData> friendInfo = [];
   List<UserData> requestInfo = [];
+
+  StreamSubscription? getFriendsStream;
+  StreamSubscription? getFriendInfoStream;
+  StreamSubscription? getRequestsStream;
+  StreamSubscription? getRequestInfoStream;
+
+  bool isLoading = true;
+
+  StreamSubscription<DocumentSnapshot>? _userDataSubscription;
+  StreamSubscription<QuerySnapshot>? _friendSubscription;
+  StreamSubscription<QuerySnapshot>? _requestSubscription;
+
+  void cancelStreams(){
+    _userDataSubscription?.cancel();
+    _friendSubscription?.cancel();
+    _requestSubscription?.cancel();
+    getRequestsStream?.cancel();
+    getRequestInfoStream?.cancel();
+    getFriendsStream?.cancel();
+    getFriendInfoStream?.cancel();
+  }
+
 
   ///Listens to changes in UserData from database and updates
   void init() {
     FirebaseAuth.instance.userChanges().listen((user) {
       if (user != null) {
-        userService.getUserData(user.uid)
-            .listen((userData) {
-        /*If there is existing user data for user*/
-          if(userData != null) {
-            currentUserData = userData;
+        _userDataSubscription = FirebaseFirestore.instance
+            .collection('userData')
+            .doc(FirebaseAuth.instance.currentUser!.uid)
+            .snapshots()
+            .listen((snapshot) async {
+          if(snapshot.data() != null){
+            print('getting user data');
+            userData = UserData.fromSnap(snapshot);
             notifyListeners();
             /*Updates current user data model values*/
-            email = userData.email;
-            uid = userData.uid;
-            photoUrl = userData.photoUrl;
-            username = userData.username;
-            name = userData.name;
-            friends = userData.friends;
-            requests = userData.requests;
-            groups = userData.groups;
-            events = userData.events;
-            notifications = userData.notifications;
-            chats = userData.chats;
-            allowAdd = userData.allowAdd;
-            maxMatchDistance = userData.maxMatchDistance;
+            email = userData!.email;
+            uid = userData!.uid;
+            photoUrl = userData!.photoUrl;
+            username = userData!.username;
+            name = userData!.name;
+            friends = userData!.friends;
+            requests = userData!.requests;
+            groups = userData!.groups;
+            events = userData!.events;
+            notifications = userData!.notifications;
+            chats = userData!.chats;
+            allowAdd = userData!.allowAdd;
+            maxMatchDistance = userData!.maxMatchDistance;
+            isLoading = false;
+            friendInfo = [];
+            requestInfo = [];
             notifyListeners();
-
-          /*Updates friendInfo*/
             if(friends.isNotEmpty){
-              Stream<List<UserData>> friendStream = UserService().getFriends(friends);
-              friendStream.listen((friends) {
-
-                friendInfo = friends;
-                notifyListeners();
+              await FirebaseFirestore.instance
+                  .collection('userData')
+                  .where('uid', whereIn: friends)
+                  .get().then((snapshot){
+                for (final document in snapshot.docs) {
+                  UserData friendUser = UserData.fromSnap(document);
+                  if(!friendInfo.any((element) => element.uid == friendUser.uid)){
+                    friendInfo.add(friendUser);
+                  }
+                  print('adding friend ${friendUser.name} to friendinfo. friendinfo length: ${friendInfo.length} ');
+                }
               });
-            }else{
-              friendInfo = [];
               notifyListeners();
             }
-          /*Updates requests*/
             if(requests.isNotEmpty){
-              Stream<List<UserData>> friendStream = UserService().getFriends(requests);
-              friendStream.listen((requests) {
-                requestInfo = requests;
-                notifyListeners();
+              await FirebaseFirestore.instance
+                  .collection('userData')
+                  .where('uid', whereIn: requests)
+                  .get().then((snapshot){
+                for (final document in snapshot.docs) {
+                  UserData requestingUser = UserData.fromSnap(document);
+                  if(!requestInfo.any((element) => element.uid == requestingUser.uid)){
+                    requestInfo.add(requestingUser);
+                  }
+                  print('adding request ${requestingUser.name} to requestinfo. requestinfo length: ${requestInfo.length} ');
+                }
               });
-            }else{
-              requestInfo = [];
               notifyListeners();
             }
+
         /*There is no existing user data for user*/
           }else{
             /*Generate new data for user and save it to database*/
@@ -122,75 +162,16 @@ class UserProvider extends ChangeNotifier {
             notifyListeners();
           }
         });
+      }else{
+        _userDataSubscription?.cancel();
+        _friendSubscription?.cancel();
+        _requestSubscription?.cancel();
+        getRequestsStream?.cancel();
+        getRequestInfoStream?.cancel();
+        getFriendsStream?.cancel();
+        getFriendInfoStream?.cancel();
       }
     });
-  }
-
-  ///User model values getters and setters
-  String? get email => _email;
-  set email(String? val){
-    _email = val;
-    notifyListeners();
-  }
-  String? get name => _name;
-  set name(String? val){
-    _name = val;
-    notifyListeners();
-  }
-  String? get uid => _uid;
-  set uid(String? val){
-    _email = val;
-    notifyListeners();
-  }
-  String? get photoUrl => _photoUrl;
-  set photoUrl(String? val){
-    _photoUrl = val;
-    notifyListeners();
-  }
-  String? get username => _username;
-  set username(String? val){
-    _username = val;
-    notifyListeners();
-  }
-  bool? get allowAdd => _allowAdd;
-  set allowAdd(bool? val){
-    _allowAdd = val;
-    notifyListeners();
-  }
-  int? get maxMatchDistance => _maxMatchDistance;
-  set maxMatchDistance(int? val){
-    _maxMatchDistance = val;
-    notifyListeners();
-  }
-  List get friends => _friends;
-  set friends(List val){
-    _friends = val;
-    notifyListeners();
-  }
-  List get requests => _requests;
-  set requests(List val){
-    _requests = val;
-    notifyListeners();
-  }
-  List get groups => _groups;
-  set groups(List val){
-    _groups = val;
-    notifyListeners();
-  }
-  List get events => _events;
-  set events(List val){
-    _events = val;
-    notifyListeners();
-  }
-  List get notifications => _notifications;
-  set notifications(List val){
-    _notifications = val;
-    notifyListeners();
-  }
-  List get chats => _chats;
-  set chats(List val){
-    _chats = val;
-    notifyListeners();
   }
 
   ///Provider methods
@@ -199,7 +180,7 @@ class UserProvider extends ChangeNotifier {
   }
 
   Future<void> changeEmail(String val) async{
-    _email = val;
+    email = val;
     notifyListeners();
     await userService.changeEmail(val, uid!);
     await FirebaseAuth.instance.currentUser!.updateEmail(val);
@@ -209,7 +190,7 @@ class UserProvider extends ChangeNotifier {
     return UsernameGen().generate();
   }
   Future<void> changeName(String val) async{
-    _email = val;
+    email = val;
     notifyListeners();
     await userService.changeName(val, uid!);
     await FirebaseAuth.instance.currentUser!.updateDisplayName(val);
@@ -217,7 +198,7 @@ class UserProvider extends ChangeNotifier {
 
   Future<void> changeProfilePicture(Uint8List file) async{
     String photoUrl = await imageService.uploadImageToStorage('profilePics', file, uid!);
-    _photoUrl = photoUrl;
+    photoUrl = photoUrl;
     notifyListeners();
     await userService.changeProfilePicture(photoUrl, uid!);
     await FirebaseAuth.instance.currentUser!.updatePhotoURL(photoUrl);
@@ -228,59 +209,59 @@ class UserProvider extends ChangeNotifier {
   }
 
   Future<void> changeUsername(String val) async{
-    _username = val;
+    await usernameService.deleteUsername(username!);
+    await usernameService.saveUsername(val);
+    username = val;
     notifyListeners();
     await userService.changeUsername(val, uid!);
   }
 
   Future<void> changeAllowAdd(bool val) async{
-    _allowAdd = val;
+    allowAdd = val;
     notifyListeners();
     await userService.changeAllowAdd(val, uid!);
   }
 
   Future<void> changeMaxMatchDistance(int val) async{
-    _maxMatchDistance = val;
+    maxMatchDistance = val;
     notifyListeners();
     await userService.changeMaxMatchDistance(val.toDouble(), uid!);
   }
 
-  Future<void> addFriend(String userID) async{
-    _friends.add(userID);
-    notifyListeners();
-    if(!friends.contains(userID)){
-      if(requests.contains(userID)){
-        _requests.remove(userID);
-        notifyListeners();
-        await userService.deleteRequest(uid!, userID);
-      }
-      await userService.addFriend(uid!, userID);
-      await userService.addFriend(userID, uid!);
+  Future<void> addFriend(UserData user) async{
+    if(!friends.contains(user.uid)){
 
+      _userDataSubscription?.pause();
+      await userService.addFriend(uid!, user.uid);
+      await userService.deleteRequest(uid!, user.uid);
+      _userDataSubscription?.resume();
+
+      userService.addFriend(user.uid, uid!);
       String notificationId = uuid.v1();
       model.Notification notification
         = model.Notification(
             notificationId:  notificationId,
             type: 1,
             created: DateTime.now(),
-            uid: userID,
+            uid: user.uid,
             isRead: false,
             userId: uid!,
             eventId: ''
         );
 
-      await notificationService.saveNotification(notification);
-      await userService.addNotification(userID, notificationId);
-      notifyListeners();
+      notificationService.saveNotification(notification);
+      userService.addNotification(user.uid, notificationId);
     }
   }
 
-  Future<void> removeFriend(String userID) async{
-    _friends.remove(userID);
-    notifyListeners();
-    if(friends.contains(userID)) {
-      await userService.removeFriend(uid!, userID);
-      await userService.removeFriend(userID, uid!);
+  Future<void> removeFriend(UserData user) async{
+    if(friends.contains(user.uid)) {
+      await userService.removeFriend(uid!, user.uid);
+      userService.removeFriend(user.uid, uid!);
+      eventService.removeFriendFromUserEvents(uid!, user.uid);
+      eventService.removeFriendFromUserEvents(user.uid!, uid!);
+      groupService.removeFriendFromUserGroups(uid!, user.uid);
+      groupService.removeFriendFromUserGroups(user.uid, uid!);
     }
   }
 
@@ -303,50 +284,11 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> removeRequest(String userID) async{
-    _requests.remove(userID);
-    notifyListeners();
-    if(requests.contains(userID)) {
-      userService.deleteRequest(uid!, userID);
+  Future<void> removeRequest(UserData user) async{
+    if(requests.contains(user.uid)) {
+      await userService.deleteRequest(uid!, user.uid);
     }
   }
-/*
-  void addGroup(String group){
-    _groups.add(group);
-    notifyListeners();
-  }
-  void removeGroup(String group){
-    _groups.remove(group);
-    notifyListeners();
-  }
-
-  void addEvent(String event){
-    _events.add(event);
-    notifyListeners();
-  }
-  void removeEvent(String event){
-    _events.remove(event);
-    notifyListeners();
-  }
-
-  void addNotification(String val){
-    _notifications.add(val);
-    notifyListeners();
-  }
-  void removeNotification(String val){
-    _notifications.remove(val);
-    notifyListeners();
-  }
-
-  void addChat(String val){
-    _chats.add(val);
-    notifyListeners();
-  }
-  void removeChat(String val){
-    _chats.remove(val);
-    notifyListeners();
-  }*/
-
 
   void saveData() {
     ///TODO VERIFY UNIQUENESS OF USERNAME
@@ -366,7 +308,7 @@ class UserProvider extends ChangeNotifier {
           chats: chats,
           friends: friends,
           requests: requests);
-    currentUserData = newUserData;
+    userData = newUserData;
     userService.saveUserData(newUserData);
   }
 }
