@@ -9,14 +9,28 @@ import 'package:wya_final/utils/constants.dart';
 import 'package:wya_final/utils/string_formatter.dart';
 import '/widgets/widgets.dart';
 
-class SharedEventViewer extends StatefulWidget {
-  const SharedEventViewer({Key? key}) : super(key: key);
+class SharedEventScreen extends StatefulWidget {
+  const SharedEventScreen({Key? key}) : super(key: key);
 
   @override
-  State<SharedEventViewer> createState() => _SharedEventViewerState();
+  State<SharedEventScreen> createState() => _SharedEventScreenState();
 }
 
-class _SharedEventViewerState extends State<SharedEventViewer> {
+class _SharedEventScreenState extends State<SharedEventScreen> {
+
+  void getData() async{
+    final eventProvider = Provider.of<EventProvider>(context, listen: false);
+    await eventProvider.getLocation(eventProvider.selectedSharedEvent!.event);
+    _kMapCenter = LatLng(
+        eventProvider.location!.latitude, eventProvider.location!.longitude);
+    isLoading = false;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getData();
+  }
 
   var _kMapCenter;
 
@@ -26,10 +40,6 @@ class _SharedEventViewerState extends State<SharedEventViewer> {
   bool isLoadingJoining = false;
   bool isLoading = true;
 
-  @override
-  void initState() {
-    super.initState();
-  }
 
   Marker _createMarker() {
     return Marker(
@@ -48,8 +58,6 @@ class _SharedEventViewerState extends State<SharedEventViewer> {
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
     final eventProvider = Provider.of<EventProvider>(context);
-    _kMapCenter = LatLng(eventProvider.location!.latitude, eventProvider.location!.longitude);
-    isLoading = false;
     return Scaffold(
         appBar: const AppBarCustom(),
         body: isLoading
@@ -94,20 +102,20 @@ class _SharedEventViewerState extends State<SharedEventViewer> {
                             Row(
                               children: [
                                 const Text('Category: ', style: kH4SourceSansTextStyle,),
-                                Text(EventCategory.getCategoryById(eventProvider.category).name),
+                                Text(EventCategory.getCategoryById(eventProvider.category!).name),
                               ],
                             ),
                             Row(
                               children: [
                                 const Text('Date: ', style: kH4SourceSansTextStyle,),
-                                Text(StringFormatter.getDayText(eventProvider.startsAt))
+                                Text(StringFormatter.getDayText(eventProvider.startsAt!))
                               ],
                             ),
                             Row(
                               children: [
                                 const Text('Time: ', style: kH4SourceSansTextStyle,),
-                                Text('${StringFormatter.getTimeString(eventProvider.startsAt)}'
-                                    '-${StringFormatter.getTimeString(eventProvider.endsAt)}')
+                                Text('${StringFormatter.getTimeString(eventProvider.startsAt!)}'
+                                    '-${StringFormatter.getTimeString(eventProvider.endsAt!)}')
                               ],
                             ),
                       ]),
@@ -129,7 +137,7 @@ class _SharedEventViewerState extends State<SharedEventViewer> {
                       ,),
                     const SizedBox(height: 30,),
                     Visibility(
-                      visible: !eventProvider.isOpen,
+                      visible: !eventProvider.isOpen!,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -153,7 +161,7 @@ class _SharedEventViewerState extends State<SharedEventViewer> {
                       ),
                     ),
                     Visibility(
-                      visible: eventProvider.isOpen,
+                      visible: eventProvider.isOpen!,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [

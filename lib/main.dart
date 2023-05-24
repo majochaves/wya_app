@@ -24,7 +24,7 @@ import 'screens/friends_screen.dart';
 import 'screens/events_screen.dart';
 import 'screens/event_screen.dart';
 import 'screens/settings_screen.dart';
-import 'widgets/event_widgets/shared_event_viewer.dart';
+import 'screens/shared_event_screen.dart';
 import 'screens/groups_screen.dart';
 import 'screens/account_screen.dart';
 import 'screens/chat_screen.dart';
@@ -88,9 +88,21 @@ final _router = GoRouter(
       builder: (context, state) => FirebaseAuth.instance.currentUser == null ? const WelcomeScreen() : const HomeScreen(),
       routes: [
         GoRoute(
+          path: 'welcome',
+          builder: (context, state) {
+            return const WelcomeScreen();
+          },
+        ),
+        GoRoute(
           path: 'sign-in',
           builder: (context, state) {
-            return const AuthScreen();
+            return const AuthScreen(mode: 'login',);
+          },
+        ),
+        GoRoute(
+          path: 'register',
+          builder: (context, state) {
+            return const AuthScreen(mode: 'register',);
           },
         ),
         GoRoute(
@@ -162,7 +174,7 @@ final _router = GoRouter(
         GoRoute(
           path: 'viewSharedEvent',
           builder: (context, state) {
-            return const SharedEventViewer();
+            return const SharedEventScreen();
           },
         ),
         GoRoute(

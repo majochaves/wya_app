@@ -6,9 +6,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:wya_final/providers/user_provider.dart';
 import 'package:wya_final/utils/constants.dart';
+import 'package:wya_final/widgets/user_widgets/user_details_viewer.dart';
 import '/widgets/widgets.dart';
 import '../utils/utils.dart';
-
 
 class ProfileScreen extends StatefulWidget {
   final String? uid;
@@ -43,14 +43,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           .doc(widget.uid)
           .get();
 
-      // get post lENGTH
-      var eventSnap = await FirebaseFirestore.instance
-          .collection('events')
-          .where('uid', isEqualTo: FirebaseAuth.instance.currentUser!.uid)
-          .get();
-
       setState(() {
-        eventsLen = eventSnap.docs.length;
+        eventsLen = userSnap.data()!['events'].length;
         userData = userSnap.data()!;
         print("gotUserDATA");
         friends = userSnap.data()!['friends'].length;
@@ -60,7 +54,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         print('is Friend : ${isFriend.toString()}');
         print(userSnap.data()!['friends'].toString());
         print(uid);
-        isRequested = userSnap.data()!['requests']
+        isRequested = userSnap
+            .data()!['requests']
             .contains(FirebaseAuth.instance.currentUser!.uid);
       });
     } catch (e) {
@@ -76,93 +71,75 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final userProvider = Provider.of<UserProvider>(context);
     return isLoading
         ? const Center(
-      child: CircularProgressIndicator(),
-    )
+            child: CircularProgressIndicator(),
+          )
         : Scaffold(
-        backgroundColor: Colors.white,
-        appBar: const AppBarCustom(),
-        body: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Expanded(flex: 1, child: Column(children: <Widget>[
-                CircleAvi(
-                  imageSrc: Image.network(
-                    userData['photoUrl'],
-                  ).image,
-                  size: 100,
-                ),
-                const SizedBox(height: 5,),
-                Text(
-                  '@${userData['username']}',
-                  style: kHandleTextStyle,
-                ),
-                const SizedBox(height: 5,),
-                Text(
-                  userData['name'],
-                  style: kNameStyle,
-                ),
-                const SizedBox(height: 5,),
-                Row(
+            backgroundColor: Colors.white,
+            appBar: const AppBarCustom(),
+            body: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
                   children: [
                     Expanded(
-                      flex: 1,
+                      child: UserDetailsViewer(
+                          photoUrl: userData['photoUrl'],
+                          username: userData['username'],
+                          name: userData['name'],
+                          friendsCount: friends,
+                          eventsCount: eventsLen,
+                          isUserAccount: false),
+                    ),
+                    Expanded(
                       child: Column(
                         children: [
                           Row(
-                            mainAxisSize: MainAxisSize.max,
-                            mainAxisAlignment:
-                            MainAxisAlignment.spaceEvenly,
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              StatColumn(num: eventsLen, label: "events", pushTo: '', isEnabled: false),
-                              StatColumn(num: friends, label: "friends", pushTo: '', isEnabled: false),
+                              isFriend
+                                  ? FollowButton(
+                                      text: 'Remove friend',
+                                      backgroundColor: kWYAOrange,
+                                      textColor: Colors.black,
+                                      borderColor: kWYAOrange,
+                                      function: () {
+                                        userProvider.removeFriend(userData['uid']);
+                                        setState(() {
+                                          isFriend = false;
+                                          friends--;
+                                        });
+                                      },
+                                    )
+                                  : isRequested
+                                      ? FollowButton(
+                                          text: 'Requested',
+                                          backgroundColor: Colors.grey,
+                                          textColor: Colors.black54,
+                                          borderColor: Colors.grey,
+                                          function: () {})
+                                      : FollowButton(
+                                          text: 'Add friend',
+                                          backgroundColor: kWYAOrange,
+                                          textColor: Colors.white,
+                                          borderColor: kWYAOrange,
+                                          function: () {
+                                            userProvider.sendFriendRequest(
+                                                userData['uid'] as String);
+                                            setState(() {
+                                              isRequested = true;
+                                            });
+                                          },
+                                        )
                             ],
                           ),
-                          Row( mainAxisAlignment: MainAxisAlignment.center, children: [isFriend
-                              ? FollowButton(
-                            text: 'Remove friend',
-                            backgroundColor: kWYAOrange,
-                            textColor: Colors.black,
-                            borderColor: kWYAOrange,
-                            function: () {
-                              userProvider.removeFriend(userData['uid']);
-                              setState(() {
-                                isFriend = false;
-                                friends--;
-                              });
-                            },
-                          )
-                              : isRequested ?
-                          FollowButton(
-                              text: 'Requested',
-                              backgroundColor: Colors.grey,
-                              textColor: Colors.black54,
-                              borderColor: Colors.grey,
-                              function: () {}) :
-                          FollowButton(
-                            text: 'Add friend',
-                            backgroundColor: kWYAOrange,
-                            textColor: Colors.white,
-                            borderColor: kWYAOrange,
-                            function: () {
-                              userProvider.sendFriendRequest(userData['uid'] as String);
-                              setState(() {
-                                isRequested = true;
-                              });
-                            },
-                          )
-                              ],
-                            ),
+                          Expanded(child: Container()),
                         ],
                       ),
                     ),
                   ],
-                ),
-              ],)),
-            ],
-          ),
-        ),
-        bottomNavigationBar: const CustomBottomAppBar(current: 'search',),
-    );
+                )),
+            bottomNavigationBar: const CustomBottomAppBar(
+              current: 'search',
+            ),
+          );
   }
 }

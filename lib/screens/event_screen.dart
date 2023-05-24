@@ -23,9 +23,18 @@ class _EventScreenState extends State<EventScreen> {
 
   bool isLoading = true;
 
+  void getData() async{
+    final eventProvider = Provider.of<EventProvider>(context, listen: false);
+    await eventProvider.getLocation(eventProvider.selectedEvent!);
+    _kMapCenter = LatLng(
+        eventProvider.location!.latitude, eventProvider.location!.longitude);
+    isLoading = false;
+  }
+
   @override
   void initState() {
     super.initState();
+    getData();
   }
 
   Future<void> _showRequestsWindow() async {
@@ -80,7 +89,7 @@ class _EventScreenState extends State<EventScreen> {
                                     onPressed: (user) {
                                       setState(() {
                                         eventProvider.acceptEventRequest(
-                                            eventProvider.eventId!, user.uid);
+                                            eventProvider.eventId!, user);
                                       });
                                     }),
                               ),
@@ -171,9 +180,6 @@ class _EventScreenState extends State<EventScreen> {
   @override
   Widget build(BuildContext context) {
     final eventProvider = Provider.of<EventProvider>(context);
-    _kMapCenter = LatLng(
-        eventProvider.location!.latitude, eventProvider.location!.longitude);
-    isLoading = false;
     return Scaffold(
       appBar: const AppBarCustom(),
       body: SafeArea(
@@ -232,7 +238,7 @@ class _EventScreenState extends State<EventScreen> {
                                     style: kH4SourceSansTextStyle,
                                   ),
                                   Text(EventCategory.getCategoryById(
-                                          eventProvider.category)
+                                          eventProvider.category!)
                                       .name),
                                 ],
                               ),
@@ -243,7 +249,7 @@ class _EventScreenState extends State<EventScreen> {
                                     style: kH4SourceSansTextStyle,
                                   ),
                                   Text(StringFormatter.getDayText(
-                                      eventProvider.startsAt))
+                                      eventProvider.startsAt!))
                                 ],
                               ),
                               Row(
@@ -253,8 +259,8 @@ class _EventScreenState extends State<EventScreen> {
                                     style: kH4SourceSansTextStyle,
                                   ),
                                   Text(
-                                      '${StringFormatter.getTimeString(eventProvider.startsAt)}'
-                                      '-${StringFormatter.getTimeString(eventProvider.endsAt)}')
+                                      '${StringFormatter.getTimeString(eventProvider.startsAt!)}'
+                                      '-${StringFormatter.getTimeString(eventProvider.endsAt!)}')
                                 ],
                               ),
                               Row(
@@ -263,7 +269,7 @@ class _EventScreenState extends State<EventScreen> {
                                     'Open event: ',
                                     style: kH4SourceSansTextStyle,
                                   ),
-                                  eventProvider.isOpen
+                                  eventProvider.isOpen!
                                       ? const Text('True')
                                       : const Text('False')
                                 ],
@@ -274,7 +280,7 @@ class _EventScreenState extends State<EventScreen> {
                                     'Shared with: ',
                                     style: kH4SourceSansTextStyle,
                                   ),
-                                  eventProvider.sharedWithAll
+                                  eventProvider.sharedWithAll!
                                       ? const Text('All friends')
                                       : TextButton(
                                           child: const Text('View shared with'),
@@ -312,7 +318,7 @@ class _EventScreenState extends State<EventScreen> {
                         ),
                       ),
                       Visibility(
-                        visible: !eventProvider.isOpen,
+                        visible: !eventProvider.isOpen!,
                         child: Row(
                           children: [
                             const Text(

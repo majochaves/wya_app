@@ -19,9 +19,12 @@ class ChatsScreen extends StatefulWidget {
 }
 
 List<Widget> getChatList(List<ChatInfo> chats){
+
   List<Widget> chatList = [];
-  for(ChatInfo chat in chats){
-    chatList.add(ChatPreviewer(chat: chat));
+  if(chats.isNotEmpty){
+    for(ChatInfo chat in chats){
+      chatList.add(ChatPreviewer(chat: chat));
+    }
   }
   return chatList;
 }

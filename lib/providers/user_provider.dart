@@ -1,18 +1,18 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart'
     hide EmailAuthProvider, PhoneAuthProvider;
 
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'package:wya_final/models/user_data.dart';
-import 'package:username_gen/username_gen.dart';
+import 'package:wya_final/services/chat_service.dart';
 
 import '../services/event_service.dart';
 import '../services/group_service.dart';
 import '../services/image_service.dart';
+import '../services/location_service.dart';
 import '../services/notification_service.dart';
 import '../services/user_service.dart';
 import '../services/username_service.dart';
@@ -32,6 +32,8 @@ class UserProvider extends ChangeNotifier {
   final notificationService = NotificationService();
   final eventService = EventService();
   final groupService = GroupService();
+  final chatService = ChatService();
+  final locationService = EventLocationService();
   var uuid = const Uuid();
 
   /// Provider values
@@ -44,6 +46,7 @@ class UserProvider extends ChangeNotifier {
   bool? allowAdd;
   int? maxMatchDistance;
   List friends = [];
+  List pendingRequests = [];
   List requests = [];
   List groups = [];
   List events = [];
@@ -54,131 +57,94 @@ class UserProvider extends ChangeNotifier {
   UserData? userData;
   List<UserData> friendInfo = [];
   List<UserData> requestInfo = [];
-
-  StreamSubscription? getFriendsStream;
-  StreamSubscription? getFriendInfoStream;
-  StreamSubscription? getRequestsStream;
-  StreamSubscription? getRequestInfoStream;
-
   bool isLoading = true;
 
-  StreamSubscription<DocumentSnapshot>? _userDataSubscription;
-  StreamSubscription<QuerySnapshot>? _friendSubscription;
-  StreamSubscription<QuerySnapshot>? _requestSubscription;
+  /*Streams*/
+  StreamSubscription? getUserDataStream;
+  StreamSubscription? getFriendsStream;
+  StreamSubscription? getRequestsStream;
+
+
+  ///Methods to reset provider once user has logged out
+  void clearData(){
+    email = null;
+    uid = null;
+    photoUrl = null;
+    username = null;
+    name = null;
+    allowAdd = null;
+    maxMatchDistance = null;
+    friends.clear();
+    pendingRequests.clear();
+    requests.clear();
+    groups.clear();
+    events.clear();
+    notifications.clear();
+    chats.clear();
+    friendInfo.clear();
+    requestInfo.clear();
+    isLoading = true;
+    notifyListeners();
+  }
 
   void cancelStreams(){
-    _userDataSubscription?.cancel();
-    _friendSubscription?.cancel();
-    _requestSubscription?.cancel();
+    getUserDataStream?.cancel();
     getRequestsStream?.cancel();
-    getRequestInfoStream?.cancel();
     getFriendsStream?.cancel();
-    getFriendInfoStream?.cancel();
   }
 
 
-  ///Listens to changes in UserData from database and updates
+  ///Listens to streams and updates values
   void init() {
     FirebaseAuth.instance.userChanges().listen((user) {
+      ///If user is logged in
       if (user != null) {
-        _userDataSubscription = FirebaseFirestore.instance
-            .collection('userData')
-            .doc(FirebaseAuth.instance.currentUser!.uid)
-            .snapshots()
-            .listen((snapshot) async {
-          if(snapshot.data() != null){
-            print('getting user data');
-            userData = UserData.fromSnap(snapshot);
-            notifyListeners();
-            /*Updates current user data model values*/
-            email = userData!.email;
-            uid = userData!.uid;
-            photoUrl = userData!.photoUrl;
-            username = userData!.username;
-            name = userData!.name;
-            friends = userData!.friends;
-            requests = userData!.requests;
-            groups = userData!.groups;
-            events = userData!.events;
-            notifications = userData!.notifications;
-            chats = userData!.chats;
-            allowAdd = userData!.allowAdd;
-            maxMatchDistance = userData!.maxMatchDistance;
-            isLoading = false;
-            friendInfo = [];
-            requestInfo = [];
-            notifyListeners();
-            if(friends.isNotEmpty){
-              await FirebaseFirestore.instance
-                  .collection('userData')
-                  .where('uid', whereIn: friends)
-                  .get().then((snapshot){
-                for (final document in snapshot.docs) {
-                  UserData friendUser = UserData.fromSnap(document);
-                  if(!friendInfo.any((element) => element.uid == friendUser.uid)){
-                    friendInfo.add(friendUser);
-                  }
-                  print('adding friend ${friendUser.name} to friendinfo. friendinfo length: ${friendInfo.length} ');
-                }
-              });
-              notifyListeners();
-            }
-            if(requests.isNotEmpty){
-              await FirebaseFirestore.instance
-                  .collection('userData')
-                  .where('uid', whereIn: requests)
-                  .get().then((snapshot){
-                for (final document in snapshot.docs) {
-                  UserData requestingUser = UserData.fromSnap(document);
-                  if(!requestInfo.any((element) => element.uid == requestingUser.uid)){
-                    requestInfo.add(requestingUser);
-                  }
-                  print('adding request ${requestingUser.name} to requestinfo. requestinfo length: ${requestInfo.length} ');
-                }
-              });
-              notifyListeners();
-            }
-
-        /*There is no existing user data for user*/
-          }else{
-            /*Generate new data for user and save it to database*/
-            ///TODO: Verify random username doesn't exist
-            String randomUsername = generateRandomUsername();
-
-            email =  user.email ?? '';
-            name = user.displayName ?? '';
-            friends = [];
-            requests = [];
-            events = [];
-            groups = [];
-            notifications = [];
-            photoUrl = 'https://picsum.photos/250?image=9';
-            uid = user.uid;
-            username = randomUsername;
-            allowAdd = true;
-            maxMatchDistance = 100;
-            chats = [];
-            saveData();
-            notifyListeners();
-          }
+        getUserDataStream = userService.getUserData(user.uid).listen((event) {
+          userData = event;
+          email = userData!.email;
+          uid = userData!.uid;
+          username = userData!.username;
+          name = userData!.name;
+          photoUrl = userData!.photoUrl;
+          allowAdd = userData!.allowAdd;
+          maxMatchDistance = userData!.maxMatchDistance;
+          friends = userData!.friends;
+          requests = userData!.requests;
+          groups = userData!.groups;
+          events = userData!.events;
+          notifications = userData!.notifications;
+          chats = userData!.chats;
+          isLoading = false;
+          notifyListeners();
+        });
+        getFriendsStream = userService.getUserFriends(user.uid).listen((event) {
+          friendInfo = event;
+          notifyListeners();
+        });
+        getRequestsStream = userService.getUserRequests(user.uid).listen((event) {
+          requestInfo = event;
+          notifyListeners();
         });
       }else{
-        _userDataSubscription?.cancel();
-        _friendSubscription?.cancel();
-        _requestSubscription?.cancel();
-        getRequestsStream?.cancel();
-        getRequestInfoStream?.cancel();
-        getFriendsStream?.cancel();
-        getFriendInfoStream?.cancel();
+        ///If user is logged out
+          cancelStreams();
+          clearData();
+          print('user provider: reset');
       }
     });
   }
 
   ///Provider methods
-  Future<bool> emailIsUnique(String email) async{
+  /*Uniqueness verification methods*/
+  Future<bool> emailIsUnique(String email) async {
     return userService.emailIsUnique(email, uid!);
   }
 
+  Future<bool> usernameIsUnique(String val) async{
+    return usernameService.usernameIsUnique(val);
+  }
+
+  /*Field update methods*/
   Future<void> changeEmail(String val) async{
     email = val;
     notifyListeners();
@@ -186,9 +152,6 @@ class UserProvider extends ChangeNotifier {
     await FirebaseAuth.instance.currentUser!.updateEmail(val);
   }
 
-  String generateRandomUsername(){
-    return UsernameGen().generate();
-  }
   Future<void> changeName(String val) async{
     email = val;
     notifyListeners();
@@ -202,10 +165,6 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
     await userService.changeProfilePicture(photoUrl, uid!);
     await FirebaseAuth.instance.currentUser!.updatePhotoURL(photoUrl);
-  }
-
-  Future<bool> usernameIsUnique(String val) async{
-    return usernameService.usernameIsUnique(val);
   }
 
   Future<void> changeUsername(String val) async{
@@ -228,15 +187,12 @@ class UserProvider extends ChangeNotifier {
     await userService.changeMaxMatchDistance(val.toDouble(), uid!);
   }
 
+  /*Friend and request methods*/
   Future<void> addFriend(UserData user) async{
     if(!friends.contains(user.uid)){
-
-      _userDataSubscription?.pause();
       await userService.addFriend(uid!, user.uid);
       await userService.deleteRequest(uid!, user.uid);
-      _userDataSubscription?.resume();
 
-      userService.addFriend(user.uid, uid!);
       String notificationId = uuid.v1();
       model.Notification notification
         = model.Notification(
@@ -257,11 +213,8 @@ class UserProvider extends ChangeNotifier {
   Future<void> removeFriend(UserData user) async{
     if(friends.contains(user.uid)) {
       await userService.removeFriend(uid!, user.uid);
-      userService.removeFriend(user.uid, uid!);
       eventService.removeFriendFromUserEvents(uid!, user.uid);
-      eventService.removeFriendFromUserEvents(user.uid!, uid!);
       groupService.removeFriendFromUserGroups(uid!, user.uid);
-      groupService.removeFriendFromUserGroups(user.uid, uid!);
     }
   }
 
@@ -290,25 +243,32 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  void saveData() {
-    ///TODO VERIFY UNIQUENESS OF USERNAME
-    usernameService.saveUsername(username!);
-    var newUserData =
-      UserData(
-          name: name!,
-          email: email!,
-          photoUrl: photoUrl!,
-          uid: uid!,
-          username: username!,
-          events: events,
-          groups: groups,
-          allowAdd: allowAdd!,
-          maxMatchDistance: maxMatchDistance!,
-          notifications: notifications,
-          chats: chats,
-          friends: friends,
-          requests: requests);
-    userData = newUserData;
-    userService.saveUserData(newUserData);
+  ///Deletes all user data from database and FirebaseAuthentication
+  Future<void> deleteAccount() async{
+    getUserDataStream?.cancel();
+    ///Remove user from friends and pending requests
+    userService.removeUserFromUserData(uid!);
+    ///Remove user from other user's groups and delete user groups
+    groupService.removeUserFromAllGroups(uid!);
+    groupService.deleteAllUserGroups(uid!);
+    ///Delete all chats that include user
+    chatService.deleteAllUserChats(uid!);
+    ///Delete all notifications that mention user events and user, and user notifications
+    if(events.isNotEmpty){
+      notificationService.deleteNotificationsForEvents(events);
+    }
+    notificationService.deleteNotificationsMentioning(uid!);
+    notificationService.deleteNotificationsForUser(uid!);
+    ///Delete user from event participants, requests, and sharedWith and delete all user events
+    eventService.removeUserFromEvents(uid!);
+    eventService.deleteAllUserEvents(uid!);
+    ///Delete all user locations
+    locationService.deleteLocationsForUser(uid!);
+    ///Delete username
+    usernameService.deleteUsername(username!);
+    ///Delete userData
+    userService.deleteUserData(uid!);
+    ///Delete user from FirebaseAuth
+    await FirebaseAuth.instance.currentUser?.delete();
   }
 }

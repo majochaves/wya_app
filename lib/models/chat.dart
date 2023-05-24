@@ -2,20 +2,16 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Chat{
   final String chatId;
-  final String uid1;
-  final String uid2;
-  final List messages;
+  final List participants;
   final String? lastMessage;
   final DateTime? lastMessageSentAt;
 
-  Chat({required this.chatId, required this.uid1, required this.uid2,
-  required this.messages, required this.lastMessage, required this.lastMessageSentAt});
+  Chat({required this.chatId, required this.participants,
+  required this.lastMessage, required this.lastMessageSentAt});
 
   Map<String, dynamic> toJson() => {
     "chatId" : chatId,
-    "uid1" : uid1,
-    "uid2" : uid2,
-    "messages" : messages,
+    "participants" : participants,
     "lastMessage" :lastMessage,
     "lastMessageSentAt" : lastMessageSentAt
   };
@@ -25,9 +21,7 @@ class Chat{
 
     return Chat(
       chatId: snapshot['chatId'],
-      uid1: snapshot['uid1'],
-      uid2: snapshot['uid2'],
-      messages : snapshot['messages'],
+      participants: snapshot['participants'],
       lastMessage: snapshot['lastMessage'],
       lastMessageSentAt : snapshot['lastMessageSentAt'] == null ? null : DateTime.parse(snapshot['lastMessageSentAt'].toDate().toString()),
     );

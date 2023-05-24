@@ -18,4 +18,18 @@ class EventLocationService{
   Future<void> saveLocation(Location location) async{
     await _db.collection('locations').doc(location.locationId).set(location.toJson());
   }
+
+  Future<void> deleteLocation(String locationId) async{
+    await _db.collection('locations').doc(locationId).delete();
+  }
+
+  Future<void> deleteLocationsForUser(String uid) async{
+    await _db
+        .collection('locations')
+        .where('uid', isEqualTo: uid)
+        .get().then((value) => value.docs.forEach((element) {
+      Location location = Location.fromSnap(element);
+      deleteLocation(location.locationId);
+    }));
+  }
 } 

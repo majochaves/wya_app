@@ -17,10 +17,11 @@ class UsernameService {
   }
 
   Future<bool> usernameIsUnique(String username) async {
-    DocumentSnapshot doc = await _db
+    QuerySnapshot doc = await _db
         .collection('usernames')
-        .doc(username).get();
+        .where('username', isEqualTo: username)
+        .get();
 
-    return !doc.exists;
+    return doc.docs.isEmpty;
   }
 }

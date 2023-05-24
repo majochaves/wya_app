@@ -44,21 +44,33 @@ class SharedEventCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Expanded(
+                    flex: 4,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          CircleAvi(
-                              imageSrc: NetworkImage(sharedEvent.user.photoUrl),
-                              size: 40),
+                          Expanded(
+                            flex: 4,
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: CircleAvatar(backgroundImage: NetworkImage(sharedEvent.user.photoUrl), radius: 25,),
+                            ),
+                          ),
                           const SizedBox(height:5),
-                          Text(sharedEvent.user.username, style: kH6RubikTextStyle,),
+                          Expanded(child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                            child: FittedBox(fit: BoxFit.fitWidth, child: Text(sharedEvent.user.username, style: kH6RubikTextStyle,)),
+                          )),
+                          Expanded(child: Container()),
                         ],
                       )),
                   Expanded(
-                    flex: 3,
+                    flex: 5,
                     child: Padding(
-                      padding: const EdgeInsets.all(10.0),
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 3),
                       child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Expanded(
                               flex:4,

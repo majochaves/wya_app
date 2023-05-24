@@ -14,6 +14,7 @@ class UserData {
   final List chats;
   final List friends;
   final List requests;
+  final List pendingRequests;
 
   UserData({
     required this.name,
@@ -28,7 +29,8 @@ class UserData {
     required this.notifications,
     required this.chats,
     required this.friends,
-    required this.requests
+    required this.requests,
+    required this.pendingRequests
   });
 
   Map<String, dynamic> toJson() => {
@@ -41,6 +43,7 @@ class UserData {
     "groups": groups,
     "friends": friends,
     "requests": requests,
+    "pendingRequests" : pendingRequests,
     "allowAdd" : allowAdd,
     "maxMatchDistance" : maxMatchDistance,
     "notifications" : notifications,
@@ -64,6 +67,7 @@ class UserData {
       chats: snapshot['chats'],
       friends: snapshot['friends'],
       requests: snapshot['requests'],
+      pendingRequests: snapshot['pendingRequests'],
     );
   }
 }

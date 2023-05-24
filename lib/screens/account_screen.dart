@@ -11,7 +11,7 @@ import 'package:wya_final/screens/welcome_screen.dart';
 import 'package:wya_final/utils/constants.dart';
 import '../providers/auth_provider.dart';
 import '/widgets/widgets.dart';
-
+import '/widgets/user_widgets/user_details_viewer.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -46,7 +46,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   photoUrl: userProvider.photoUrl!,
                   username: userProvider.username!,
                   name: userProvider.name!,
-                  friendsCount: userProvider.friends.length,
+                  friendsCount: userProvider.friendInfo.length,
                   eventsCount: userProvider.events.length, isUserAccount: true),
               ),
               Expanded(child: Column(

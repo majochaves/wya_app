@@ -71,6 +71,35 @@ class GroupService{
       Group group = Group.fromSnap(element);
       removeOldFriends(group.groupId, [friendId]);
     }));
+
+    Query doc2 = _db
+        .collection('groups')
+        .where('uid', isEqualTo: friendId)
+        .where('members', arrayContains: userId);
+
+    doc2.get().then((value) => value.docs.forEach((element) {
+      Group group = Group.fromSnap(element);
+      removeOldFriends(group.groupId, [userId]);
+    }));
   }
 
+  Future<void> removeUserFromAllGroups(String uid) async{
+    await _db
+        .collection('groups')
+        .where('members', arrayContains: uid)
+        .get().then((value) => value.docs.forEach((element) {
+      Group group = Group.fromSnap(element);
+      removeOldFriends(group.groupId, [uid]);
+    }));
+  }
+
+  Future<void> deleteAllUserGroups(String uid) async{
+    await _db
+        .collection('groups')
+        .where('uid', isEqualTo: uid)
+        .get().then((value) => value.docs.forEach((element) {
+      Group group = Group.fromSnap(element);
+      deleteGroup(group.groupId);
+    }));
+  }
 }

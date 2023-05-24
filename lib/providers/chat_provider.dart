@@ -26,7 +26,6 @@ class ChatProvider extends ChangeNotifier {
 
   ///ChangeNotifierProxy Update Method: Updates when UserProvider has been updated
   void update(UserProvider provider){
-    userChatIds = provider.chats;
     friendInfo = provider.friendInfo;
     notifyListeners();
   }
@@ -36,12 +35,23 @@ class ChatProvider extends ChangeNotifier {
   UserService userService = UserService();
 
   ///Shared data from User provider
-  List userChatIds = [];
   List<UserData> friendInfo = [];
 
   ///Provider values
   List<ChatInfo> chats = [];
-  ChatInfo? selectedChat;
+  ChatInfo? _selectedChat;
+  ChatInfo? get selectedChat => _selectedChat;
+  set selectedChat(ChatInfo? newSelectedChat){
+    _selectedChat = newSelectedChat;
+    if(newSelectedChat != null){
+      currentChatMessagesStream = chatService.getMessagesStream(newSelectedChat.chat.chatId).listen((event) {
+        selectedChat!.messages = event;
+        notifyListeners();
+      });
+    }else{
+      currentChatMessagesStream?.cancel();
+    }
+  }
   int get unreadMessages{
     int unread = 0;
     for(ChatInfo chat in chats){
@@ -55,61 +65,66 @@ class ChatProvider extends ChangeNotifier {
   }
 
   StreamSubscription? getChatStream;
+  StreamSubscription? currentChatMessagesStream;
+
 
   void cancelStreams(){
     getChatStream?.cancel();
+    currentChatMessagesStream?.cancel();
+  }
+
+  void clearData(){
+    friendInfo.clear();
+    chats.clear();
+    selectedChat = null;
+    notifyListeners();
   }
 
   ///Get chats from chat stream
   void init(){
     FirebaseAuth.instance.userChanges().listen((user) {
       if (user != null) {
-        getChatStream = chatService.getChats(userChatIds).listen((chatList) async {
+        getChatStream = chatService.getChats(user.uid).listen((chatList) async {
           for (model.Chat chat in chatList) {
-            if (chat.messages.isNotEmpty) {
-              List<model.Message> messages = await chatService.getMessages(
-                  chat.chatId);
-              UserData friend = await getFriendForChat(chat);
-              ChatInfo chatInfo = ChatInfo(
-                  chat: chat, messages: messages, user: friend);
-              if (chats.any((element) =>
-              element.chat.chatId == chatInfo.chat.chatId)) {
-                chats[chats.indexWhere((element) =>
-                element.chat.chatId == chatInfo.chat.chatId)] =
-                    chatInfo;
-                if (selectedChat != null) {
-                  if (selectedChat!.chat.chatId == chatInfo.chat.chatId) {
-                    selectedChat = chatInfo;
-                  }
+            List<model.Message> messages = await chatService.getMessages(chat.chatId);
+            UserData? friend = await getFriendForChat(chat);
+            ChatInfo chatInfo = ChatInfo(chat: chat, messages: messages, user: friend!);
+            if (chats.any((element) =>
+            element.chat.chatId == chatInfo.chat.chatId)) {
+              chats[chats.indexWhere((element) =>
+              element.chat.chatId == chatInfo.chat.chatId)] =
+                  chatInfo;
+              if (selectedChat != null) {
+                if (selectedChat!.chat.chatId == chatInfo.chat.chatId) {
+                  selectedChat = chatInfo;
                 }
-              } else {
-                chats.add(chatInfo);
               }
+            } else {
+              chats.add(chatInfo);
             }
           }
         });
+
       }else{
-        getChatStream?.cancel();
+        cancelStreams();
+        clearData();
+        print('chat provider: reset');
       }
     });
   }
 
   ///Auxiliary method to get UserData for chat participant
-  Future<UserData> getFriendForChat(model.Chat chat) async{
-    if(chat.uid1 == user!.uid){
-      if(friendInfo.any((element) => element.uid == chat.uid2)){
-        return friendInfo[friendInfo.indexWhere((element) => element.uid == chat.uid2)];
-      }else{
-        return await userService.getUserById(chat.uid2);
-      }
-    }else {
-      if (friendInfo.any((element) => element.uid == chat.uid1)) {
-        return friendInfo[friendInfo.indexWhere((element) =>
-        element.uid == chat.uid1)];
-      } else {
-        return await userService.getUserById(chat.uid1);
+  Future<UserData?> getFriendForChat(model.Chat chat) async{
+    for(String id in chat.participants){
+      if(id != user!.uid){
+        if(friendInfo.any((element) => element.uid == id)){
+          return friendInfo[friendInfo.indexWhere((element) => element.uid == id)];
+        }else{
+          return await userService.getUserById(id);
+        }
       }
     }
+    return null;
   }
 
   ///Provided methods
@@ -124,7 +139,6 @@ class ChatProvider extends ChangeNotifier {
           isRead: false
       );
     selectedChat!.messages.insert(selectedChat!.messages.length, newMessage);
-    chatService.saveMessage(newMessage);
     chatService.addNewMessageToChat(newMessage);
   }
 
@@ -134,13 +148,12 @@ class ChatProvider extends ChangeNotifier {
       if(chat.user.uid == friend.uid){
         foundChat = true;
         selectedChat = chat;
+        print('found chat! with user: ${selectedChat!.user!.name}');
       }
     }
     if(!foundChat) {
       model.Chat newChat = model.Chat(chatId: const Uuid().v1(),
-          uid1: user!.uid,
-          uid2: friend.uid,
-          messages: [],
+          participants: [user!.uid, friend.uid],
           lastMessage: null,
           lastMessageSentAt: null);
       chatService.saveChat(newChat);

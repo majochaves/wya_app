@@ -9,36 +9,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:provider/provider.dart';
+import 'package:wya_final/providers/auth_provider.dart';
 import 'package:wya_final/utils/constants.dart';
 import 'package:wya_final/widgets/widgets.dart';
 
 typedef OAuthSignIn = void Function();
 
-class ScaffoldSnackbar {
-  ScaffoldSnackbar(this._context);
-
-  factory ScaffoldSnackbar.of(BuildContext context) {
-    return ScaffoldSnackbar(context);
-  }
-
-  final BuildContext _context;
-
-  void show(String message) {
-    ScaffoldMessenger.of(_context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(message),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-  }
-}
 
 enum AuthMode { login, register}
 
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({Key? key}) : super(key: key);
+  final String mode;
+  const AuthScreen({Key? key, required this.mode}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _AuthScreenState();
@@ -48,6 +31,7 @@ class _AuthScreenState extends State<AuthScreen> {
   FirebaseAuth auth = FirebaseAuth.instance;
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
+  TextEditingController usernameController = TextEditingController();
 
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
   String error = '';
@@ -68,6 +52,9 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.mode == 'register') {
+      mode = AuthMode.register;
+    }
     authButtons = {
       Buttons.Google: () =>
           _handleMultiFactorException(
@@ -78,6 +65,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<Auth>(context);
     return GestureDetector(
       onTap: FocusScope
           .of(context)
@@ -97,7 +85,6 @@ class _AuthScreenState extends State<AuthScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Image(image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/wyatext.png').image, width: 200,),
                           Visibility(
                             visible: error.isNotEmpty,
                             child: MaterialBanner(
@@ -126,14 +113,45 @@ class _AuthScreenState extends State<AuthScreen> {
                             ),
                           ),
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(mode == AuthMode.login ? 'Login' : 'Register', style: kH3SourceSansTextStyle, textAlign: TextAlign.start,),
+                              Text(
+                                mode == AuthMode.login ? 'Login' : 'Register',
+                                style: kH1SpaceMonoTextStyle,
+                                textAlign: TextAlign.center,),
                             ],
                           ),
                           const SizedBox(height: 20),
                           Column(
                             children: [
+                              Visibility(visible: mode == AuthMode.register,
+                                  child: Column(children: [
+                                    TextFormField(
+                                      controller: usernameController,
+                                      decoration: const InputDecoration(
+                                        hintText: 'Username',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      keyboardType: TextInputType.text,
+                                      onChanged: (value) async {
+                                        if (await authProvider.usernameIsUnique(
+                                            value) == false) {
+                                          setState(() {
+                                            error = 'Username already exists';
+                                          });
+                                        } else {
+                                          setState(() {
+                                            error = '';
+                                          });
+                                        }
+                                      },
+                                      validator: (value) =>
+                                      value != null && value.isNotEmpty
+                                          ? null
+                                          : 'Required',
+                                    ),
+                                    const SizedBox(height: 20),
+                                  ],)),
                               TextFormField(
                                 controller: emailController,
                                 decoration: const InputDecoration(
@@ -169,9 +187,13 @@ class _AuthScreenState extends State<AuthScreen> {
                             child: SpecialWYAButton(
                               color: kWYATeal,
                               textColor: Colors.white,
-                              text: mode == AuthMode.login ? 'login' : 'register',
+                              text: mode == AuthMode.login
+                                  ? 'login'
+                                  : 'register',
                               isLoading: isLoading,
-                              onTap: _emailAndPassword
+                              onTap: mode == AuthMode.login
+                                  ? _emailAndPassword
+                                  : _registerUser,
                             ),
                           ),
                           TextButton(
@@ -314,41 +336,84 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _emailAndPassword() async {
-    if (formKey.currentState?.validate() ?? false) {
-      if (mode == AuthMode.login) {
-        await auth.signInWithEmailAndPassword(
-          email: emailController.text,
-          password: passwordController.text,
-        );
+    setState(() {
+      isLoading = true;
+    });
+    if ((formKey.currentState?.validate() ?? false) && error.isEmpty) {
+      final authProvider = Provider.of<Auth>(context, listen: false);
+      String res = await authProvider.loginUser(
+          emailController.text, passwordController.text);
+      if (res == 'success') {
         context.go('/');
-      } else  {
-        await auth.createUserWithEmailAndPassword(
-          email: emailController.text,
-          password: passwordController.text,
-        );
-        context.go('/');
+      } else {
+        setState(() {
+          error = res;
+        });
       }
     }
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  Future<void> _registerUser() async {
+    setState(() {
+      isLoading = true;
+    });
+    if ((formKey.currentState?.validate() ?? false) && error.isEmpty) {
+      final authProvider = Provider.of<Auth>(context, listen: false);
+      String res = await authProvider.registerUser(
+          emailController.text, usernameController.text,
+          passwordController.text);
+      if (res == 'success') {
+        context.go('/');
+      } else {
+        setState(() {
+          error = res;
+        });
+      }
+    }
+    setState(() {
+      isLoading = false;
+    });
   }
 
   Future<void> _signInWithGoogle() async {
-    // Trigger the authentication flow
-    final googleUser = await GoogleSignIn(
-      clientId: '536153952717-2d1ad23q7bcbhiq2khkr5umk5lthtgc5.apps.googleusercontent.com'
-    ).signIn();
-
-    // Obtain the auth details from the request
-    final googleAuth = await googleUser?.authentication;
-
-    if (googleAuth != null) {
-      // Create a new credential
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-      // Once signed in, return the UserCredential
-      await auth.signInWithCredential(credential);
+    setState(() {
+      isLoading = true;
+    });
+    final authProvider = Provider.of<Auth>(context, listen: false);
+    String res = await authProvider.loginUserWithGoogle();
+    if (res == 'success') {
       context.go('/');
+    } else {
+      setState(() {
+        error = res;
+      });
     }
+    setState(() {
+      isLoading = false;
+    });
+  }
+}
+
+class ScaffoldSnackbar {
+  ScaffoldSnackbar(this._context);
+
+  factory ScaffoldSnackbar.of(BuildContext context) {
+    return ScaffoldSnackbar(context);
+  }
+
+  final BuildContext _context;
+
+  void show(String message) {
+    ScaffoldMessenger.of(_context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
   }
 }

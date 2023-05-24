@@ -15,8 +15,6 @@ import 'event_provider.dart';
 
 
 class NotificationProvider extends ChangeNotifier {
-  User? user = FirebaseAuth.instance.currentUser;
-
   ///Constructor
   NotificationProvider(){
     init();
@@ -60,6 +58,14 @@ class NotificationProvider extends ChangeNotifier {
     getNotificationStream?.cancel();
   }
 
+  void clearData(){
+    notifications.clear();
+    sharedEvents.clear();
+    events.clear();
+    friendInfo.clear();
+    notifyListeners();
+  }
+
   ///Get notifications from Notification Stream
   void init() {
     FirebaseAuth.instance.userChanges().listen((user) {
@@ -89,12 +95,12 @@ class NotificationProvider extends ChangeNotifier {
               notifications[dayOfNotification]!.add(notInfo);
             }
           }
-          notifications = Map.fromEntries(
-              notifications.entries.toList()..sort((e1, e2) => e1.key.compareTo(e2.key)));
           notifyListeners();
         });
       }else{
-        getNotificationStream?.cancel();
+        cancelStreams();
+        clearData();
+        print('notification provider: reset');
       }
     });
   }
@@ -104,6 +110,7 @@ class NotificationProvider extends ChangeNotifier {
     if(friendInfo.any((element) => element.uid == id)){
       return friendInfo[friendInfo.indexWhere((element) => element.uid == id)];
     }else{
+      ///This is used in the case that the user mentioned in the notification is no longer friends with the current user
       return await userService.getUserById(id);
     }
 
@@ -117,6 +124,7 @@ class NotificationProvider extends ChangeNotifier {
     if(sharedEvents.any((element) => element.event.eventId == id)){
       return sharedEvents[sharedEvents.indexWhere((element) => element.event.eventId == id)].event;
     }else{
+      ///This is used in the case that the event mentioned in the notification is no longer shared with the current user
       return await eventService.getEventById(id);
     }
 
@@ -124,7 +132,7 @@ class NotificationProvider extends ChangeNotifier {
 
   ///Provided methods
   Future<void> setReadNotifications() async{
-    notificationService.setReadNotifications(user!.uid);
+    notificationService.setReadNotifications(FirebaseAuth.instance.currentUser!.uid);
   }
 
 }

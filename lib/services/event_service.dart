@@ -27,6 +27,13 @@ class EventService {
               .toList());
   }
 
+  Stream<Event> getEventStream(String eventId){
+    return _db
+        .collection('events')
+        .doc(eventId)
+        .snapshots().map((snapshot) => Event.fromSnap(snapshot));
+  }
+
 
   Future<Event> getEventById(String eventId) async {
     DocumentSnapshot doc = await _db.collection('events')
@@ -67,6 +74,15 @@ class EventService {
         .update({
       'requests': FieldValue.arrayRemove([requesterUID]),
       'participants': FieldValue.arrayUnion([requesterUID])
+    });
+  }
+
+  Future<void> deleteEventRequest(String eventId, String requesterUID) async {
+    await _db
+        .collection('events')
+        .doc(eventId)
+        .update({
+      'requests': FieldValue.arrayRemove([requesterUID]),
     });
   }
 
@@ -125,6 +141,52 @@ class EventService {
     doc.get().then((value) => value.docs.forEach((element) {
       Event event = Event.fromSnap(element);
       removeOldFriends(event.eventId, [friendId]);
+    }));
+
+    Query doc2 = _db
+        .collection('events')
+        .where('uid', isEqualTo: friendId)
+        .where('sharedWith', arrayContains: userId);
+
+    doc2.get().then((value) => value.docs.forEach((element) {
+      Event event = Event.fromSnap(element);
+      removeOldFriends(event.eventId, [userId]);
+    }));
+  }
+
+  Future<void> removeUserFromEvents(String uid) async{
+    await _db
+        .collection('events')
+        .where('participants', arrayContains: uid)
+        .get().then((value) => value.docs.forEach((element) {
+      Event event = Event.fromSnap(element);
+      removeParticipant(event.eventId, uid);
+    }));
+
+    await _db
+        .collection('events')
+        .where('requests', arrayContains: uid)
+        .get().then((value) => value.docs.forEach((element) {
+      Event event = Event.fromSnap(element);
+      deleteEventRequest(event.eventId, uid);
+    }));
+
+    await _db
+        .collection('events')
+        .where('sharedWith', arrayContains: uid)
+        .get().then((value) => value.docs.forEach((element) {
+      Event event = Event.fromSnap(element);
+      removeOldFriends(event.eventId, [uid]);
+    }));
+  }
+
+  Future<void> deleteAllUserEvents(String uid) async{
+    await _db
+        .collection('events')
+        .where('uid', isEqualTo: uid)
+        .get().then((value) => value.docs.forEach((element) {
+      Event event = Event.fromSnap(element);
+      deleteEvent(event.eventId);
     }));
   }
 

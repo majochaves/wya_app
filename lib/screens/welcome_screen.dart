@@ -31,19 +31,34 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              Expanded(child: Container(), flex: 10,),
-              Expanded(child: Image(image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/locationpin.png').image, width: 50,),
-              flex: 5,),
-              Expanded(child: Container(), flex: 1,),
-              Expanded(child: Image(image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/wyatext.png').image),
-              flex: 4,),
-              Expanded(child: Container(), flex: 1,),
+              Expanded(flex: 5,child: Container(),),
+              Expanded(flex: 5,child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Image(image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/locationpin.png').image, width: 50,),
+              ),),
+              Expanded(flex: 5,child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Image(image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/wyatext.png').image),
+              ),),
               Expanded(
-                child: SpecialWYAButton(textColor: Colors.white, color: kWYATeal, isLoading: false, text: 'login', onTap: (){
-                  context.push('/sign-in');
-                }), flex: 2,
+                flex: 2,
+                child: Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: SpecialWYAButton(textColor: Colors.white, color: kWYATeal, isLoading: false, text: 'login', onTap: (){
+                    context.push('/sign-in');
+                  }),
+                ),
               ),
-              Expanded(child: Container(), flex: 3,),
+              Expanded(
+                flex: 2,
+                child: Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: SpecialWYAButton(textColor: Colors.white, color: kWYAOrange, isLoading: false, text: 'register', onTap: (){
+                    context.push('/register');
+                  }),
+                ),
+              ),
+              Expanded(flex: 2,child: Container(),),
             ],
           ),
         ),

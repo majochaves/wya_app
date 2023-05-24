@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:wya_final/utils/constants.dart';
 import 'package:wya_final/widgets/event_widgets/match_card.dart';
 import 'package:wya_final/models/match.dart' as model;
+
+import '../../providers/event_provider.dart';
 
 
 class MatchPreviewer extends StatelessWidget {
@@ -27,6 +30,7 @@ class MatchPreviewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final eventProvider = Provider.of<EventProvider>(context);
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,7 +56,7 @@ class MatchPreviewer extends StatelessWidget {
                   Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/notFoundSymbol.png', width: 30,),
                   const SizedBox(height: 20,),
                   const Text('You have no matches for this day.'),
-                  TextButton(child: const Text('Add an event'), onPressed: () {context.go('/newEvent');},),
+                  TextButton(child: const Text('Add an event'), onPressed: () {eventProvider.newEvent(); context.go('/eventEditor');},),
                 ],
               ) : Container(
                   width: double.infinity,

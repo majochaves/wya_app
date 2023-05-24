@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:wya_final/providers/chat_provider.dart';
 import 'package:wya_final/providers/event_provider.dart';
 import 'package:wya_final/providers/user_provider.dart';
+import '../providers/auth_provider.dart';
 import '../providers/notification_provider.dart';
 import '/widgets/calendar.dart';
 import 'package:wya_final/widgets/event_widgets/match_previewer.dart';
@@ -32,6 +33,10 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_){
+      final authProvider = Provider.of<Auth>(context, listen: false);
+      if(!authProvider.loggedIn){
+        context.go('/welcome');
+      }
       final eventProvider = Provider.of<EventProvider>(context, listen:false);
       eventProvider.selectedDay = DateTime.now();
     });

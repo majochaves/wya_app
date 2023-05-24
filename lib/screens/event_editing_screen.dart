@@ -52,10 +52,10 @@ class _EventEditingScreenState extends State<EventEditingScreen> {
         print('startTime: ${eventProvider.startsAt}');
         print('endTime: ${eventProvider.endsAt}');
         eventDate = eventProvider.selectedDay;
-        startTime = eventProvider.startsAt;
-        endTime = eventProvider.endsAt;
-        _descriptionController.text = eventProvider.description;
-        _locationController.text = eventProvider.location!.formattedAddress! ?? '';
+        startTime = eventProvider.startsAt!;
+        endTime = eventProvider.endsAt!;
+        _descriptionController.text = eventProvider.description!;
+        _locationController.text = eventProvider.location == null ? '' : eventProvider.location!.formattedAddress!;
         isLoading = false;
       });
     });
@@ -534,22 +534,22 @@ class _EventEditingScreenState extends State<EventEditingScreen> {
       minDate: DateTime.now(),
       maxDate: DateTime(
           DateTime.now().year, DateTime.now().month + 3, DateTime.now().day),
-      initDate: eventProvider.startsAt,
+      initDate: eventProvider.startsAt!,
       toggleChangeDate: changeStartDate,
     );
 
     var startTimePicker = TimeChooser(
-      initDate: eventProvider.startsAt,
+      initDate: eventProvider.startsAt!,
       toggleChangeTime: changeStartTime,
-      minDate: isSameDay(eventProvider.startsAt, DateTime.now()) ? DateTime.now() : DateTime(eventProvider.startsAt.year, eventProvider.startsAt.month, eventProvider.startsAt.day, 0, 0),
-      maxDate: DateTime(eventProvider.startsAt.year, eventProvider.startsAt.month, eventProvider.startsAt.day, 23, 59),
+      minDate: isSameDay(eventProvider.startsAt, DateTime.now()) ? DateTime.now() : DateTime(eventProvider.startsAt!.year, eventProvider.startsAt!.month, eventProvider.startsAt!.day, 0, 0),
+      maxDate: DateTime(eventProvider.startsAt!.year, eventProvider.startsAt!.month, eventProvider.startsAt!.day, 23, 59),
     );
 
     var endTimePicker = TimeChooser(
-      initDate: eventProvider.endsAt.isBefore(eventProvider.startsAt) ? eventProvider.startsAt : eventProvider.endsAt,
+      initDate: eventProvider.endsAt!.isBefore(eventProvider.startsAt!) ? eventProvider.startsAt! : eventProvider.endsAt!,
       toggleChangeTime: changeEndTime,
-      minDate: eventProvider.startsAt,
-      maxDate: DateTime(eventProvider.startsAt.year, eventProvider.startsAt.month, eventProvider.startsAt.day, 23, 59),
+      minDate: eventProvider.startsAt!,
+      maxDate: DateTime(eventProvider.startsAt!.year, eventProvider.startsAt!.month, eventProvider.startsAt!.day, 23, 59),
     );
 
     return Scaffold(
@@ -692,7 +692,7 @@ class _EventEditingScreenState extends State<EventEditingScreen> {
                                   ),
                                   Expanded(
                                       child: OptionSwitch(
-                                          boolValue: eventProvider.isOpen,
+                                          boolValue: eventProvider.isOpen!,
                                           onChanged: (bool value) {
                                             eventProvider.isOpen = value;
                                           })),
@@ -745,7 +745,7 @@ class _EventEditingScreenState extends State<EventEditingScreen> {
                                   ),
                                   Expanded(
                                       child: OptionSwitch(
-                                          boolValue: eventProvider.sharedWithAll,
+                                          boolValue: eventProvider.sharedWithAll!,
                                           onChanged: (bool value){
                                         eventProvider.sharedWithAll = value;
                                   }),
@@ -753,7 +753,7 @@ class _EventEditingScreenState extends State<EventEditingScreen> {
                               ),
                             ),
                             Visibility(
-                              visible: !eventProvider.sharedWithAll,
+                              visible: !eventProvider.sharedWithAll!,
                               child: InkWell(
                                 onTap: () {_showShareWithWindow();},
                                 child: const RoundedContainer(

@@ -11,7 +11,6 @@ import '../models/group.dart';
 import '../models/user_data.dart';
 
 class GroupProvider extends ChangeNotifier{
-  final User? user = FirebaseAuth.instance.currentUser;
   static const Uuid uuid = Uuid();
 
   ///Constructor
@@ -40,6 +39,17 @@ class GroupProvider extends ChangeNotifier{
     getGroupsStream?.cancel();
   }
 
+  void clearData(){
+    groups.clear();
+    friendInfo.clear();
+    groupMap.clear();
+    _members.clear();
+    _uid = null;
+    _groupId = null;
+    _name = null;
+    notifyListeners();
+  }
+
   ///Get groups from Group Stream
   init(){
     FirebaseAuth.instance.userChanges().listen((user) {
@@ -55,7 +65,9 @@ class GroupProvider extends ChangeNotifier{
           notifyListeners();
         });
       }else{
-        getGroupsStream?.cancel();
+        cancelStreams();
+        clearData();
+        print('group provider: reset');
       }
     });
   }
@@ -104,7 +116,7 @@ class GroupProvider extends ChangeNotifier{
 
   ///Sets new group values
   void newGroup(){
-    _uid = user!.uid;
+    _uid = FirebaseAuth.instance.currentUser!.uid;
     _groupId = null;
     _name = '';
     _members = [];
@@ -127,15 +139,15 @@ class GroupProvider extends ChangeNotifier{
       Group updatedGroup = Group(name: name!, uid: uid!, groupId: groupId!, members: members.map((e) => e.uid).toList());
       groupService.updateGroup(updatedGroup);
     }
-    userService.addGroup(user!.uid, groupId!);
+    userService.addGroup(FirebaseAuth.instance.currentUser!.uid, groupId!);
   }
 
   void deleteGroup(String groupId) async{
     await groupService.deleteGroup(groupId);
-    await userService.deleteGroup(user!.uid, groupId);
+    await userService.deleteGroup(FirebaseAuth.instance.currentUser!.uid, groupId);
   }
   Future<bool> groupNameIsUnique(String groupName, String groupId) async{
-    return groupService.groupNameIsUnique(user!.uid, groupName, groupId);
+    return groupService.groupNameIsUnique(FirebaseAuth.instance.currentUser!.uid, groupName, groupId);
   }
 
 }

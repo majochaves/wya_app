@@ -17,29 +17,20 @@ class UserService {
         .doc(uid)
         .snapshots().map((snapshot) => UserData.fromSnap(snapshot));
   }
-  Stream<List> getUserFriends(String uid){
+  Stream<List<UserData>> getUserFriends(String uid){
     return FirebaseFirestore.instance
         .collection('userData')
-        .doc(uid)
-        .snapshots().map((snapshot) => UserData.fromSnap(snapshot).friends);
+        .where('friends', arrayContains: uid)
+        .snapshots().map((snapshot) =>
+        snapshot.docs
+            .map((document) => UserData.fromSnap(document))
+            .toList());
   }
 
-  Stream<List> getUserRequests(String uid){
+  Stream<List<UserData>> getUserRequests(String uid){
     return FirebaseFirestore.instance
         .collection('userData')
-        .doc(uid)
-        .snapshots().map((snapshot) => UserData.fromSnap(snapshot).requests);
-  }
-
-  /*Stream<List<UserData>> getFriends(String uid) {
-    return getUserFriends(uid).map((event) => FirebaseFirestore.instance.collection('userData').where('uid', whereIn: event).get().then((value) => value.docs.map((e) => UserData.fromSnap(e)).toList())).asBroadcastStream();
-  }*/
-
-  Stream<List<UserData>> getRequests(List requests) {
-    if(requests.isEmpty) return const Stream.empty();
-    return FirebaseFirestore.instance
-        .collection('userData')
-        .where('uid', whereIn: requests)
+        .where('pendingRequests', arrayContains: uid)
         .snapshots().map((snapshot) =>
         snapshot.docs
             .map((document) => UserData.fromSnap(document))
@@ -60,7 +51,27 @@ class UserService {
         .set(user.toJson());
   }
 
+  ///Delete UserData from database
+  Future<void> deleteUserData(String uid) {
+    return _db
+        .collection('userData')
+        .doc(uid)
+        .delete();
+  }
+
   ///Queries
+  Future<bool> userDataExists(String uid) async {
+    try{
+      QuerySnapshot doc = await _db
+          .collection('userData')
+          .where('uid', isEqualTo: uid)
+          .get();
+      return doc.docs.isNotEmpty;
+    } catch(e){
+      print('error is here');
+    }
+    return false;
+  }
   Future<bool> emailIsUnique(String email, String uid) async{
     Query doc = FirebaseFirestore.instance
         .collection('userData')
@@ -127,6 +138,12 @@ class UserService {
 
   /*Update: add request to requests */
   Future<void> requestFriend(String uid, String requesterUID) async{
+    await FirebaseFirestore.instance
+        .collection('userData')
+        .doc(requesterUID)
+        .update({
+        'pendingRequests': FieldValue.arrayUnion([uid])
+        });
     return await FirebaseFirestore.instance
         .collection('userData')
         .doc(uid)
@@ -137,6 +154,12 @@ class UserService {
 
   /*Update: remove request from requests */
   Future<void> deleteRequest(String uid, String requesterUID) async{
+    await FirebaseFirestore.instance
+        .collection('userData')
+        .doc(requesterUID)
+        .update({
+      'pendingRequests': FieldValue.arrayRemove([uid])
+    });
     return await FirebaseFirestore.instance
         .collection('userData')
         .doc(uid)
@@ -147,6 +170,12 @@ class UserService {
 
   /*Update: add friend to friends */
   Future<void> addFriend(String uid, String requesterUID) async{
+    await FirebaseFirestore.instance
+        .collection('userData')
+        .doc(requesterUID)
+        .update({
+      'friends': FieldValue.arrayUnion([uid])
+    });
     return await FirebaseFirestore.instance
         .collection('userData')
         .doc(uid)
@@ -157,12 +186,35 @@ class UserService {
 
   /*Update: remove friend from friends */
   Future<void> removeFriend(String uid, friendUID) async{
+    await FirebaseFirestore.instance
+        .collection('userData')
+        .doc(friendUID)
+        .update({
+      'friends': FieldValue.arrayRemove([uid])
+    });
     return await FirebaseFirestore.instance
         .collection('userData')
         .doc(uid)
         .update({
           'friends': FieldValue.arrayRemove([friendUID])
         });
+  }
+  
+  Future<void> removeUserFromUserData(String uid) async{
+    await _db
+        .collection('userData')
+        .where('friends', arrayContains: uid)
+        .get().then((value) => value.docs.forEach((element) {
+      UserData user = UserData.fromSnap(element);
+      removeFriend(user.uid, uid);
+    }));
+    await _db
+        .collection('userData')
+        .where('pendingRequests', arrayContains: uid)
+        .get().then((value) => value.docs.forEach((element) {
+      UserData user = UserData.fromSnap(element);
+      deleteRequest(user.uid, uid);
+    }));
   }
 
   /*Update: add group to groups */
