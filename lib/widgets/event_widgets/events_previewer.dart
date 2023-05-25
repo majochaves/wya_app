@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:wya_final/utils/constants.dart';
 import '../../models/event.dart';
 import 'package:wya_final/widgets/widgets.dart';
 import 'package:wya_final/widgets/event_widgets/event_card.dart';
+
+import '../../providers/event_provider.dart';
 
 
 
@@ -28,6 +31,7 @@ class EventsPreviewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final eventProvider = Provider.of<EventProvider>(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -53,11 +57,11 @@ class EventsPreviewer extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget> [
+                  Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/notFoundSymbol.png', width: 30,),
+                  const SizedBox(height: 20,),
                   Text("You have no events on this day. ",
                     textAlign: TextAlign.center, style: kBodyTextStyle,),
-                  TextButton(onPressed: (){context.go('/newEvent');}, child: Text(
-                      'Add one', style: kBodyTextStyle
-                  ))
+                  TextButton(child: const Text('Add an event'), onPressed: () {eventProvider.newEvent(); context.go('/eventEditor');},),
                 ],
               ) : Padding(
                 padding: const EdgeInsets.all(16),

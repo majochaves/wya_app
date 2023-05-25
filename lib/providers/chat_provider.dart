@@ -84,7 +84,8 @@ class ChatProvider extends ChangeNotifier {
   void init(){
     FirebaseAuth.instance.userChanges().listen((user) {
       if (user != null) {
-        getChatStream = chatService.getChats(user.uid).listen((chatList) async {
+        getChatStream = chatService.getChats(FirebaseAuth.instance.currentUser!.uid).listen((chatList) async {
+          print('getting chat stream for user: ${user.uid}');
           for (model.Chat chat in chatList) {
             List<model.Message> messages = await chatService.getMessages(chat.chatId);
             UserData? friend = await getFriendForChat(chat);

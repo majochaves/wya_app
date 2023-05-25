@@ -49,8 +49,14 @@ class Auth extends ChangeNotifier {
         email: email,
         password: password,
       );
-    } catch (e) {
-      res = 'error';
+    } on FirebaseAuthException catch (e) {
+      if (e.code == "user-not-found") {
+        res = 'The email entered does not match any existing account';
+      } else if (e.code == "wrong-password") {
+        res = 'The password entered is not correct';
+      } else {
+        res = 'Unknown error.';
+      }
     }
     return res;
   }

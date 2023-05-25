@@ -60,9 +60,9 @@ class MatchPreviewer extends StatelessWidget {
                 ],
               ) : Container(
                   width: double.infinity,
-                  decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.all(Radius.circular(40))),
+                  decoration: BoxDecoration(
+                      color: Theme.of(context).scaffoldBackgroundColor,
+                      borderRadius: const BorderRadius.all(Radius.circular(40))),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: ListView(

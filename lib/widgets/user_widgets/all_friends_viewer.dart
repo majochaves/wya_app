@@ -51,7 +51,7 @@ class _AllFriendsViewerState extends State<AllFriendsViewer> {
                             trailing: IconButton(
                               icon: const Icon(Icons.close),
                               onPressed: () {
-                                userProvider.removeFriend(userProvider.friendInfo[index]);
+                                userProvider.removeFriend(userProvider.friendInfo[index].uid);
                               },
                             ),
                           ),
@@ -59,7 +59,7 @@ class _AllFriendsViewerState extends State<AllFriendsViewer> {
                             Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (context) => ProfileScreen(
-                                    uid: userProvider.friendInfo[index].uid,
+                                    userUID: userProvider.friendInfo[index].uid,
                                   ),
                                 ));
                           },

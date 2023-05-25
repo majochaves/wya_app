@@ -354,21 +354,7 @@ class EventCategoryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return (index == 0 || index == 1)
-        ? InputChip(
-            backgroundColor: kPastelBlue,
-            selectedColor: kPastelPink,
-            disabledColor: kPastelBlue,
-            label: Text(
-              categoryName,
-              textAlign: TextAlign.center,
-            ),
-            selected: isSelected,
-            onSelected: (bool selected) {
-              selectEventCategoryCallback(index, selected);
-            },
-          )
-        : InputChip(
+    return InputChip(
             avatar: CircleAvatar(
                 backgroundColor: isSelected ? kPastelPink : kPastelBlue,
                 child: icon),

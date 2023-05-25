@@ -54,7 +54,8 @@ class GroupProvider extends ChangeNotifier{
   init(){
     FirebaseAuth.instance.userChanges().listen((user) {
       if (user != null) {
-        getGroupsStream = groupService.getGroups(user.uid).listen((groupList) {
+        getGroupsStream = groupService.getGroups(FirebaseAuth.instance.currentUser!.uid).listen((groupList) {
+          print('Getting groups stream for user: ${user.uid}');
           groups = groupList;
           notifyListeners();
           groupMap.clear();

@@ -31,74 +31,70 @@ class _RequestsViewerState extends State<RequestsViewer> {
             visible: userProvider.requestInfo.isNotEmpty,
             child: SizedBox(
               height: 120,
-              child: Row(
-                children: [
-                  ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      shrinkWrap: true,
-                      itemCount: userProvider.requestInfo.length,
-                      itemBuilder: (context, index) {
-                        return InkWell(
-                          onTap: () => context.push(
-                              '/profile:${userProvider.requestInfo[index].uid}'),
-                          child: Column(
-                            children: [
-                              Expanded(
-                                flex: 2,
-                                child: CircleAvatar(
-                                  backgroundImage: NetworkImage(
-                                    userProvider.requestInfo[index].photoUrl,
+              child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  shrinkWrap: true,
+                  itemCount: userProvider.requestInfo.length,
+                  itemBuilder: (context, index) {
+                    return InkWell(
+                      onTap: () => context.push(
+                          '/profile:${userProvider.requestInfo[index].uid}'),
+                      child: Column(
+                        children: [
+                          Expanded(
+                            flex: 2,
+                            child: CircleAvatar(
+                              backgroundImage: NetworkImage(
+                                userProvider.requestInfo[index].photoUrl,
+                              ),
+                              radius: 25,
+                            ),
+                          ),
+                          Expanded(
+                            flex: 1,
+                            child: Center(
+                              child: Text(
+                                userProvider.requestInfo[index].username,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.max,
+                              children: <Widget>[
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.check,
+                                    size: 20,
+                                    color: Colors.green,
                                   ),
-                                  radius: 25,
+                                  onPressed: () {
+                                    setState(() {
+                                      userProvider.addFriend(
+                                          userProvider.requestInfo[index].uid);
+                                    });
+                                  },
                                 ),
-                              ),
-                              Expanded(
-                                flex: 1,
-                                child: Center(
-                                  child: Text(
-                                    userProvider.requestInfo[index].username,
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.close,
+                                    size: 20,
+                                    color: Colors.red,
                                   ),
-                                ),
-                              ),
-                              Expanded(
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  children: <Widget>[
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.check,
-                                        size: 20,
-                                        color: Colors.green,
-                                      ),
-                                      onPressed: () {
-                                        setState(() {
-                                          userProvider.addFriend(
-                                              userProvider.requestInfo[index]);
-                                        });
-                                      },
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.close,
-                                        size: 20,
-                                        color: Colors.red,
-                                      ),
-                                      onPressed: () {
-                                        setState(() {
-                                          userProvider.removeRequest(
-                                              userProvider.requestInfo[index]);
-                                        });
-                                      },
-                                    )
-                                  ],
-                                ),
-                              ),
-                            ],
-                          )
-                        );
-                      }),
-                ],
-              ),
+                                  onPressed: () {
+                                    setState(() {
+                                      userProvider.removeRequest(
+                                          userProvider.requestInfo[index].uid);
+                                    });
+                                  },
+                                )
+                              ],
+                            ),
+                          ),
+                        ],
+                      )
+                    );
+                  }),
             ),
           ),
         ],

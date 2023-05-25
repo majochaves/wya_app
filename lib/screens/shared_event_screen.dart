@@ -70,62 +70,83 @@ class _SharedEventScreenState extends State<SharedEventScreen> {
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: RoundedContainer(
-              backgroundColor: Colors.white,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               padding: 15,
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Event: ${eventProvider.description}',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Text('Event: ${eventProvider.description}',
                       style: kH2SourceSansTextStyle,),
-                    Row(
+                  ),
+                  const SizedBox(width: 20,),
+                  Expanded(
+                    flex: 3,
+                    child: Row(
                       mainAxisSize: MainAxisSize.max,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: const BorderRadius.all(Radius.circular(20)),
-                            //border: Border.all(color: Colors.black),
-                            image: DecorationImage(image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/gradient${eventProvider.selectedSharedEvent!.event.category}.png').image),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: SvgPicture.asset('/Users/majochaves/StudioProjects/wya_app/assets/icons/category${eventProvider.selectedSharedEvent!.event.category}.svg',
-                              color: Colors.black, width: 100,),
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: const BorderRadius.all(Radius.circular(20)),
+                              //border: Border.all(color: Colors.black),
+                              image: DecorationImage(image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/gradient${eventProvider.selectedSharedEvent!.event.category}.png').image),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: SvgPicture.asset('/Users/majochaves/StudioProjects/wya_app/assets/icons/category${eventProvider.selectedSharedEvent!.event.category}.svg',
+                                color: Colors.black, width: 100,),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 10,),
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Text('Category: ', style: kH4SourceSansTextStyle,),
-                                Text(EventCategory.getCategoryById(eventProvider.category!).name),
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                const Text('Date: ', style: kH4SourceSansTextStyle,),
-                                Text(StringFormatter.getDayText(eventProvider.startsAt!))
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                const Text('Time: ', style: kH4SourceSansTextStyle,),
-                                Text('${StringFormatter.getTimeString(eventProvider.startsAt!)}'
-                                    '-${StringFormatter.getTimeString(eventProvider.endsAt!)}')
-                              ],
-                            ),
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    const Text('Category: ', style: kH4SourceSansTextStyle,),
+                                    Text(EventCategory.getCategoryById(eventProvider.category!).name),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    const Text('Date: ', style: kH4SourceSansTextStyle,),
+                                    Text(StringFormatter.getDayText(eventProvider.startsAt!))
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    const Text('Time: ', style: kH4SourceSansTextStyle,),
+                                    Text('${StringFormatter.getTimeString(eventProvider.startsAt!)}'
+                                        '-${StringFormatter.getTimeString(eventProvider.endsAt!)}')
+                                  ],
+                                ),
+                              ),
                       ]),
+                        ),
                     ],
                     ),
-                    const Text('Location: ', style: kH3SourceSansTextStyle,),
-                    const SizedBox(height: 10,),
-                    Text(eventProvider.location!.formattedAddress!),
-                    const SizedBox(height: 10,),
-                    Center(child: SizedBox(height: 200, width: 250, child:
+                  ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  const Expanded(child: Text('Location: ', style: kH3SourceSansTextStyle,)),
+                  const SizedBox(height: 10,),
+                  Expanded(child: Text(eventProvider.location!.formattedAddress!)),
+                  const SizedBox(height: 10,),
+                  Expanded(
+                    flex: 7,
+                    child: Center(child: SizedBox(height: 200, width: 250, child:
                     GoogleMap(
                       onMapCreated: onMapCreated,
                       initialCameraPosition: CameraPosition(
@@ -135,8 +156,11 @@ class _SharedEventScreenState extends State<SharedEventScreen> {
                       markers: <Marker>{_createMarker()},
                     ),)
                       ,),
-                    const SizedBox(height: 30,),
-                    Visibility(
+                  ),
+                  const SizedBox(height: 30,),
+                  Expanded(
+                    flex: 3,
+                    child: Visibility(
                       visible: !eventProvider.isOpen!,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -160,7 +184,10 @@ class _SharedEventScreenState extends State<SharedEventScreen> {
                         ],
                       ),
                     ),
-                    Visibility(
+                  ),
+                  Expanded(
+                    flex: 3,
+                    child: Visibility(
                       visible: eventProvider.isOpen!,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -183,8 +210,8 @@ class _SharedEventScreenState extends State<SharedEventScreen> {
                         ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),

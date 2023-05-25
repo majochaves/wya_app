@@ -89,7 +89,8 @@ class _EventScreenState extends State<EventScreen> {
                                     onPressed: (user) {
                                       setState(() {
                                         eventProvider.acceptEventRequest(
-                                            eventProvider.eventId!, user);
+                                            eventProvider.eventId!, user.uid);
+                                        print(eventProvider.requests);
                                       });
                                     }),
                               ),
@@ -197,183 +198,208 @@ class _EventScreenState extends State<EventScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Event: ${eventProvider.description}',
-                        style: kH2SourceSansTextStyle,
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.max,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              borderRadius:
-                                  const BorderRadius.all(Radius.circular(20)),
-                              //border: Border.all(color: Colors.black),
-                              image: DecorationImage(
-                                  image: Image.asset(
-                                          '/Users/majochaves/StudioProjects/wya_app/assets/images/gradient${eventProvider.category}.png')
-                                      .image),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: SvgPicture.asset(
-                                '/Users/majochaves/StudioProjects/wya_app/assets/icons/category${eventProvider.category}.svg',
-                                color: Colors.black,
-                                width: 100,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(
-                            width: 10,
-                          ),
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  const Text(
-                                    'Category: ',
-                                    style: kH4SourceSansTextStyle,
-                                  ),
-                                  Text(EventCategory.getCategoryById(
-                                          eventProvider.category!)
-                                      .name),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  const Text(
-                                    'Date: ',
-                                    style: kH4SourceSansTextStyle,
-                                  ),
-                                  Text(StringFormatter.getDayText(
-                                      eventProvider.startsAt!))
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  const Text(
-                                    'Time: ',
-                                    style: kH4SourceSansTextStyle,
-                                  ),
-                                  Text(
-                                      '${StringFormatter.getTimeString(eventProvider.startsAt!)}'
-                                      '-${StringFormatter.getTimeString(eventProvider.endsAt!)}')
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  const Text(
-                                    'Open event: ',
-                                    style: kH4SourceSansTextStyle,
-                                  ),
-                                  eventProvider.isOpen!
-                                      ? const Text('True')
-                                      : const Text('False')
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  const Text(
-                                    'Shared with: ',
-                                    style: kH4SourceSansTextStyle,
-                                  ),
-                                  eventProvider.sharedWithAll!
-                                      ? const Text('All friends')
-                                      : TextButton(
-                                          child: const Text('View shared with'),
-                                          onPressed: () {},
-                                        )
-                                ],
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const Text(
-                        'Location: ',
-                        style: kH3SourceSansTextStyle,
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      Text(eventProvider.location!.formattedAddress!),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      Center(
-                        child: SizedBox(
-                          height: 200,
-                          width: 250,
-                          child: GoogleMap(
-                            onMapCreated: onMapCreated,
-                            initialCameraPosition: CameraPosition(
-                              target: _kMapCenter,
-                              zoom: 13.0,
-                            ),
-                            markers: <Marker>{_createMarker()},
+                      Expanded(
+                        flex: 3,
+                        child: FittedBox(
+                          fit: BoxFit.fitWidth,
+                          child: Text(
+                            'Event: ${eventProvider.description}',
+                            style: kH2SourceSansTextStyle,
+                            maxLines: 2,
                           ),
                         ),
                       ),
-                      Visibility(
-                        visible: !eventProvider.isOpen!,
+                      Expanded(
+                        flex: 3,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.max,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius:
+                                      const BorderRadius.all(Radius.circular(20)),
+                                  //border: Border.all(color: Colors.black),
+                                  image: DecorationImage(
+                                      image: Image.asset(
+                                              '/Users/majochaves/StudioProjects/wya_app/assets/images/gradient${eventProvider.category}.png')
+                                          .image),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: SvgPicture.asset(
+                                    '/Users/majochaves/StudioProjects/wya_app/assets/icons/category${eventProvider.category}.svg',
+                                    color: Colors.black,
+                                    width: 100,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(
+                              width: 10,
+                            ),
+                            Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        const Text(
+                                          'Category: ',
+                                          style: kH4SourceSansTextStyle,
+                                        ),
+                                        Text(EventCategory.getCategoryById(
+                                                eventProvider.category!)
+                                            .name),
+                                      ],
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        const Text(
+                                          'Date: ',
+                                          style: kH4SourceSansTextStyle,
+                                        ),
+                                        Text(StringFormatter.getDayText(
+                                            eventProvider.startsAt!))
+                                      ],
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        const Text(
+                                          'Time: ',
+                                          style: kH4SourceSansTextStyle,
+                                        ),
+                                        Text(
+                                            '${StringFormatter.getTimeString(eventProvider.startsAt!)}'
+                                            '-${StringFormatter.getTimeString(eventProvider.endsAt!)}')
+                                      ],
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        const Text(
+                                          'Open event: ',
+                                          style: kH4SourceSansTextStyle,
+                                        ),
+                                        eventProvider.isOpen!
+                                            ? const Text('True')
+                                            : const Text('False')
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      Expanded(
+                        child: const Text(
+                          'Location: ',
+                          style: kH3SourceSansTextStyle,
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      Expanded(child: Text(eventProvider.location!.formattedAddress!)),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      Expanded(
+                        flex: 7,
+                        child: Center(
+                          child: SizedBox(
+                            height: 200,
+                            width: 250,
+                            child: GoogleMap(
+                              onMapCreated: onMapCreated,
+                              initialCameraPosition: CameraPosition(
+                                target: _kMapCenter,
+                                zoom: 13.0,
+                              ),
+                              markers: <Marker>{_createMarker()},
+                            ),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 3,
+                        child: Visibility(
+                          visible: !eventProvider.isOpen!,
+                          child: Row(
+                            children: [
+                              const Text(
+                                'Join requests: ',
+                                style: kH4SourceSansTextStyle,
+                              ),
+                              eventProvider.requests.isEmpty
+                                  ? const Text('None yet')
+                                  : Text('(${eventProvider.requests.length})'),
+                              TextButton(
+                                child: const Text('View requests'),
+                                onPressed: () {
+                                  _showRequestsWindow();
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
                         child: Row(
                           children: [
                             const Text(
-                              'Join requests: ',
+                              'Participants: ',
                               style: kH4SourceSansTextStyle,
                             ),
-                            eventProvider.requests.isEmpty
+                            eventProvider.participants.isEmpty
                                 ? const Text('None yet')
-                                : Text('(${eventProvider.requests.length})'),
+                                : Text('(${eventProvider.participants.length})'),
                             TextButton(
-                              child: const Text('View requests'),
+                              child: const Text('View participants'),
                               onPressed: () {
-                                _showRequestsWindow();
+                                _showParticipantsWindow();
                               },
                             ),
                           ],
                         ),
                       ),
-                      Row(
-                        children: [
-                          const Text(
-                            'Participants: ',
-                            style: kH4SourceSansTextStyle,
-                          ),
-                          eventProvider.participants.isEmpty
-                              ? const Text('None yet')
-                              : Text('(${eventProvider.participants.length})'),
-                          TextButton(
-                            child: const Text('View participants'),
-                            onPressed: () {
-                              _showParticipantsWindow();
-                            },
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          TextButton(
-                            child: const Text('Edit event'),
-                            onPressed: () {
-                              context.go('/eventEditor');
-                            },
-                          ),
-                          const SizedBox(
-                            width: 50,
-                          ),
-                          TextButton(
-                            child: const Text('Delete event'),
-                            onPressed: () {
-                              eventProvider.deleteEvent(eventProvider.eventId!);
-                              context.go('/events');
-                            },
-                          ),
-                        ],
+                      Expanded(
+                        flex: 2,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            TextButton(
+                              child: const Text('Edit event'),
+                              onPressed: () {
+                                context.go('/eventEditor');
+                              },
+                            ),
+                            const SizedBox(
+                              width: 50,
+                            ),
+                            TextButton(
+                              child: const Text('Delete event'),
+                              onPressed: () {
+                                eventProvider.deleteEvent(eventProvider.eventId!);
+                                context.go('/events');
+                              },
+                            ),
+                          ],
+                        ),
                       )
                     ],
                   ),

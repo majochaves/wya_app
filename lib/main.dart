@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:wya_final/screens/welcome_screen.dart';
+import 'package:wya_final/utils/constants.dart';
 
 import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
@@ -181,7 +182,7 @@ final _router = GoRouter(
           path: 'profile:userId',
           builder: (context, state) {
             return ProfileScreen(
-              uid: state.pathParameters['userId']
+                userUID: state.pathParameters['userId']
             );
           },
         ),
@@ -224,7 +225,7 @@ class App extends StatelessWidget {
         }
 
         // Otherwise, show something whilst waiting for initialization to complete
-        return const Center(child:CircularProgressIndicator());
+        return Container(color: Colors.white, child: const Center(child: CircularProgressIndicator(color: kWYAOrange,),),);
       },
     );
   }

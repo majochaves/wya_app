@@ -91,6 +91,7 @@ class EventProvider with ChangeNotifier {
     selectedEvent = event;
     if(selectedEvent != null){
       getSelectedEventStream = eventService.getEventStream(event.eventId).listen((event) async{
+        print('Received stream for event: ${event.eventId}');
         selectedEvent = event;
         await loadEvent(event);
         notifyListeners();
@@ -106,6 +107,7 @@ class EventProvider with ChangeNotifier {
   Future<void> setSelectedSharedEvent(SharedEvent event) async{
     selectedSharedEvent = event;
     if(selectedSharedEvent != null){
+      print('Received stream for shared event: ${event.event.eventId}');
       getSelectedSharedEventStream = eventService.getEventStream(event.event.eventId).listen((event) async{
         selectedSharedEvent = SharedEvent(event, selectedSharedEvent!.user);
         await loadEvent(selectedSharedEvent!.event);
@@ -167,7 +169,8 @@ class EventProvider with ChangeNotifier {
           groupInfo = groupList;
           notifyListeners();
         });
-        getEventsStream = eventService.getEvents(user.uid).listen((eventsList) {
+        getEventsStream = eventService.getEvents(FirebaseAuth.instance.currentUser!.uid).listen((eventsList) {
+          print('getting event stream for user: ${user!.uid}');
           events = eventsList;
           eventMap = {};
            for(Event event in eventsList){
@@ -192,6 +195,7 @@ class EventProvider with ChangeNotifier {
            notifyListeners();
          });
         getSharedEventsStream = eventService.getSharedEvents(user.uid).listen((sharedEventsList) async {
+          print('getting shared event stream for user: ${user!.uid}');
           print('received stream: ${sharedEventsList.toString()}');
           sharedEvents = [];
           sharedEventsMap = {};
@@ -208,12 +212,6 @@ class EventProvider with ChangeNotifier {
              }else{
                sharedEvents.add(SharedEvent(event, friend));
              }
-
-             /*
-             if(selectedSharedEvent != null && selectedSharedEvent!.event.eventId == event.eventId){
-               selectedSharedEvent = SharedEvent(event, friend);
-               loadEvent(selectedSharedEvent!.event);
-             }*/
 
              if(event.participants.contains(user.uid)){
                if(!joinedEvents.containsKey(dayOfEvent)){
@@ -264,8 +262,10 @@ class EventProvider with ChangeNotifier {
     DateTime dayOfEvent = DateTime(sharedEvent.event.startsAt.year, sharedEvent.event.startsAt.month, sharedEvent.event.startsAt.day, 0,0);
     if(eventMap.containsKey(dayOfEvent)){
       for(Event event in eventMap[dayOfEvent]!){
-        if(event.startsAt.isBefore(sharedEvent.event.endsAt) &&
-            event.endsAt.isAfter(sharedEvent.event.startsAt)){
+        if((event.startsAt.isBefore(sharedEvent.event.endsAt) &&
+            event.endsAt.isAfter(sharedEvent.event.startsAt)) ||
+            (sharedEvent.event.startsAt.isBefore(event.endsAt) &&
+            sharedEvent.event.endsAt.isAfter(event.startsAt))){
           Location? locationEvent = await eventLocationService.getLocationById(event.locationId);
           Location? locationSharedEvent = await eventLocationService.getLocationById(sharedEvent.event.locationId);
           double lat1 = locationEvent!.latitude;
@@ -483,12 +483,11 @@ class EventProvider with ChangeNotifier {
     userService.addNotification(event.uid, notificationId);
   }
 
-  Future<void> acceptEventRequest(String eventId, UserData requester) async{
-    Event event = getEventById(eventId);
-    if(event.requests.contains(requester)){
-      removeRequest(requester);
-      addParticipant(requester);
-      await eventService.acceptEventRequest(eventId, requester.uid);
+  Future<void> acceptEventRequest(String eventId, String userId) async{
+    if(requestIDs.contains(userId)){
+      print('accepting request from user $userId to join event $eventId');
+      requests.removeWhere((element) => element.uid == userId);
+      await eventService.acceptEventRequest(eventId, userId);
 
       ///Create notification letting requesting user know that their
       ///request has been accepted
@@ -498,22 +497,21 @@ class EventProvider with ChangeNotifier {
             notificationId: notificationId,
             type: 3,
             created: DateTime.now(),
-            uid: requester.uid,
+            uid: userId,
             isRead: false,
             userId: FirebaseAuth.instance.currentUser!.uid,
             eventId: eventId
         );
 
       notificationService.saveNotification(notification);
-      userService.addNotification(requester.uid, notificationId);
+      userService.addNotification(userId, notificationId);
     }
   }
 
-  Future<void> removeParticipantFromEvent(String eventId, UserData user) async{
-    Event event = getEventById(eventId);
-    if(event.participants.contains(user)){
-      removeParticipant(user);
-      await eventService.removeParticipant(eventId, user.uid);
+  Future<void> removeParticipantFromEvent(String eventId, String userId) async{
+    if(participantIDs.contains(userId)){
+      participants.removeWhere((element) => element.uid == userId);
+      await eventService.removeParticipant(eventId, userId);
     }
   }
   ///Aux methods

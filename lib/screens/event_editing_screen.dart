@@ -236,6 +236,7 @@ class _EventEditingScreenState extends State<EventEditingScreen> {
     List<UserData> friendsNotAdded = List.from(userProvider.friendInfo);
     friendsNotAdded
         .removeWhere((element) => eventProvider.sharedWith.contains(element));
+    print('groups is empty: ${groupProvider.groups.isEmpty.toString()}');
 
     return showDialog<void>(
       context: context,
@@ -265,133 +266,140 @@ class _EventEditingScreenState extends State<EventEditingScreen> {
                 content: StatefulBuilder(
                     builder: (BuildContext context, StateSetter setState) {
                   return SizedBox(
-                    height: 450,
-                    width: 300,
-                    child: Column(
-                      children: [
-                        Expanded(
-                            flex: 4,
-                            child:
-                                Row(mainAxisSize: MainAxisSize.max, children: [
-                              Visibility(
-                                visible: eventProvider.groups.isNotEmpty,
-                                child: Expanded(
-                                  child: Column(
-                                    children: [
-                                      const Expanded(
+                    height: 400,
+                    width: 450,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.max,
+                        children: [
+                          Visibility(
+                            visible: groupProvider.groups.isNotEmpty,
+                            child: SizedBox(
+                              height: eventProvider.groups.isEmpty ? 100 : 200,
+                              width:  450,
+                              child: Column(
+                                children: [
+                                  const Expanded(
+                                      child: Text(
+                                    'Groups shared with: ',
+                                    style: kH4SourceSansTextStyle,
+                                    textAlign: TextAlign.center,
+                                  )),
+                                  Expanded(
+                                    flex: 5,
+                                    child: eventProvider.groups.isEmpty
+                                        ? const Center(
+                                            child: Text(
+                                                "You haven't added any groups"))
+                                        : GroupListTiles(
+                                            groups: eventProvider.groups,
+                                            icon: Icons.close,
+                                            onPressed: (Group group) {
+                                              setState(() {
+                                                eventProvider.removeGroup(group);
+                                                eventProvider.removeUsersFromSharedWith(groupProvider.getFriendsContainedIn(group.members));
+                                              });
+                                            }),
+                                  )
+                                ],
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            height: eventProvider.sharedWith.isEmpty ? 100 : 200,
+                            width:450,
+                            child: Column(
+                              children: [
+                                const Expanded(
+                                    child: Text(
+                                  'Friends shared with: ',
+                                  style: kH4SourceSansTextStyle,
+                                  textAlign: TextAlign.center,
+                                )),
+                                Expanded(
+                                  flex: 5,
+                                  child: eventProvider.sharedWith.isEmpty
+                                      ? const Center(
                                           child: Text(
-                                        'Groups shared with: ',
-                                        style: kH4SourceSansTextStyle,
-                                        textAlign: TextAlign.center,
-                                      )),
-                                      Expanded(
-                                        flex: 5,
-                                        child: eventProvider.groups.isEmpty
-                                            ? const Center(
-                                                child: Text(
-                                                    "You haven't added any groups"))
-                                            : GroupListTiles(
-                                                groups: eventProvider.groups,
-                                                icon: Icons.close,
-                                                onPressed: (Group group) {
-                                                  setState(() {
-                                                    eventProvider.removeGroup(group);
-                                                    eventProvider.removeUsersFromSharedWith(groupProvider.getFriendsContainedIn(group.members));
-                                                  });
-                                                }),
-                                      )
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: Column(
-                                  children: [
-                                    const Expanded(
-                                        child: Text(
-                                      'Friends shared with: ',
-                                      style: kH4SourceSansTextStyle,
-                                      textAlign: TextAlign.center,
-                                    )),
-                                    Expanded(
-                                      flex: 5,
-                                      child: eventProvider.sharedWith.isEmpty
-                                          ? const Center(
-                                              child: Text(
-                                                  "You haven't added any friends"))
-                                          : UserListTiles(
-                                              users: eventProvider.sharedWith,
-                                              icon: Icons.close,
-                                              onPressed: (UserData user) {
-                                                setState(() {
-                                                  eventProvider.removeUserFromSharedWith(user);
-                                                  friendsNotAdded.add(user);
-                                                });
-                                              }),
-                                    )
-                                  ],
-                                ),
-                              ),
-                            ])),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        Visibility(
-                            visible: eventProvider.groups.isNotEmpty,
-                            child: const Text('Your groups:',
-                                style: kH4SourceSansTextStyle)),
-                        Visibility(
-                          visible: eventProvider.groups.isNotEmpty,
-                          child: const SizedBox(
+                                              "You haven't added any friends"))
+                                      : UserListTiles(
+                                          users: eventProvider.sharedWith,
+                                          icon: Icons.close,
+                                          onPressed: (UserData user) {
+                                            setState(() {
+                                              eventProvider.removeUserFromSharedWith(user);
+                                              friendsNotAdded.add(user);
+                                            });
+                                          }),
+                                )
+                              ],
+                            ),
+                          ),
+                          const SizedBox(
                             height: 10,
                           ),
-                        ),
-                        Visibility(
-                          visible: eventProvider.groups.isNotEmpty,
-                          child: Expanded(
-                              flex: 2,
-                              child: groupsNotAdded.isEmpty
-                                  ? const Center(
+                          SizedBox(
+                            height:200,
+                            width:450,
+                            child: Column(children: [
+                              Visibility(
+                                  visible: groupProvider.groups.isNotEmpty,
+                                  child: const Text('Your groups:',
+                                      style: kH4SourceSansTextStyle)),
+                              Visibility(
+                                visible: groupProvider.groups.isNotEmpty,
+                                child: const SizedBox(
+                                  height: 10,
+                                ),
+                              ),
+                              Visibility(
+                                visible: groupProvider.groups.isNotEmpty,
+                                child: Expanded(
+                                    flex: 2,
+                                    child: groupsNotAdded.isEmpty
+                                        ? const Center(
                                       child: Text(
                                           "You've added all your groups to this event."),
                                     )
-                                  : GroupListTiles(
-                                      groups: groupsNotAdded,
-                                      icon: Icons.add,
-                                      onPressed: (Group group) {
-                                        setState(() {
-                                          List<UserData> groupMembers = groupProvider.getFriendsContainedIn(group.members);
-                                          eventProvider.addGroup(group);
-                                          for (UserData groupMember
-                                              in groupMembers) {
-                                            if (!eventProvider.sharedWith
-                                                .contains(groupMember)) {
-                                              eventProvider.addUserToSharedWith(groupMember);
+                                        : GroupListTiles(
+                                        groups: groupsNotAdded,
+                                        icon: Icons.add,
+                                        onPressed: (Group group) {
+                                          setState(() {
+                                            List<UserData> groupMembers = groupProvider.getFriendsContainedIn(group.members);
+                                            eventProvider.addGroup(group);
+                                            for (UserData groupMember
+                                            in groupMembers) {
+                                              if (!eventProvider.sharedWith
+                                                  .contains(groupMember)) {
+                                                eventProvider.addUserToSharedWith(groupMember);
+                                              }
                                             }
-                                          }
-                                          groupsNotAdded.remove(group);
-                                          friendsNotAdded.removeWhere(
-                                              (element) => groupMembers
-                                                  .contains(element));
-                                        });
-                                      })),
-                        ),
-                        const SizedBox(
-                          height: 20,
-                        ),
-                        const Text('Your friends:',
-                            style: kH4SourceSansTextStyle),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        Expanded(
-                            flex: 2,
-                            child: friendsNotAdded.isEmpty
-                                ? const Center(
-                                    child: Text(
-                                        "You've added all your friends to this event."),
-                                  )
-                                : UserListTiles(
+                                            groupsNotAdded.remove(group);
+                                            friendsNotAdded.removeWhere(
+                                                    (element) => groupMembers
+                                                    .contains(element));
+                                          });
+                                        })),
+                              ),
+                            ],),
+                          ),
+                          const SizedBox(
+                            height: 20,
+                          ),
+                          SizedBox(height:200, width:450, child: Column(children: [const Text('Your friends:',
+                              style: kH4SourceSansTextStyle),
+                            const SizedBox(
+                              height: 10,
+                            ),
+                            Expanded(
+                                flex: 2,
+                                child: friendsNotAdded.isEmpty
+                                    ? const Center(
+                                  child: Text(
+                                      "You've added all your friends to this event."),
+                                )
+                                    : UserListTiles(
                                     users: friendsNotAdded,
                                     icon: Icons.add,
                                     onPressed: (user) {
@@ -399,19 +407,21 @@ class _EventEditingScreenState extends State<EventEditingScreen> {
                                         eventProvider.addUserToSharedWith(user);
                                         friendsNotAdded.remove(user);
                                       });
-                                    })),
-                        SizedBox(
-                          height: 20,
-                          width: 300,
-                          child: TextField(
-                            style: TextStyle(color: Colors.red.shade700),
-                            controller: _errorController,
-                            readOnly: true,
-                            enabled: false,
-                            decoration: const InputDecoration(),
+                                    })),],)),
+
+                          SizedBox(
+                            height: 20,
+                            width: 300,
+                            child: TextField(
+                              style: TextStyle(color: Colors.red.shade700),
+                              controller: _errorController,
+                              readOnly: true,
+                              enabled: false,
+                              decoration: const InputDecoration(),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   );
                 }),
@@ -523,12 +533,6 @@ class _EventEditingScreenState extends State<EventEditingScreen> {
           });
       eventChips.add(chip);
     }
-
-    DateTime eventDate = DateTime.now();
-
-    DateTime startTime = DateTime.now();
-
-    DateTime endTime = DateTime.now();
 
     var datePicker = DateChooser(
       minDate: DateTime.now(),

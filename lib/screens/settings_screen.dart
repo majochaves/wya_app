@@ -32,10 +32,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
       TextEditingController();
   final TextEditingController emailTextEditingController =
       TextEditingController();
+  final TextEditingController errorTextEditingController =
+      TextEditingController();
 
   Uint8List? _image;
   bool isLoading = true;
   bool deleteIsLoading = false;
+  bool imageIsLoading = false;
+  bool usernameIsLoading = false;
+  bool nameIsLoading = false;
+  bool emailIsLoading = false;
 
   void changeProfilePic() async {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -54,7 +60,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final imageTemp = File(image.path);
       setState(() {
         _image = imageTemp.readAsBytesSync();
+        setState(() {
+          imageIsLoading = true;
+        });
         changeProfilePicture(_image);
+        setState((){
+          imageIsLoading = false;
+        });
       });
     } on PlatformException catch (e) {
       print('Failed to pick image: $e');
@@ -78,7 +90,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> showChangeUsernameWindow() async {
-    String error = '';
+    errorTextEditingController.text = '';
     return showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -91,7 +103,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: SizedBox(
                   height: 70,
                   width: 300,
-                  child: Column(
+                  child: usernameIsLoading ? const Center(child: CircularProgressIndicator(color: kWYATeal,)) : Column(
                     children: [
                       TextFormField(
                         controller: usernameTextEditingController,
@@ -109,7 +121,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       SizedBox(
                         height: 10,
-                        child: Text(error),
+                        child: TextFormField(
+                          controller: errorTextEditingController,
+                          readOnly: true,
+                          enabled: false,
+                          decoration: const InputDecoration(border: InputBorder.none,),
+                        ),
                       )
                     ],
                   )),
@@ -125,15 +142,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
               TextButton(
                 child: const Text('Done'),
                 onPressed: () async {
-                  bool isUnique = await userProvider
-                      .usernameIsUnique(usernameTextEditingController.text);
-                  if (isUnique && _usernameFormKey.currentState!.validate()) {
-                    error = '';
-                    await userProvider
-                        .changeUsername(usernameTextEditingController.text);
+                  if(usernameTextEditingController.text != userProvider.username){
+                    bool isUnique = await userProvider
+                        .usernameIsUnique(usernameTextEditingController.text);
+                    if (isUnique && _usernameFormKey.currentState!.validate()) {
+                      errorTextEditingController.text = '';
+                      setState(() {
+                        usernameIsLoading = true;
+                      });
+                      await userProvider
+                          .changeUsername(usernameTextEditingController.text);
+                      setState(() {
+                        usernameIsLoading = false;
+                      });
+                      Navigator.of(context).pop();
+                    } else {
+                      errorTextEditingController.text = 'Sorry, that username already exists.';
+                    }
+                  }else{
                     Navigator.of(context).pop();
-                  } else {
-                    error = 'Sorry, that username already exists.';
                   }
                 },
               ),
@@ -145,7 +172,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> showChangeNameWindow() async {
-    String error = '';
+    errorTextEditingController.text = '';
     return showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -158,7 +185,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: SizedBox(
                   height: 70,
                   width: 300,
-                  child: Column(
+                  child: nameIsLoading ? const Center(child: CircularProgressIndicator(color: kWYATeal,)) : Column(
                     children: [
                       TextFormField(
                         controller: nameTextEditingController,
@@ -176,7 +203,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       SizedBox(
                         height: 10,
-                        child: Text(error),
+                        child: TextFormField(
+                          controller: errorTextEditingController,
+                          readOnly: true,
+                          enabled: false,
+                          decoration: const InputDecoration(border: InputBorder.none,),
+                        ),
                       )
                     ],
                   )),
@@ -192,9 +224,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
               TextButton(
                 child: const Text('Done'),
                 onPressed: () async {
-                  if (_nameFormKey.currentState!.validate()) {
-                    await userProvider
-                        .changeName(nameTextEditingController.text);
+                  if(nameTextEditingController.text != userProvider.name){
+                    if (_nameFormKey.currentState!.validate()) {
+                      errorTextEditingController.text = '';
+                      setState(() {
+                        nameIsLoading = true;
+                      });
+                      await userProvider
+                          .changeName(nameTextEditingController.text);
+                      setState(() {
+                        nameIsLoading = false;
+                      });
+                      Navigator.of(context).pop();
+                    }
+                  }else{
                     Navigator.of(context).pop();
                   }
                 },
@@ -207,7 +250,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> showChangeEmailWindow() async {
-    String error = '';
+    errorTextEditingController.text = '';
     return showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -220,7 +263,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: SizedBox(
                   height: 70,
                   width: 300,
-                  child: Column(
+                  child: emailIsLoading ? const Center(child: CircularProgressIndicator(color: kWYATeal,)) : Column(
                     children: [
                       TextFormField(
                         controller: emailTextEditingController,
@@ -240,7 +283,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       SizedBox(
                         height: 10,
-                        child: Text(error),
+                        child: TextFormField(
+                          controller: errorTextEditingController,
+                          readOnly: true,
+                          enabled: false,
+                          decoration: const InputDecoration(border: InputBorder.none,),
+                        ),
                       )
                     ],
                   )),
@@ -256,17 +304,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
               TextButton(
                 child: const Text('Done'),
                 onPressed: () async {
-                  bool isUnique = await userProvider
-                      .emailIsUnique(emailTextEditingController.text);
-                  if (!isUnique) {
-                    error =
-                        'Sorry, that email is already linked to another account. ';
-                  } else {
-                    if (_emailFormKey.currentState!.validate()) {
-                      await userProvider
-                          .changeEmail(emailTextEditingController.text);
-                      Navigator.of(context).pop();
+                  if(emailTextEditingController.text != userProvider.email){
+                    bool isUnique = await userProvider
+                        .emailIsUnique(emailTextEditingController.text);
+                    if (!isUnique) {
+                    errorTextEditingController.text =
+                    'Sorry, that email is already linked to another account. ';
+                    } else {
+                      if (_emailFormKey.currentState!.validate()) {
+                        errorTextEditingController.text = '';
+                        setState(() {
+                          emailIsLoading = true;
+                        });
+                        await userProvider
+                            .changeEmail(emailTextEditingController.text);
+                        setState(() {
+                          emailIsLoading = false;
+                        });
+                        Navigator.of(context).pop();
+                      }
                     }
+                  }else{
+                    Navigator.of(context).pop();
                   }
                 },
               ),
@@ -327,8 +386,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 ),
                                 Expanded(
                                   child: Stack(children: [
-                                    _image != null
-                                        ? CircleAvatar(
+                                     imageIsLoading ? const CircleAvatar(backgroundColor: Colors.white, radius: 35,child: CircularProgressIndicator(color: kWYATeal,),) :
+                                     _image != null
+                                         ? CircleAvatar(
                                             radius: 35,
                                             backgroundImage:
                                                 MemoryImage(_image!),

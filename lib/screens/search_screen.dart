@@ -65,7 +65,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       Navigator.of(context).push(
                           MaterialPageRoute(
                               builder: (context) => ProfileScreen(
-                                uid: (snapshot.data! as dynamic).docs[index]['uid'],
+                                userUID: (snapshot.data! as dynamic).docs[index]['uid'],
                               )));
                     }
                   },

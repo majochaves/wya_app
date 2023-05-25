@@ -11,15 +11,15 @@ import '/widgets/widgets.dart';
 import '../utils/utils.dart';
 
 class ProfileScreen extends StatefulWidget {
-  final String? uid;
-  const ProfileScreen({super.key, required this.uid});
+  final String? userUID;
+  const ProfileScreen({super.key, required this.userUID});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  String uid = FirebaseAuth.instance.currentUser!.uid;
+  String currentUserUID = FirebaseAuth.instance.currentUser!.uid;
   var userData = {};
   int eventsLen = 0;
   int friends = 0;
@@ -40,23 +40,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       var userSnap = await FirebaseFirestore.instance
           .collection('userData')
-          .doc(widget.uid)
+          .doc(widget.userUID)
           .get();
 
       setState(() {
         eventsLen = userSnap.data()!['events'].length;
         userData = userSnap.data()!;
-        print("gotUserDATA");
+        print("got user data for user: ${userSnap.data()!['uid']}");
         friends = userSnap.data()!['friends'].length;
         isFriend = userSnap
             .data()!['friends']
-            .contains(FirebaseAuth.instance.currentUser!.uid);
-        print('is Friend : ${isFriend.toString()}');
-        print(userSnap.data()!['friends'].toString());
-        print(uid);
+            .contains(currentUserUID);
+        print('user is friend : ${isFriend.toString()}');
         isRequested = userSnap
             .data()!['requests']
-            .contains(FirebaseAuth.instance.currentUser!.uid);
+            .contains(currentUserUID);
+        print('user is requested : ${isRequested.toString()}');
       });
     } catch (e) {
       showSnackBar(e.toString(), context);

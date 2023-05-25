@@ -17,7 +17,6 @@ class SharedEventPreviewer extends StatelessWidget {
 
   List<Widget> getEventCards() {
     List<Widget> eventCards = [];
-    int index = 0;
     for (SharedEvent sharedEvent in sharedEvents) {
       SharedEventCard eventCard = SharedEventCard(
         setSelectedSharedEvent: setSelectedSharedEvent,
@@ -25,7 +24,6 @@ class SharedEventPreviewer extends StatelessWidget {
         uid: uid,
       );
       eventCards.add(eventCard);
-      index++;
     }
 
     return eventCards;
@@ -63,9 +61,9 @@ class SharedEventPreviewer extends StatelessWidget {
                   )
                 : Container(
               width: double.infinity,
-              decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.all(Radius.circular(40))),
+              decoration: BoxDecoration(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  borderRadius: const BorderRadius.all(Radius.circular(40))),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: ListView(

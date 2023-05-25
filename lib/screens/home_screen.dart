@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -33,8 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_){
-      final authProvider = Provider.of<Auth>(context, listen: false);
-      if(!authProvider.loggedIn){
+      if(FirebaseAuth.instance.currentUser == null){
         context.go('/welcome');
       }
       final eventProvider = Provider.of<EventProvider>(context, listen:false);
@@ -76,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final chatProvider = Provider.of<ChatProvider>(context);
     final eventProvider = Provider.of<EventProvider>(context);
     final userProvider = Provider.of<UserProvider>(context);
-    return userProvider.isLoading ? const Center(child: CircularProgressIndicator())
+    return userProvider.isLoading ? Container(color: Colors.white, child: const Center(child: CircularProgressIndicator(color: kWYAOrange,)))
         : Scaffold(
               appBar: AppBar(
                 backgroundColor: kWYATeal,

@@ -51,6 +51,7 @@ class NotificationProvider extends ChangeNotifier {
     }
     return unread;
   }
+  bool notificationsIsLoading = false;
 
   StreamSubscription? getNotificationStream;
 
@@ -70,8 +71,14 @@ class NotificationProvider extends ChangeNotifier {
   void init() {
     FirebaseAuth.instance.userChanges().listen((user) {
       if (user != null) {
-        getNotificationStream = notificationService.getNotifications(user.uid).listen((notificationsList) async {
+        getNotificationStream = notificationService.getNotifications(FirebaseAuth.instance.currentUser!.uid).listen((notificationsList) async {
+          notificationsIsLoading = true;
+          notifyListeners();
+          print('getting notification stream for user: ${user.uid}');
+          notifications = {};
           for(model.Notification notification in notificationsList){
+            DateTime dayOfNotification = DateTime(notification.created.year, notification.created.month, notification.created.day, 0, 0);
+            print('notification: ${notification.notificationId}');
             Event? notificationEvent;
             UserData notificationUser = await getFriendFromId(notification.userId);
             if(notification.eventId != ''){
@@ -81,10 +88,7 @@ class NotificationProvider extends ChangeNotifier {
                 notificationEvent = await getSharedEventFromId(notification.eventId);
               }
             }
-
             NotificationInfo notInfo = NotificationInfo(notification: notification, user: notificationUser, event: notificationEvent);
-
-            DateTime dayOfNotification = DateTime(notification.created.year, notification.created.month, notification.created.day, 0, 0);
             if(!notifications.containsKey(dayOfNotification)){
               notifications.putIfAbsent(dayOfNotification, () => []);
             }
@@ -95,6 +99,7 @@ class NotificationProvider extends ChangeNotifier {
               notifications[dayOfNotification]!.add(notInfo);
             }
           }
+          notificationsIsLoading = false;
           notifyListeners();
         });
       }else{

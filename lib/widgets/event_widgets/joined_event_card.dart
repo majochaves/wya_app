@@ -42,7 +42,13 @@ class JoinedEventCard extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Expanded(child: Text(event.user.username, style: matchUsernameText,),),
+                    Expanded(child: FittedBox(
+                      fit: BoxFit.fitWidth,
+                      child: Padding(
+                        padding: const EdgeInsets.all(3.0),
+                        child: Text(event.user.username, style: matchUsernameText,),
+                      ),
+                    ),),
                     Expanded(
                         flex: 2,
                         child: SvgPicture.asset('/Users/majochaves/StudioProjects/wya_app/assets/icons/category${event.event.category}.svg', color: Colors.white,)

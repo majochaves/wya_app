@@ -39,7 +39,8 @@ class UserProvider extends ChangeNotifier {
   /// Provider values
   /* UserData model values*/
   String? email;
-  String? uid;
+  String? _uid;
+  String? get uid => _uid;
   String? photoUrl;
   String? username;
   String? name;
@@ -68,7 +69,7 @@ class UserProvider extends ChangeNotifier {
   ///Methods to reset provider once user has logged out
   void clearData(){
     email = null;
-    uid = null;
+    _uid = null;
     photoUrl = null;
     username = null;
     name = null;
@@ -99,10 +100,11 @@ class UserProvider extends ChangeNotifier {
     FirebaseAuth.instance.userChanges().listen((user) {
       ///If user is logged in
       if (user != null) {
-        getUserDataStream = userService.getUserData(user.uid).listen((event) {
+        print('Getting user data stream for user: ${user.uid}');
+        getUserDataStream = userService.getUserData(FirebaseAuth.instance.currentUser!.uid).listen((event) {
           userData = event;
           email = userData!.email;
-          uid = userData!.uid;
+          _uid = userData!.uid;
           username = userData!.username;
           name = userData!.name;
           photoUrl = userData!.photoUrl;
@@ -118,10 +120,12 @@ class UserProvider extends ChangeNotifier {
           notifyListeners();
         });
         getFriendsStream = userService.getUserFriends(user.uid).listen((event) {
+          print('got friend stream: ${friendInfo.toString()}');
           friendInfo = event;
           notifyListeners();
         });
         getRequestsStream = userService.getUserRequests(user.uid).listen((event) {
+          print('got request stream: ${friendInfo.toString()}');
           requestInfo = event;
           notifyListeners();
         });
@@ -137,7 +141,7 @@ class UserProvider extends ChangeNotifier {
   ///Provider methods
   /*Uniqueness verification methods*/
   Future<bool> emailIsUnique(String email) async {
-    return userService.emailIsUnique(email, uid!);
+    return userService.emailIsUnique(email, _uid!);
   }
 
   Future<bool> usernameIsUnique(String val) async{
@@ -148,22 +152,22 @@ class UserProvider extends ChangeNotifier {
   Future<void> changeEmail(String val) async{
     email = val;
     notifyListeners();
-    await userService.changeEmail(val, uid!);
+    await userService.changeEmail(val, _uid!);
     await FirebaseAuth.instance.currentUser!.updateEmail(val);
   }
 
   Future<void> changeName(String val) async{
     email = val;
     notifyListeners();
-    await userService.changeName(val, uid!);
+    await userService.changeName(val, _uid!);
     await FirebaseAuth.instance.currentUser!.updateDisplayName(val);
   }
 
   Future<void> changeProfilePicture(Uint8List file) async{
-    String photoUrl = await imageService.uploadImageToStorage('profilePics', file, uid!);
+    String photoUrl = await imageService.uploadImageToStorage('profilePics', file, _uid!);
     photoUrl = photoUrl;
     notifyListeners();
-    await userService.changeProfilePicture(photoUrl, uid!);
+    await userService.changeProfilePicture(photoUrl, _uid!);
     await FirebaseAuth.instance.currentUser!.updatePhotoURL(photoUrl);
   }
 
@@ -172,26 +176,27 @@ class UserProvider extends ChangeNotifier {
     await usernameService.saveUsername(val);
     username = val;
     notifyListeners();
-    await userService.changeUsername(val, uid!);
+    await userService.changeUsername(val, _uid!);
   }
 
   Future<void> changeAllowAdd(bool val) async{
     allowAdd = val;
     notifyListeners();
-    await userService.changeAllowAdd(val, uid!);
+    await userService.changeAllowAdd(val, _uid!);
   }
 
   Future<void> changeMaxMatchDistance(int val) async{
     maxMatchDistance = val;
     notifyListeners();
-    await userService.changeMaxMatchDistance(val.toDouble(), uid!);
+    await userService.changeMaxMatchDistance(val.toDouble(), _uid!);
   }
 
   /*Friend and request methods*/
-  Future<void> addFriend(UserData user) async{
-    if(!friends.contains(user.uid)){
-      await userService.addFriend(uid!, user.uid);
-      await userService.deleteRequest(uid!, user.uid);
+  Future<void> addFriend(String userId) async{
+    if(!friends.contains(userId)){
+      print('user: $uid ACCEPTING FRIEND REQUEST from user: ${userId}');
+      await userService.addFriend(_uid!, userId);
+      await userService.deleteRequest(_uid!, userId);
 
       String notificationId = uuid.v1();
       model.Notification notification
@@ -199,28 +204,30 @@ class UserProvider extends ChangeNotifier {
             notificationId:  notificationId,
             type: 1,
             created: DateTime.now(),
-            uid: user.uid,
+            uid: userId,
             isRead: false,
-            userId: uid!,
+            userId: _uid!,
             eventId: ''
         );
 
       notificationService.saveNotification(notification);
-      userService.addNotification(user.uid, notificationId);
+      userService.addNotification(userId, notificationId);
     }
   }
 
-  Future<void> removeFriend(UserData user) async{
-    if(friends.contains(user.uid)) {
-      await userService.removeFriend(uid!, user.uid);
-      eventService.removeFriendFromUserEvents(uid!, user.uid);
-      groupService.removeFriendFromUserGroups(uid!, user.uid);
+  Future<void> removeFriend(String userId) async{
+    if(friends.contains(userId)) {
+      print('user: $_uid REMOVING FRIEND ${userId}');
+      await userService.removeFriend(_uid!, userId);
+      eventService.removeFriendFromUserEvents(_uid!, userId);
+      groupService.removeFriendFromUserGroups(_uid!, userId);
     }
   }
 
   Future<void> sendFriendRequest(String userID) async{
     if(!friends.contains(userID)) {
-      await userService.requestFriend(userID, uid!);
+      print('user: $_uid SENDING FRIEND REQUEST TO user: $userID');
+      await userService.requestFriend(userID, _uid!);
 
       String notificationId = uuid.v1();
       model.Notification notification = model.Notification(
@@ -229,7 +236,7 @@ class UserProvider extends ChangeNotifier {
           created: DateTime.now(),
           uid: userID,
           isRead: false,
-          userId: uid!,
+          userId: _uid!,
           eventId: '');
 
       await notificationService.saveNotification(notification);
@@ -237,9 +244,10 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> removeRequest(UserData user) async{
-    if(requests.contains(user.uid)) {
-      await userService.deleteRequest(uid!, user.uid);
+  Future<void> removeRequest(String userId) async{
+    if(requests.contains(userId)) {
+      print('user: $_uid REMOVING REQUEST FROM ${userId}');
+      await userService.deleteRequest(_uid!, userId);
     }
   }
 
@@ -247,27 +255,27 @@ class UserProvider extends ChangeNotifier {
   Future<void> deleteAccount() async{
     getUserDataStream?.cancel();
     ///Remove user from friends and pending requests
-    userService.removeUserFromUserData(uid!);
+    userService.removeUserFromUserData(_uid!);
     ///Remove user from other user's groups and delete user groups
-    groupService.removeUserFromAllGroups(uid!);
-    groupService.deleteAllUserGroups(uid!);
+    groupService.removeUserFromAllGroups(_uid!);
+    groupService.deleteAllUserGroups(_uid!);
     ///Delete all chats that include user
-    chatService.deleteAllUserChats(uid!);
+    chatService.deleteAllUserChats(_uid!);
     ///Delete all notifications that mention user events and user, and user notifications
     if(events.isNotEmpty){
       notificationService.deleteNotificationsForEvents(events);
     }
-    notificationService.deleteNotificationsMentioning(uid!);
-    notificationService.deleteNotificationsForUser(uid!);
+    notificationService.deleteNotificationsMentioning(_uid!);
+    notificationService.deleteNotificationsForUser(_uid!);
     ///Delete user from event participants, requests, and sharedWith and delete all user events
-    eventService.removeUserFromEvents(uid!);
-    eventService.deleteAllUserEvents(uid!);
+    eventService.removeUserFromEvents(_uid!);
+    eventService.deleteAllUserEvents(_uid!);
     ///Delete all user locations
-    locationService.deleteLocationsForUser(uid!);
+    locationService.deleteLocationsForUser(_uid!);
     ///Delete username
     usernameService.deleteUsername(username!);
     ///Delete userData
-    userService.deleteUserData(uid!);
+    userService.deleteUserData(_uid!);
     ///Delete user from FirebaseAuth
     await FirebaseAuth.instance.currentUser?.delete();
   }

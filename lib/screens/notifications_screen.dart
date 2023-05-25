@@ -42,7 +42,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Column(
+            child:
+            Column(
               children: [
                 Visibility(visible: notificationProvider.notifications.isEmpty,
                     child: const Center(child: Text('You have no notifications'),)),
