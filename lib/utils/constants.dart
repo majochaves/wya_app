@@ -26,7 +26,6 @@ const kAlmostBlack = Color(0xFF212121);
 const kMainBGColor = Colors.white;
 const kIconDefaultColor = kOrange;
 
-//LINKWAVE COLORS
 const kLinkPink = Color(0xFFDE60BE);
 const kLinkPurple = Color(0xFF9E42C7);
 const kLinkLightPurple = Color(0xFFB9B7FF);
@@ -45,8 +44,7 @@ const kWYAOrange = Color(0xFFF28B66);
 const kWYALightCamoGreen = Color(0xFFEEFED7);
 const kWYALightOrange = Color(0xFFFAFF4D);
 
-//LINKWAVE TEXT
-TextStyle kH1SpaceMonoTextStyle = GoogleFonts.pattaya(textStyle: const TextStyle(fontSize: 40, color: Colors.black,
+TextStyle kH1PattayaTextStyle = GoogleFonts.pattaya(textStyle: const TextStyle(fontSize: 40, color: Colors.black,
 fontWeight: FontWeight.bold));
 TextStyle kH3RubikTextStyle = GoogleFonts.rubik(textStyle: const TextStyle(fontSize: 25, color: Colors.black,
     fontWeight: FontWeight.w500));

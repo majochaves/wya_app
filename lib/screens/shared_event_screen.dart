@@ -92,11 +92,11 @@ class _SharedEventScreenState extends State<SharedEventScreen> {
                             decoration: BoxDecoration(
                               borderRadius: const BorderRadius.all(Radius.circular(20)),
                               //border: Border.all(color: Colors.black),
-                              image: DecorationImage(image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/gradient${eventProvider.selectedSharedEvent!.event.category}.png').image),
+                              image: DecorationImage(image: Image.asset('assets/images/gradient${eventProvider.selectedSharedEvent!.event.category}.png').image),
                             ),
                             child: Padding(
                               padding: const EdgeInsets.all(16),
-                              child: SvgPicture.asset('/Users/majochaves/StudioProjects/wya_app/assets/icons/category${eventProvider.selectedSharedEvent!.event.category}.svg',
+                              child: SvgPicture.asset('assets/icons/category${eventProvider.selectedSharedEvent!.event.category}.svg',
                                 color: Colors.black, width: 100,),
                             ),
                           ),

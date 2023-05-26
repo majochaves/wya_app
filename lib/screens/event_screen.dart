@@ -223,13 +223,13 @@ class _EventScreenState extends State<EventScreen> {
                                   //border: Border.all(color: Colors.black),
                                   image: DecorationImage(
                                       image: Image.asset(
-                                              '/Users/majochaves/StudioProjects/wya_app/assets/images/gradient${eventProvider.category}.png')
+                                              'assets/images/gradient${eventProvider.category}.png')
                                           .image),
                                 ),
                                 child: Padding(
                                   padding: const EdgeInsets.all(16),
                                   child: SvgPicture.asset(
-                                    '/Users/majochaves/StudioProjects/wya_app/assets/icons/category${eventProvider.category}.svg',
+                                    'assets/icons/category${eventProvider.category}.svg',
                                     color: Colors.black,
                                     width: 100,
                                   ),

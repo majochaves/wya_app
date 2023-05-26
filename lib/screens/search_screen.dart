@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../providers/user_provider.dart';
-import '/screens/profile_screen.dart';
+import 'package:wya_final/providers/user_provider.dart';
+import 'package:wya_final/screens/profile_screen.dart';
 import 'package:wya_final/utils/constants.dart';
-import '/widgets/widgets.dart';
+import 'package:wya_final/widgets/widgets.dart';
 
 class SearchScreen extends StatefulWidget {
   static String id = 'search_screen';

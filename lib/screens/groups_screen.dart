@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:wya_final/models/group.dart';
 import 'package:wya_final/providers/group_provider.dart';
 import 'package:wya_final/providers/user_provider.dart';
 import 'package:wya_final/utils/constants.dart';

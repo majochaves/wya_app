@@ -77,10 +77,8 @@ class Auth extends ChangeNotifier {
       );
       await auth.signInWithCredential(credential);
       if (auth.currentUser != null) {
-        print('IN GOOGLE LOGIN FUNCTION: current user is NOT NULL. UID: ${auth.currentUser!.uid}');
         bool exists = await userService.userDataExists(auth.currentUser!.uid);
         if(!exists){
-          print('USER DATA DOES NOT EXIST FOR USER');
           bool uniqueUsername = false;
           String username = '';
           while(!uniqueUsername){
@@ -141,9 +139,8 @@ class Auth extends ChangeNotifier {
   }
 
   Future<void> saveNewUserData(String username) async{
-    print('saving user data');
     User? user = auth.currentUser;
-    await usernameService.saveUsername(username!);
+    await usernameService.saveUsername(username);
     var newUserData = UserData(
         name: '',
         email: user!.email!,

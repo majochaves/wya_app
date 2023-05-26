@@ -21,7 +21,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
       body: Container(
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/welcomescreenbg.png').image,
+            image: Image.asset('assets/images/welcomescreenbg.png').image,
             fit: BoxFit.cover
           )
         ),
@@ -34,11 +34,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
               Expanded(flex: 5,child: Container(),),
               Expanded(flex: 5,child: Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Image(image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/locationpin.png').image, width: 50,),
+                child: Image(image: Image.asset('assets/images/locationpin.png').image, width: 50,),
               ),),
               Expanded(flex: 5,child: Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Image(image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/wyatext.png').image),
+                child: Image(image: Image.asset('assets/images/wyatext.png').image),
               ),),
               Expanded(
                 flex: 2,

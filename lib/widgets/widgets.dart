@@ -1,7 +1,3 @@
-// Copyright 2022 The Flutter Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
 import 'dart:ui';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -11,21 +7,15 @@ import 'package:flutter_cupertino_date_picker_fork/flutter_cupertino_date_picker
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:wya_final/models/event_category.dart';
-import 'package:wya_final/providers/event_provider.dart';
 import 'package:wya_final/providers/user_provider.dart';
 import 'package:wya_final/utils/constants.dart';
 import 'package:wya_final/utils/string_formatter.dart';
 
-import 'package:wya_final/models/event.dart';
 import '../models/chat_info.dart';
 import '../models/group.dart';
-import '../models/shared_event.dart';
 import '../models/user_data.dart';
-import 'package:wya_final/models/match.dart' as model;
 
 import '../providers/chat_provider.dart';
-import '/models/notification_info.dart';
 
 class Header extends StatelessWidget {
   const Header(this.heading, {super.key});
@@ -1129,7 +1119,7 @@ class AppBarCustom extends StatelessWidget with PreferredSizeWidget{
   Widget build(BuildContext context) {
     return AppBar(
       backgroundColor: kWYATeal,
-      title: Image(image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/wyatextorange.png').image, width: 80,),);
+      title: Image(image: Image.asset('assets/images/wyatextorange.png').image, width: 80,),);
   }
 
   @override

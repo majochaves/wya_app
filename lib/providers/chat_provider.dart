@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:uuid/uuid.dart';
 
-
 import 'package:wya_final/providers/user_provider.dart';
 import 'package:wya_final/services/chat_service.dart';
 import 'package:wya_final/services/user_service.dart';
@@ -128,7 +127,7 @@ class ChatProvider extends ChangeNotifier {
     return null;
   }
 
-  ///Provided methods
+  ///Provider methods
   void handleNewMessage(types.PartialText message) {
     model.Message newMessage
       = model.Message(
@@ -149,7 +148,6 @@ class ChatProvider extends ChangeNotifier {
       if(chat.user.uid == friend.uid){
         foundChat = true;
         selectedChat = chat;
-        print('found chat! with user: ${selectedChat!.user!.name}');
       }
     }
     if(!foundChat) {

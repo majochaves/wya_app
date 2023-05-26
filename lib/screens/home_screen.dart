@@ -1,7 +1,3 @@
-// Copyright 2022 The Flutter Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -9,7 +5,6 @@ import 'package:provider/provider.dart';
 import 'package:wya_final/providers/chat_provider.dart';
 import 'package:wya_final/providers/event_provider.dart';
 import 'package:wya_final/providers/user_provider.dart';
-import '../providers/auth_provider.dart';
 import '../providers/notification_provider.dart';
 import '/widgets/calendar.dart';
 import 'package:wya_final/widgets/event_widgets/match_previewer.dart';
@@ -80,7 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
         : Scaffold(
               appBar: AppBar(
                 backgroundColor: kWYATeal,
-                title: Image(image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/wyatextorange.png').image, width: 80,),
+                title: Image(image: Image.asset('assets/images/wyatextorange.png').image, width: 80,),
                 actions: [
                   Row(
                     mainAxisSize: MainAxisSize.max,

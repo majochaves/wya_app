@@ -55,9 +55,8 @@ class JoinedEventPreviewer extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget> [
-                Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/notFoundSymbol.png', width: 30,),
-                const SizedBox(height: 20,),
-                const Text("You haven't joined any events on this day."),
+                Expanded(child: Image.asset('assets/images/notFoundSymbol.png', width: 30,)),
+                const Expanded(child: Center(child: Text("You haven't joined any events on this day."))),
               ],
             ) : Container(
               width: double.infinity,

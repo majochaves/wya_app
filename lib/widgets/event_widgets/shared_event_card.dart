@@ -35,7 +35,7 @@ class SharedEventCard extends StatelessWidget {
           width: 150,
           height: 100,
           decoration: BoxDecoration(
-            image: DecorationImage(image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/gradient${sharedEvent.event.category}.png').image, fit: BoxFit.cover),
+            image: DecorationImage(image: Image.asset('assets/images/gradient${sharedEvent.event.category}.png').image, fit: BoxFit.cover),
             borderRadius: const BorderRadius.all(Radius.circular(40)),
           ),
           child: Center(

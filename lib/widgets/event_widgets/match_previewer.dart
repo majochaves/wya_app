@@ -37,10 +37,13 @@ class MatchPreviewer extends StatelessWidget {
       children: [
         Expanded(
           flex: 1,
-          child: Text(
-            'Matches:',
-            style: kH3RubikTextStyle,
-            textAlign: TextAlign.start,
+          child: FittedBox(
+            fit: BoxFit.fitHeight,
+            child: Text(
+              'Matches:',
+              style: kH3RubikTextStyle,
+              textAlign: TextAlign.start,
+            ),
           ),
         ),
         const SizedBox(height: 10,),
@@ -53,10 +56,9 @@ class MatchPreviewer extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget> [
-                  Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/notFoundSymbol.png', width: 30,),
-                  const SizedBox(height: 20,),
-                  const Text('You have no matches for this day.'),
-                  TextButton(child: const Text('Add an event'), onPressed: () {eventProvider.newEvent(); context.go('/eventEditor');},),
+                  Expanded(child: Image.asset('assets/images/notFoundSymbol.png', width: 30,)),
+                  const Expanded(child: Center(child: Text('You have no matches for this day.'))),
+                  Expanded(child: TextButton(child: const Text('Add an event'), onPressed: () {eventProvider.newEvent(); context.go('/eventEditor');},)),
                 ],
               ) : Container(
                   width: double.infinity,

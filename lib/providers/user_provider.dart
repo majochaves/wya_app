@@ -194,7 +194,6 @@ class UserProvider extends ChangeNotifier {
   /*Friend and request methods*/
   Future<void> addFriend(String userId) async{
     if(!friends.contains(userId)){
-      print('user: $uid ACCEPTING FRIEND REQUEST from user: ${userId}');
       await userService.addFriend(_uid!, userId);
       await userService.deleteRequest(_uid!, userId);
 
@@ -217,7 +216,6 @@ class UserProvider extends ChangeNotifier {
 
   Future<void> removeFriend(String userId) async{
     if(friends.contains(userId)) {
-      print('user: $_uid REMOVING FRIEND ${userId}');
       await userService.removeFriend(_uid!, userId);
       eventService.removeFriendFromUserEvents(_uid!, userId);
       groupService.removeFriendFromUserGroups(_uid!, userId);
@@ -226,7 +224,6 @@ class UserProvider extends ChangeNotifier {
 
   Future<void> sendFriendRequest(String userID) async{
     if(!friends.contains(userID)) {
-      print('user: $_uid SENDING FRIEND REQUEST TO user: $userID');
       await userService.requestFriend(userID, _uid!);
 
       String notificationId = uuid.v1();
@@ -246,7 +243,6 @@ class UserProvider extends ChangeNotifier {
 
   Future<void> removeRequest(String userId) async{
     if(requests.contains(userId)) {
-      print('user: $_uid REMOVING REQUEST FROM ${userId}');
       await userService.deleteRequest(_uid!, userId);
     }
   }

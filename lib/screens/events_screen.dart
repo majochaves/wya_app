@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:wya_final/providers/event_provider.dart';
 import 'package:wya_final/providers/user_provider.dart';
-import '../utils/constants.dart';
 import '../widgets/event_widgets/joined_event_previewer.dart';
 import '../widgets/event_widgets/events_previewer.dart';
 import '/widgets/widgets.dart';

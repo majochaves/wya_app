@@ -1,15 +1,10 @@
-//Core
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:wya_final/providers/chat_provider.dart';
-import 'package:wya_final/providers/event_provider.dart';
-import 'package:wya_final/providers/group_provider.dart';
-import 'package:wya_final/providers/notification_provider.dart';
+import '../providers/auth_provider.dart';
 import 'package:wya_final/providers/user_provider.dart';
 import 'package:wya_final/screens/welcome_screen.dart';
 import 'package:wya_final/utils/constants.dart';
-import '../providers/auth_provider.dart';
 import '/widgets/widgets.dart';
 import '/widgets/user_widgets/user_details_viewer.dart';
 
@@ -29,7 +24,7 @@ class _AccountScreenState extends State<AccountScreen> {
     return authProvider.loggedIn ?  Scaffold(
       appBar: AppBar(
         backgroundColor: kWYATeal,
-        title: Image(image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/wyatextorange.png').image, width: 80,),
+        title: Image(image: Image.asset('assets/images/wyatextorange.png').image, width: 80,),
         actions: [
           IconButton(onPressed: (){
             FirebaseAuth.instance.signOut();

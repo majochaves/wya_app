@@ -1,14 +1,9 @@
-// Copyright 2022, the Chromium project authors.  Please see the AUTHORS file
-// for details. All rights reserved. Use of this source code is governed by a
-// BSD-style license that can be found in the LICENSE file.
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
 import 'package:wya_final/providers/auth_provider.dart';
 import 'package:wya_final/utils/constants.dart';
@@ -117,7 +112,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             children: [
                               Text(
                                 mode == AuthMode.login ? 'Login' : 'Register',
-                                style: kH1SpaceMonoTextStyle,
+                                style: kH1PattayaTextStyle,
                                 textAlign: TextAlign.center,),
                             ],
                           ),

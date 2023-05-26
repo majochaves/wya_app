@@ -33,7 +33,7 @@ class JoinedEventCard extends StatelessWidget {
           width: 110,
           height: 150,
           decoration: BoxDecoration(
-            image: DecorationImage(image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/gradient${event.event.category}.png').image, fit: BoxFit.cover),
+            image: DecorationImage(image: Image.asset('assets/images/gradient${event.event.category}.png').image, fit: BoxFit.cover),
             borderRadius: const BorderRadius.all(Radius.circular(80)),
           ),
           child: Center(
@@ -51,7 +51,7 @@ class JoinedEventCard extends StatelessWidget {
                     ),),
                     Expanded(
                         flex: 2,
-                        child: SvgPicture.asset('/Users/majochaves/StudioProjects/wya_app/assets/icons/category${event.event.category}.svg', color: Colors.white,)
+                        child: SvgPicture.asset('assets/icons/category${event.event.category}.svg', color: Colors.white,)
                       //child: CircleAvatar(backgroundImage: EventCategory.getCategoryById(match.friendEvent.event.category).icon.image, radius: 25,backgroundColor: Colors.transparent,),
                     ),
                     Expanded(

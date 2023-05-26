@@ -67,7 +67,7 @@ class NotificationProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  ///Get notifications from Notification Stream
+  ///Gets notifications from Notification Stream
   void init() {
     FirebaseAuth.instance.userChanges().listen((user) {
       if (user != null) {
@@ -78,7 +78,6 @@ class NotificationProvider extends ChangeNotifier {
           notifications = {};
           for(model.Notification notification in notificationsList){
             DateTime dayOfNotification = DateTime(notification.created.year, notification.created.month, notification.created.day, 0, 0);
-            print('notification: ${notification.notificationId}');
             Event? notificationEvent;
             UserData notificationUser = await getFriendFromId(notification.userId);
             if(notification.eventId != ''){

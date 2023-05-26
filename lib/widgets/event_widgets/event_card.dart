@@ -33,7 +33,7 @@ class EventCard extends StatelessWidget {
           height: 100,
           decoration: BoxDecoration(
               image: DecorationImage(
-                  image: Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/gradient${event.category}.png').image,
+                  image: Image.asset('assets/images/gradient${event.category}.png').image,
                   fit: BoxFit.cover),
               borderRadius: const BorderRadius.all(Radius.circular(20))),
           child: Center(
@@ -58,7 +58,7 @@ class EventCard extends StatelessWidget {
                           style: sharedEventCardText,
                         ),
                       ),
-                      trailing: SizedBox(width: 40, height:40, child: SvgPicture.asset('/Users/majochaves/StudioProjects/wya_app/assets/icons/category${event.category}.svg', color: Colors.white,)),
+                      trailing: SizedBox(width: 40, height:40, child: SvgPicture.asset('assets/icons/category${event.category}.svg', color: Colors.white,)),
                     ),
                   ),
                 ],

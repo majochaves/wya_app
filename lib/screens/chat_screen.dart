@@ -6,9 +6,7 @@ import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:wya_final/providers/chat_provider.dart';
 import 'package:wya_final/providers/user_provider.dart';
 import 'package:wya_final/utils/constants.dart';
-import '../providers/auth_provider.dart';
 import 'package:wya_final/models/user_data.dart';
-import 'package:wya_final/screens/welcome_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({Key? key}) : super(key: key);

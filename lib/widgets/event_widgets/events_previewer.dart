@@ -57,11 +57,14 @@ class EventsPreviewer extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget> [
-                  Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/notFoundSymbol.png', width: 30,),
-                  const SizedBox(height: 20,),
-                  Text("You have no events on this day. ",
-                    textAlign: TextAlign.center, style: kBodyTextStyle,),
-                  TextButton(child: const Text('Add an event'), onPressed: () {eventProvider.newEvent(); context.go('/eventEditor');},),
+                  Expanded(child: Image.asset('assets/images/notFoundSymbol.png', width: 30,)),
+                  Expanded(
+                    child: Center(
+                      child: Text("You have no events on this day. ",
+                        textAlign: TextAlign.center, style: kBodyTextStyle,),
+                    ),
+                  ),
+                  Expanded(child: TextButton(child: const Text('Add an event'), onPressed: () {eventProvider.newEvent(); context.go('/eventEditor');},)),
                 ],
               ) : Padding(
                 padding: const EdgeInsets.all(16),

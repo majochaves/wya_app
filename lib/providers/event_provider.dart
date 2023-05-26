@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -91,7 +90,6 @@ class EventProvider with ChangeNotifier {
     selectedEvent = event;
     if(selectedEvent != null){
       getSelectedEventStream = eventService.getEventStream(event.eventId).listen((event) async{
-        print('Received stream for event: ${event.eventId}');
         selectedEvent = event;
         await loadEvent(event);
         notifyListeners();
@@ -107,7 +105,6 @@ class EventProvider with ChangeNotifier {
   Future<void> setSelectedSharedEvent(SharedEvent event) async{
     selectedSharedEvent = event;
     if(selectedSharedEvent != null){
-      print('Received stream for shared event: ${event.event.eventId}');
       getSelectedSharedEventStream = eventService.getEventStream(event.event.eventId).listen((event) async{
         selectedSharedEvent = SharedEvent(event, selectedSharedEvent!.user);
         await loadEvent(selectedSharedEvent!.event);
@@ -176,11 +173,7 @@ class EventProvider with ChangeNotifier {
            for(Event event in eventsList){
              DateTime startsAt = event.startsAt as DateTime;
              DateTime dayOfEvent = DateTime(startsAt.year, startsAt.month, startsAt.day, 0,0);
-             ///Found current selected event
-             /*if(selectedEvent != null && selectedEvent!.eventId == event.eventId){
-               selectedEvent = event;
-               loadEvent(selectedEvent!);
-             }*/
+
              ///If map does not contain key for day of event, we add a new entry with an empty list
              if(!eventMap.containsKey(dayOfEvent)){
                eventMap.putIfAbsent(dayOfEvent, () => []);
@@ -196,7 +189,6 @@ class EventProvider with ChangeNotifier {
          });
         getSharedEventsStream = eventService.getSharedEvents(user.uid).listen((sharedEventsList) async {
           print('getting shared event stream for user: ${user!.uid}');
-          print('received stream: ${sharedEventsList.toString()}');
           sharedEvents = [];
           sharedEventsMap = {};
           joinedEvents = {};
@@ -400,7 +392,6 @@ class EventProvider with ChangeNotifier {
 
   void setLocation(String formattedAddress, String url, double latitude, double longitude) {
     Location location = Location(locationId: const Uuid().v1(), uid: FirebaseAuth.instance.currentUser!.uid, formattedAddress: formattedAddress, url: url, latitude: latitude, longitude: longitude);
-    print('new location set: ${location.locationId}');
     _location = location;
     notifyListeners();
   }
@@ -485,11 +476,10 @@ class EventProvider with ChangeNotifier {
 
   Future<void> acceptEventRequest(String eventId, String userId) async{
     if(requestIDs.contains(userId)){
-      print('accepting request from user $userId to join event $eventId');
       requests.removeWhere((element) => element.uid == userId);
       await eventService.acceptEventRequest(eventId, userId);
 
-      ///Create notification letting requesting user know that their
+      ///Creates a notification letting requesting user know that their
       ///request has been accepted
       String notificationId = uuid.v1();
       model.Notification notification
@@ -538,7 +528,7 @@ class EventProvider with ChangeNotifier {
     _location = await eventLocationService.getLocationById(event.locationId);
   }
 
-  ///Load event values
+  ///Loads existing event values
   Future<void> loadEvent(Event event) async{
     _eventId = event.eventId;
     _uid = event.uid;
@@ -561,7 +551,7 @@ class EventProvider with ChangeNotifier {
     print('got event location');
     notifyListeners();
   }
-  ///Set new event values
+  ///Sets new event values
   void newEvent(){
     _eventId = null;
     _uid = FirebaseAuth.instance.currentUser!.uid;
@@ -580,7 +570,7 @@ class EventProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  ///Save event to database
+  ///Saves event to database
   saveEvent(){
     eventLocationService.saveLocation(location!);
     if(eventId == null){
@@ -622,7 +612,7 @@ class EventProvider with ChangeNotifier {
     }
   }
 
-  ///Delete event from database
+  ///Deletes event from database
   void deleteEvent(String eventId) async{
     await eventService.deleteEvent(eventId);
     await userService.deleteEvent(FirebaseAuth.instance.currentUser!.uid, eventId);

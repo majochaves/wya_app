@@ -522,7 +522,7 @@ class _EventEditingScreenState extends State<EventEditingScreen> {
     List<EventCategory> eventCategories = EventCategory.getEventCategories();
     for (int i = 0; i < eventCategories.length; i++) {
       EventCategoryChip chip = EventCategoryChip(
-          icon: SvgPicture.asset('/Users/majochaves/StudioProjects/wya_app/assets/icons/category$i.svg'),
+          icon: SvgPicture.asset('assets/icons/category$i.svg'),
           categoryName: eventCategories[i].name,
           index: i,
           isSelected: eventProvider.category == i,

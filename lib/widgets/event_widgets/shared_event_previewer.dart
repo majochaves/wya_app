@@ -53,10 +53,9 @@ class SharedEventPreviewer extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
-                      Image.asset('/Users/majochaves/StudioProjects/wya_app/assets/images/notFoundSymbol.png', width: 30,),
-                      const SizedBox(height: 20,),
-                      const Text('You have no shared events for this day.'),
-                      TextButton(child: const Text('Find friends'), onPressed: () {context.go('/search');},),
+                      Expanded(flex: 2, child: Center(child: Image.asset('assets/images/notFoundSymbol.png', width: 30,))),
+                      const Expanded(child: Center(child: Text('You have no shared events for this day.'))),
+                      Expanded(flex: 2, child: Center(child: TextButton(child: const Text('Find friends'), onPressed: () {context.go('/search');},))),
                     ],
                   )
                 : Container(

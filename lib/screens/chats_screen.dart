@@ -3,14 +3,12 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:wya_final/utils/constants.dart';
-import '../providers/auth_provider.dart';
 import '../providers/chat_provider.dart';
 import '../providers/user_provider.dart';
 import '/widgets/widgets.dart';
 import 'package:wya_final/models/user_data.dart';
-import 'package:wya_final/screens/welcome_screen.dart';
-
 import '../models/chat_info.dart';
+
 class ChatsScreen extends StatefulWidget {
   const ChatsScreen({Key? key}) : super(key: key);
 

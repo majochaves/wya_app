@@ -21,7 +21,7 @@ class DateSelector extends StatelessWidget {
             fit: BoxFit.fitWidth,
             child: Text(
               StringFormatter.getDayTitle(selectedDay),
-              style: kH1SpaceMonoTextStyle,
+              style: kH1PattayaTextStyle,
             ),
           ),
         ),

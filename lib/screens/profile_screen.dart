@@ -1,14 +1,12 @@
-//Core
 import 'package:flutter/material.dart';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:wya_final/providers/user_provider.dart';
 import 'package:wya_final/utils/constants.dart';
+import 'package:wya_final/utils/utils.dart';
 import 'package:wya_final/widgets/user_widgets/user_details_viewer.dart';
-import '/widgets/widgets.dart';
-import '../utils/utils.dart';
+import 'package:wya_final/widgets/widgets.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String? userUID;
