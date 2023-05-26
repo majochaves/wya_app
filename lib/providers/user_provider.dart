@@ -251,6 +251,16 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
+  Future<String> changePassword(String newPassword) async{
+    String res = 'success';
+    try{
+      await FirebaseAuth.instance.currentUser!.updatePassword(newPassword);
+    } on FirebaseAuthException catch(e){
+      res = e.message!;
+    }
+    return res;
+  }
+
   ///Deletes all user data from database and FirebaseAuthentication
   Future<void> deleteAccount() async{
     getUserDataStream?.cancel();

@@ -26,6 +26,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       GlobalKey<FormState>(debugLabel: '_SettingsPageStateUsernameForm');
   final _emailFormKey =
       GlobalKey<FormState>(debugLabel: '_SettingsPageStateEmailForm');
+  final _passwordFormKey =
+      GlobalKey<FormState>(debugLabel: '_SettingsPageStatePasswordForm');
   final TextEditingController usernameTextEditingController =
       TextEditingController();
   final TextEditingController nameTextEditingController =
@@ -33,6 +35,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController emailTextEditingController =
       TextEditingController();
   final TextEditingController errorTextEditingController =
+      TextEditingController();
+  final TextEditingController passwordTextEditingController =
       TextEditingController();
 
   Uint8List? _image;
@@ -42,6 +46,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool usernameIsLoading = false;
   bool nameIsLoading = false;
   bool emailIsLoading = false;
+  bool passwordIsLoading = false;
 
   void changeProfilePic() async {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -101,7 +106,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             content: Form(
               key: _usernameFormKey,
               child: SizedBox(
-                  height: 70,
+                  height: 100,
                   width: 300,
                   child: usernameIsLoading ? const Center(child: CircularProgressIndicator(color: kWYATeal,)) : Column(
                     children: [
@@ -120,7 +125,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         },
                       ),
                       SizedBox(
-                        height: 10,
+                        height: 30,
                         child: TextFormField(
                           controller: errorTextEditingController,
                           readOnly: true,
@@ -183,7 +188,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             content: Form(
               key: _nameFormKey,
               child: SizedBox(
-                  height: 70,
+                  height: 100,
                   width: 300,
                   child: nameIsLoading ? const Center(child: CircularProgressIndicator(color: kWYATeal,)) : Column(
                     children: [
@@ -202,7 +207,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         },
                       ),
                       SizedBox(
-                        height: 10,
+                        height: 30,
                         child: TextFormField(
                           controller: errorTextEditingController,
                           readOnly: true,
@@ -261,7 +266,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             content: Form(
               key: _emailFormKey,
               child: SizedBox(
-                  height: 70,
+                  height: 100,
                   width: 300,
                   child: emailIsLoading ? const Center(child: CircularProgressIndicator(color: kWYATeal,)) : Column(
                     children: [
@@ -282,7 +287,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         },
                       ),
                       SizedBox(
-                        height: 10,
+                        height: 30,
                         child: TextFormField(
                           controller: errorTextEditingController,
                           readOnly: true,
@@ -328,6 +333,86 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Navigator.of(context).pop();
                   }
                 },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> showChangePasswordWindow() async {
+    errorTextEditingController.text = '';
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Consumer<UserProvider>(
+          builder: (context, userProvider, _) => AlertDialog(
+            title: const Text('Change your password'),
+            content: Form(
+              key: _passwordFormKey,
+              child: SizedBox(
+                  height: 200,
+                  width: 200,
+                  child: passwordIsLoading ? const Center(child: CircularProgressIndicator(color: kWYATeal,)) : Column(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: passwordTextEditingController,
+                          obscureText: true,
+                          keyboardType: TextInputType.text,
+                          decoration: const InputDecoration(
+                            hintText: 'Enter your new password',
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter a password.';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      Expanded(
+                        child: TextFormField(
+                          controller: errorTextEditingController,
+                          readOnly: true,
+                          enabled: false,
+                          decoration: const InputDecoration(border: InputBorder.none,),
+                        ),
+                      )
+                    ],
+                  )),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Cancel'),
+                onPressed: () {
+                  passwordTextEditingController.text = '';
+                  Navigator.of(context).pop();
+                },
+              ),
+              TextButton(
+                child: const Text('Done'),
+                onPressed: () async {
+                  if (_passwordFormKey.currentState!.validate()) {
+                    errorTextEditingController.text = '';
+                    setState(() {
+                      passwordIsLoading = true;
+                    });
+                    String res = await userProvider
+                        .changePassword(passwordTextEditingController.text);
+                    setState(() {
+                        passwordIsLoading = false;
+                    });
+                    if(res == 'success'){
+                      passwordTextEditingController.text = '';
+                      Navigator.of(context).pop();
+                    }else{
+                      errorTextEditingController.text = res;
+                    }
+                  }
+                }
               ),
             ],
           ),
@@ -547,6 +632,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   const Icon(
                                     Icons.warning_amber,
                                     color: Colors.amber,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Expanded(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  TextButton(
+                                    onPressed: () {
+                                      showChangePasswordWindow();
+                                    },
+                                    style: ButtonStyle(
+                                        backgroundColor:
+                                        MaterialStateProperty.all(
+                                            Colors.amber)),
+                                    child: const Text(
+                                      'Change my password',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
                                   ),
                                 ],
                               ),
